@@ -1,0 +1,17 @@
+.ring-tryon { margin: 12px 0; }
+.ring-tryon__btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  width: 100%; min-height: 46px; padding: 0 20px; cursor: pointer;
+  background: var(--rt-bg, #1f1a17); color: var(--rt-fg, #fff);
+  border: 0; border-radius: var(--rt-radius, 4px);
+  font: inherit; font-size: 15px; letter-spacing: .02em;
+}
+.ring-tryon__btn:hover { opacity: .9; }
+.ring-tryon__btn:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
+
+.ring-tryon-frame {
+  position: fixed; inset: 0; width: 100vw; height: 100dvh; border: 0;
+  z-index: 2147483000; background: transparent;
+}
+html.ring-tryon-lock, html.ring-tryon-lock body { overflow: hidden !important; }
+.ring-tryon--empty { padding: 12px; border: 1px dashed #c9c2bc; border-radius: 6px; font-size: 13px; color: #7d736d; }

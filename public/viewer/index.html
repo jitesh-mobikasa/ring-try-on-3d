@@ -1,0 +1,1127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ring Try-On 3D</title>
+<script src="hand.js?v=20261118"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+} }
+</script>
+<style>
+  :root { --bg:#ffffff; --ink:#2a2320; --muted:#8a7f78; --line:#e6e0dc; --brand:#a67c6d; --brand-d:#946a5c; --pink:#e46aa3; --soft:#f6f3f1; }
+  * { box-sizing:border-box; }
+  [hidden] { display:none !important; }
+  body { margin:0; font:14px/1.5 "Inter",system-ui,-apple-system,"Segoe UI",sans-serif; background:var(--bg); color:var(--ink); }
+  button, select, input { font:inherit; color:inherit; }
+  button { cursor:pointer; }
+  :focus-visible { outline:2px solid var(--brand); outline-offset:2px; }
+  .muted { color:var(--muted); }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .row.between { justify-content:space-between; }
+
+  /* ---------- Store chrome ---------- */
+  .topbar { background:#efe9e4; font-size:13px; color:#5c524c; padding:9px 48px; display:flex; justify-content:space-between; }
+  .nav { display:flex; align-items:center; gap:28px; padding:18px 48px; border-bottom:1px solid var(--line); background:#fff; }
+  .logo { font-family:Georgia,"Times New Roman",serif; font-size:28px; letter-spacing:6px; white-space:nowrap; }
+  .menu { display:flex; gap:22px; flex:1; justify-content:center; font-size:14px; letter-spacing:.4px; flex-wrap:wrap; }
+  .menu a { color:var(--ink); text-decoration:none; }
+  .icons { display:flex; gap:18px; align-items:center; font-size:18px; }
+  .icons button { background:none; border:none; padding:0; font-size:18px; position:relative; }
+  .icons .badge { position:absolute; top:-6px; right:-10px; background:var(--brand); color:#fff; border-radius:9px; font-size:10px; padding:0 5px; }
+  .appt { background:var(--brand); color:#fff; border:none; border-radius:4px; padding:11px 18px; font-size:14px; }
+  .promo { background:#b18a7d; color:#fff; text-align:center; font-size:13px; letter-spacing:2px; padding:11px; }
+  .promo u { letter-spacing:.5px; }
+  .demo-pick { display:flex; gap:6px; flex-wrap:wrap; padding:8px 48px; background:#fbf9f8; font-size:12px; color:var(--muted); align-items:center; border-bottom:1px dashed var(--line); }
+  .demo-pick button { padding:3px 10px; font-size:12px; border-radius:14px; border:1px solid var(--line); background:#fff; }
+  .demo-pick button.on { background:var(--ink); color:#fff; border-color:var(--ink); }
+
+  /* ---------- Product page ---------- */
+  .pdp { display:grid; grid-template-columns:minmax(0,1.05fr) minmax(0,1fr); gap:56px; padding:40px 48px 60px; max-width:1500px; margin:0 auto; }
+  .media { position:relative; display:flex; align-items:center; justify-content:center; min-height:560px; }
+  .media img { width:100%; max-width:720px; aspect-ratio:1/1; object-fit:contain; display:block; }
+  .arrow { position:absolute; top:50%; transform:translateY(-50%); width:44px; height:52px; background:#fff; border:none; box-shadow:0 1px 6px rgba(0,0,0,.12); font-size:20px; }
+  .arrow.l { left:20px; } .arrow.r { right:20px; }
+  .info { display:flex; flex-direction:column; gap:14px; max-width:720px; }
+  .info h1 { margin:40px 0 0; font-size:30px; font-weight:300; }
+  .price { font-size:22px; font-variant-numeric:tabular-nums; }
+  .tax { font-size:11px; color:var(--muted); }
+  .reviews { font-size:12px; color:#555; }
+  .reviews b { color:#f2b01e; letter-spacing:1px; }
+  .pill { background:#ebe8e6; border:none; border-radius:22px; padding:9px 16px; font-size:13px; letter-spacing:2px; display:inline-flex; gap:8px; align-items:center; }
+  .pill:hover { background:#e1dcd8; }
+  hr.sep { border:none; border-top:1px solid var(--line); margin:4px 0 6px; width:100%; }
+  .optgrp { display:flex; flex-direction:column; gap:8px; }
+  .optlbl { font-size:12px; color:#444; }
+  .pills { display:flex; flex-wrap:wrap; gap:8px; }
+  .pillopt { background:#fff; border:1px solid var(--line); border-radius:2px; padding:11px 16px; font-size:13px; color:#555; display:inline-flex; align-items:center; gap:8px; }
+  .pillopt.on { border-color:var(--brand); color:var(--ink); box-shadow:inset 0 0 0 1px var(--brand); }
+  .pillopt i { width:12px; height:12px; border-radius:50%; display:inline-block; box-shadow:0 0 0 1px rgba(0,0,0,.15); }
+  .metaltiles { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; max-width:640px; }
+  .mtile { background:#fff; border:1px solid var(--line); border-radius:2px; padding:16px 8px 12px; display:flex; flex-direction:column; align-items:center; gap:8px; font-size:13px; color:#444; }
+  .mtile img { width:30px; height:30px; border-radius:50%; }
+  .mtile.on { border-color:var(--brand); box-shadow:inset 0 0 0 1px var(--brand); color:var(--ink); }
+  .caratrow { display:flex; align-items:center; gap:10px; }
+  .caratrow input { flex:1; accent-color:var(--brand); }
+  select.size { border:1px solid var(--line); border-radius:2px; padding:11px 14px; min-width:200px; background:#fff; }
+  .seg { display:inline-flex; border:1px solid var(--line); border-radius:2px; }
+  .seg button { border:none; background:#fff; padding:8px 12px; font-size:12px; }
+  .seg button.on { background:var(--ink); color:#fff; }
+  .donate { font-size:20px; margin:8px 0 0 18px; }
+  .choose { background:var(--brand); color:#fff; border:none; border-radius:2px; padding:14px; font-size:15px; width:100%; }
+  .choose:hover { background:var(--brand-d); }
+  .ship { font-size:13px; display:flex; gap:10px; align-items:center; }
+  details.acc { background:#f8f7f6; padding:14px 22px; border-radius:2px; }
+  details.acc summary { cursor:pointer; font-size:14px; }
+  details.acc p { font-size:13px; color:#666; }
+
+  /* ---------- Try-on pop-up (Inova-style layout) ---------- */
+  /* Embedded in a Shopify storefront (iframe): only the try-on pop-up is shown */
+  body.embed { background:transparent; }
+  body.embed .topbar, body.embed .nav, body.embed .promo, body.embed .demo-pick,
+  body.embed .pdp, body.embed #tryFab { display:none !important; }
+  body.embed .tryon { background:rgba(40,30,24,.28); }
+  body.preview .tryon { background:transparent; padding:0 !important; } body.preview .rail, body.preview .tleft, body.preview .qrcard, body.preview #closeTry { display:none !important; }
+  body.preview .tbox { grid-template-columns:1fr; box-shadow:none; border-radius:8px; }
+  body.embed .qrcard { display:none !important; }   /* no QR card on the store */
+  .tryon { position:fixed; inset:0; z-index:40; background:rgba(40,30,24,.28); display:flex; align-items:center; justify-content:center; padding:24px 120px; }
+  .tbox { position:relative; display:grid; grid-template-columns:400px minmax(0,1fr); width:min(1130px,100%); height:min(960px,100%); background:#fff; border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,.25); }
+  .rail { position:absolute; left:-90px; top:72px; width:90px; display:flex; flex-direction:column; border-radius:10px 0 0 10px; overflow:hidden; background:#fff; box-shadow:-4px 4px 16px rgba(0,0,0,.08); }
+  .rail button { border:none; background:#fff; padding:14px 6px; display:flex; flex-direction:column; align-items:center; gap:4px; font-size:13px; }
+  .rail button svg { width:38px; height:38px; }
+  .rail button.on { background:#2a2320; color:#fff; }
+  .rail button.on svg { stroke:#fff; }
+  .tleft { display:flex; flex-direction:column; overflow:auto; border-radius:14px 0 0 14px; }
+  .thead { background:#f7f6f5; text-align:center; padding:12px; font-size:15px; }
+  .shapes { display:flex; justify-content:center; flex-wrap:wrap; gap:16px; padding:56px 20px; min-height:230px; align-content:center; }
+  .shape { border:none; background:transparent; padding:6px; border-radius:8px; display:flex; flex-direction:column; align-items:center; gap:4px; font-size:11px; color:#c9b6c0; }
+  .shape svg { width:34px; height:46px; }
+  .shape.on { color:var(--pink); background:#fdf3f8; }
+  .carat { padding:70px 18px 30px; }
+  .ticks { position:relative; height:26px; margin:0 46px 0 56px; }
+  .ticks span { position:absolute; transform:translateX(-50%); font-size:11px; color:#444; display:flex; flex-direction:column; align-items:center; }
+  .ticks span::after { content:""; width:1px; height:7px; background:#888; margin-top:2px; }
+  .crow { display:flex; align-items:center; gap:10px; font-size:14px; }
+  input.ct { -webkit-appearance:none; appearance:none; flex:1; height:3px; border-radius:2px; cursor:pointer; background:#e9e5e2; }
+  input.ct::-webkit-slider-thumb { -webkit-appearance:none; width:22px; height:22px; border-radius:50%; background:#fff; border:1px solid #cfc8c3; box-shadow:0 1px 4px rgba(0,0,0,.2); }
+  input.ct::-moz-range-thumb { width:20px; height:20px; border-radius:50%; background:#fff; border:1px solid #cfc8c3; }
+  .ctval { text-align:center; margin-top:18px; font-size:12px; color:var(--muted); }
+  .ctval b { color:var(--ink); }
+  .nocentre { padding:24px; color:var(--muted); text-align:center; font-size:13px; }
+  .youbox { display:flex; flex-direction:column; align-items:center; gap:10px; padding:40px 20px; font-size:12px; text-align:center; }
+  #qr, #qr2 { width:128px; height:128px; } #qr img, #qr canvas, #qr2 img, #qr2 canvas { width:128px !important; height:128px !important; }
+  .models { display:flex; flex-wrap:wrap; gap:12px; padding:40px 44px; }
+  .model { width:62px; height:82px; padding:3px; border-radius:6px; border:1px solid #ddd; background:#faf8f6; }
+  .model img { width:100%; height:100%; object-fit:contain; display:block; }
+  .model.on { border:2px solid #2a2320; }
+  #view { position:relative; overflow:hidden; background:#fff; touch-action:none; min-height:0; border-radius:0 14px 14px 0; }
+  #view > canvas { display:block; width:100%; height:100%; }
+  #overlay { position:absolute; inset:0; pointer-events:none; }
+  .brand { position:absolute; left:28px; top:20px; font-size:11px; text-align:center; line-height:1.1; pointer-events:none; }
+  .brand b { display:block; font-size:28px; letter-spacing:3px; font-weight:800; }
+  .closeX { position:absolute; right:30px; top:34px; width:26px; height:26px; border-radius:50%; padding:0; font-size:12px; background:#fff; border:1px solid #333; z-index:3; line-height:1; }
+  .skinwrap { position:absolute; right:22px; top:32%; height:380px; width:20px; display:flex; justify-content:center; z-index:3; }
+  input.skinv { -webkit-appearance:none; appearance:none; writing-mode:vertical-lr; direction:rtl; width:3px; height:100%; cursor:pointer;
+    background:linear-gradient(to top,#5e3a26,#8d5a3b,#b97f58,#d9a37e,#ecc8ad,#f6dcc8,#fbeee6); border-radius:2px; }
+  input.skinv::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:#fff; border:1px solid #cfc8c3; box-shadow:0 1px 4px rgba(0,0,0,.25); }
+  input.skinv::-moz-range-thumb { width:14px; height:14px; border-radius:50%; background:#fff; border:1px solid #cfc8c3; }
+  .zoomBtn { position:absolute; left:26px; bottom:34px; width:38px; height:38px; border-radius:50%; padding:0; font-size:16px; background:#fff; border:1px solid #eee; box-shadow:0 2px 10px rgba(0,0,0,.12); z-index:3; }
+  .hint { position:absolute; left:50%; bottom:18px; transform:translateX(-50%); font-size:11px; color:var(--muted); background:rgba(255,255,255,.9); padding:4px 10px; border-radius:6px; pointer-events:none; }
+  .loading { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--muted); }
+  .qrcard { position:absolute; right:-210px; top:6px; width:200px; background:#efedeb; border-radius:4px; padding:10px 10px 14px; text-align:center; font-size:12px; display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .qrcard .qrwhite { background:#fff; padding:8px; }
+  .qrcard .phone { width:46px; height:84px; border:2px solid #333; border-radius:8px; display:flex; align-items:center; justify-content:center; }
+  .qrcard .phone i { width:12px; height:12px; border-radius:50%; background:#555; }
+  .hidden-meta { display:none; }
+  .ringgrid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; padding:14px; }
+  .ringcard { border:1px solid var(--line); background:#fff; border-radius:8px; padding:6px; display:flex; flex-direction:column; gap:3px; text-align:left; cursor:pointer; font-size:12px; }
+  .ringcard img, .ringcard .noimg { width:100%; aspect-ratio:1; object-fit:cover; border-radius:5px; background:var(--soft); display:flex; align-items:center; justify-content:center; color:var(--muted); }
+  .ringcard .rn { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .ringcard .rp { color:var(--muted); }
+  .ringcard.on { border-color:var(--pink); box-shadow:0 0 0 1px var(--pink); }
+  .shopopts { padding:6px 16px; } .shopopts .metaltiles { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .shopbuy { position:sticky; bottom:0; background:#fff; padding:12px 16px 16px; margin-top:auto; }
+  .added { border:1px solid var(--line); border-radius:10px; padding:12px; margin-bottom:10px; background:#fbfaf9; font-size:13px; }
+  .addedhead { display:flex; gap:10px; align-items:flex-start; margin-bottom:10px; } .addedhead b { font-size:14px; } .added .muted { color:var(--muted); }
+  .tick { width:22px; height:22px; border-radius:50%; background:#2e7d4f; color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; flex:none; }
+  .addedbtns { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .shopbuy .added button { min-height:40px; font-size:14px; border-radius:6px; cursor:pointer; }
+  .shopbuy .added #goCheckout { background:var(--ink); color:#fff; border:1px solid var(--ink); }
+  .shopbuy .added #goCart { background:#fff; color:var(--ink); border:1px solid var(--ink); }
+  .shopbuy .added .linkbtn { background:none; color:var(--muted); border:0; min-height:30px; text-decoration:underline; margin-top:4px; width:100%; }
+  .shopbuy #shopCart:disabled { opacity:.6; cursor:wait; }
+  .shopbuy #shopCart { width:100%; min-height:46px; border:0; border-radius:6px; background:#2a2320; color:#fff; font-size:15px; cursor:pointer; }
+
+  .backdrop { position:fixed; inset:0; background:rgba(30,24,20,.45); display:flex; align-items:center; justify-content:center; z-index:60; padding:16px; }
+  .modal { background:#fff; border-radius:12px; padding:18px; width:min(480px,100%); max-height:85vh; overflow:auto; display:flex; flex-direction:column; gap:12px; }
+  .modal h3 { margin:0; }
+  .modal .actions { display:flex; justify-content:flex-end; gap:8px; }
+  .modal .actions button { border:1px solid var(--line); background:#fff; border-radius:4px; padding:8px 14px; }
+  .modal .actions button.primary { background:var(--brand); border-color:var(--brand); color:#fff; }
+  .modal pre { background:#1e1b2e; color:#cfc8ff; font-size:11px; padding:10px; border-radius:8px; white-space:pre-wrap; margin:0; max-height:220px; overflow:auto; }
+  .toast { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:var(--ink); color:#fff; padding:9px 14px; border-radius:10px; z-index:70; }
+
+  @media (max-width: 1100px) {
+    .pdp { grid-template-columns:1fr; gap:20px; padding:20px; }
+    .menu { display:none; } .nav, .topbar, .demo-pick { padding-left:20px; padding-right:20px; }
+    .tryon { padding:0; }
+    .tbox { grid-template-columns:1fr; grid-template-rows:auto minmax(0,1fr) auto; height:100%; width:100%; border-radius:0; }
+    .rail { position:static; flex-direction:row; width:auto; border-radius:0; box-shadow:none; grid-row:1; }
+    .rail button { flex:1; flex-direction:row; justify-content:center; padding:10px; } .rail button svg { width:22px; height:22px; }
+    #view { grid-row:2; border-radius:0; } .tleft { grid-row:3; max-height:34vh; border-radius:0; }
+    .shapes { padding:12px; min-height:0; } .carat { padding:16px; } .qrcard { display:none; }
+    .skinwrap { height:200px; right:14px; }
+  }
+</style>
+</head>
+<body>
+<div class="topbar"><span>☎ Showroom appointments: Melbourne · Sydney · Brisbane · Perth</span><span>Australia (AUD $)</span></div>
+<header class="nav">
+  <div class="logo">HOUSE OF AMARA</div>
+  <nav class="menu"><a href="#">ENGAGEMENT RINGS</a><a href="#">SAPPHIRE RINGS</a><a href="#">WOMEN'S RINGS</a><a href="#">MEN'S RINGS</a><a href="#">JEWELLERY</a><a href="#">EXPLORE</a></nav>
+  <div class="icons"><button aria-label="Search">⌕</button><button aria-label="Account">👤</button><button id="cartBtn" aria-label="Cart">👜<span class="badge" id="cartCount">0</span></button></div>
+  <button class="appt">Book An Appointment</button>
+</header>
+<div class="promo">PROPOSING THIS HOLIDAY SEASON? <u>SHOP OUR READY-MADE ENGAGEMENT RINGS</u></div>
+<div class="demo-pick"><span>Demo – open another product:</span><span id="productPick" class="row"></span></div>
+
+<!-- ======================= PRODUCT PAGE ======================= -->
+<main class="pdp">
+  <div class="media" id="media">
+    <button class="arrow l" aria-label="Previous image">‹</button>
+    <img id="pImg" alt="Product photo">
+    <button class="arrow r" aria-label="Next image">›</button>
+    <span id="tryFab" hidden></span>
+  </div>
+  <div class="info">
+    <h1 id="pName"></h1>
+    <div class="row"><span class="price" id="pPrice"></span><span class="tax">Tax included.</span></div>
+    <div class="row between">
+      <span class="reviews"><b>★★★★★</b> 2000+ reviews</span>
+      <div class="row"><button class="pill" id="stoneBtn">◎ STONE SIZE</button><button class="pill" id="tryBtn">✋ TRY ON</button></div>
+    </div>
+    <hr class="sep">
+    <div id="pdpOptions" class="info" style="gap:16px"></div>
+    <p class="donate">We donate $5 from every online order</p>
+    <button class="choose" id="pdpCart">Choose This Design</button>
+    <div class="ship">📦 <span>To receive by <b>2nd January 2027</b>, order in the next 17 hours</span></div>
+    <details class="acc" open><summary>Details</summary><p id="pDesc">Handcrafted to order in our Melbourne workshop. The setting is shown with a centre stone, which can be selected separately.</p></details>
+  </div>
+</main>
+
+<!-- ======================= TRY-ON POP-UP ======================= -->
+<div class="tryon" id="tryon" hidden>
+  <div class="tbox" role="dialog" aria-modal="true" aria-label="Virtual try-on">
+    <div class="rail">
+      <button id="tabShop" hidden><svg viewBox="0 0 40 40" fill="none" stroke="#e46aa3" stroke-width="1.6"><rect x="7" y="7" width="11" height="11" rx="2"/><rect x="22" y="7" width="11" height="11" rx="2"/><rect x="7" y="22" width="11" height="11" rx="2"/><rect x="22" y="22" width="11" height="11" rx="2"/></svg>Rings</button>
+      <button id="tabRing" class="on"><svg viewBox="0 0 40 40" fill="none" stroke="#e46aa3" stroke-width="1.8"><circle cx="20" cy="25" r="11"/><path d="M16 9l4-4 4 4-4 4z"/></svg>Ring</button>
+      <button id="tabHand"><svg viewBox="0 0 40 40" fill="none" stroke="#e46aa3" stroke-width="1.6" stroke-linecap="round"><path d="M12 22V10m5 10V6m5 14V7m5 15V11M12 22c0 7 4 12 10 12s9-5 9-10l3-6"/></svg>On you</button>
+    </div>
+    <div class="tleft">
+      <div id="panelShop" hidden>
+        <div class="thead">Choose a ring</div>
+        <div class="ringgrid" id="shopList"></div>
+        <div class="thead" id="shopName"></div>
+        <div class="shopopts" id="shopOptions"></div>
+        <div class="shopbuy">
+          <div class="added" id="addedSheet" hidden>
+            <div class="addedhead"><span class="tick">✓</span><div><b>Added to your bag</b><div id="addedText"></div><div class="muted" id="addedCount"></div></div></div>
+            <div class="addedbtns"><button id="goCheckout" class="dark">Checkout</button><button id="goCart">View bag</button></div>
+            <button id="keepTrying" class="linkbtn">Keep trying on</button>
+          </div>
+          <button class="primary" id="shopCart">Add to cart</button>
+        </div>
+      </div>
+      <div id="panelRing">
+        <div class="thead">Shape</div>
+        <div class="shapes" id="shapeList"></div>
+        <div class="thead">Carat size</div>
+        <div id="caratBox"></div>
+      </div>
+      <div id="panelYou" hidden>
+        <div class="thead">On you</div>
+        <div class="youbox"><div id="qr"></div><div>Scan the QR code to<br>take more picture</div></div>
+        <div class="thead">On model</div>
+        <div class="models" id="modelList"></div>
+      </div>
+      <div class="hidden-meta"><span id="tName"></span><span id="tPrice"></span><button id="tCart"></button></div>
+    </div>
+    <div id="view">
+      <div class="loading" id="loading">Loading try-on…</div>
+      <canvas id="overlay"></canvas>
+      <div class="brand">Powered by<b>AMARA</b></div>
+      <button class="closeX" id="closeTry" aria-label="Close try-on">✕</button>
+      <div class="skinwrap" title="Skin tone"><input id="tone" class="skinv" type="range" min="0" max="100" value="20" aria-label="Skin tone"></div>
+      <button class="zoomBtn" id="zoomBtn" title="Zoom in on the ring">⌕</button>
+      <button class="zoomBtn" id="spinBtn" title="Rotate the ring around the finger" style="bottom:82px">⟳</button>
+      <div class="hint" id="hint">Drag the ring along the finger · slide it off the tip onto another finger</div>
+    </div>
+    <div class="qrcard" id="qrCard">
+      <div class="qrwhite"><div id="qr2"></div></div>
+      <div>Scan the QR Code to take pictures and Try On Virtually</div>
+      <div class="phone"><i></i></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+/* =====================================================================
+   CATALOGUE (in production: the store's existing Shopify products)
+   ===================================================================== */
+const METALS = { Y:{ name:'18 ct Yellow Gold', c:'#e8c766', add:0 }, W:{ name:'18 ct White Gold', c:'#eceef0', add:0 },
+  R:{ name:'18 ct Rose Gold', c:'#eab8a4', add:0 }, P:{ name:'Platinum', c:'#dfe3e7', add:400 } };
+const STONES = { diamond:{ name:'Diamond', c:'#ffffff' }, champagne:{ name:'Champagne', c:'#f3cf8a' }, pink:{ name:'Pink', c:'#ff9db8' },
+  sapphire:{ name:'Sapphire', c:'#2f55e0' }, emerald:{ name:'Emerald', c:'#19b46a' }, ruby:{ name:'Ruby', c:'#d8203a' } };
+const SHAPES = ['round', 'oval', 'princess', 'emerald'];
+// Product photos: PLACEHOLDERS cropped for internal testing only. Replace with House of Amara's own images
+// (in production these come from the store's existing Shopify product images).
+/* Shopify embed: the theme block opens this page in an iframe with the product in the URL hash
+   (#c=<base64url JSON>, see extensions/tryon-theme/assets/tryon.js). Without it, the demo catalogue below runs. */
+const EMBED = (() => {
+  const m = location.hash.match(/[#&]c=([^&]+)/); if (!m) return null;
+  try { const b = m[1].replace(/-/g, '+').replace(/_/g, '/'); return JSON.parse(decodeURIComponent(escape(atob(b)))); }
+  catch (e) { console.warn('Bad try-on config', e); return null; }
+})();
+const DEMO_PRODUCTS = [
+  { id:'lara',   name:'Lara Oval',   img:'products/lara.jpg',   style:'solitaire', shape:'oval', stone:'diamond', metal:'Y', price:2190 },
+  { id:'blair',  name:'Blair Oval',  img:'products/blair.jpg',  style:'three',     shape:'oval', stone:'diamond', metal:'Y', price:3290 },
+  { id:'noelle', name:'Noelle Oval', img:'products/noelle.jpg', style:'halo',      shape:'oval', stone:'diamond', metal:'Y', price:2740 },
+  { id:'poppy',  name:'Poppy Oval',  img:'products/poppy.jpg',  style:'three',     shape:'oval', stone:'diamond', metal:'Y', price:3290 },
+];
+const pick = (v, list, d) => list.includes(v) ? v : d;
+const PRODUCTS = EMBED ? (EMBED.products || []).map(x => ({
+  id:'s' + x.key, key:x.key, name:x.title, img:x.image, url:x.url, price:x.price || 0,
+  style:pick(x.style, ['solitaire', 'halo', 'three', 'pave', 'band', 'eternity'], 'solitaire'),
+  shape:pick(x.shape, ['round', 'oval', 'princess', 'emerald'], 'oval'),
+  stone:pick(x.stone, ['diamond', 'champagne', 'pink', 'sapphire', 'emerald', 'ruby'], 'diamond'),
+  metal:x.metalPrices && !(x.metal in x.metalPrices) ? Object.keys(x.metalPrices)[0] : (x.metal || 'Y'),
+  metalPrices:x.metalPrices, metalImages:x.metalImages, available:x.available !== false,
+  tryonImage:x.tryon?.image || null, tryonScale:+x.tryon?.scale || 1, tryonView:x.tryon?.view || 'photo', tryonOffsetY:+x.tryon?.offsetY || 0,
+})) : DEMO_PRODUCTS;
+const metalsOf = p => Object.keys(METALS).filter(k => !p.metalPrices || k in p.metalPrices);
+const byId = Object.fromEntries(PRODUCTS.map(p => [p.id, p]));
+const hasCenter = p => ['solitaire', 'halo', 'three', 'pave'].includes(p.style);
+const RING_SIZES = [['4','H'],['4.5','I'],['5','J½'],['5.5','K½'],['6','L½'],['6.5','M½'],['7','N½'],['7.5','O½'],['8','P½'],['8.5','Q½'],['9','R½']];
+
+/* =====================================================================
+   FIXED HAND PHOTOS + FINGER POSITIONS (in production: set up once by the merchant)
+   Both photos show a RIGHT hand; the left hand is the mirror image.
+   ===================================================================== */
+const W = 620, H = 635;          // try-on canvas box; each photo is fitted into it
+const HANDS = {
+  back:{ name:'Hand', src:window.HAND_SRC, crop:{ x:0, y:0, w:1254, h:1254 }, fit:{ s:.5, dx:-4, dy:4 }, depth:22, geo:{
+    pinky:{ x:415, y:500, rot:-14, w:46 }, ring:{ x:528, y:470, rot:-3, w:50 }, middle:{ x:640, y:450, rot:0, w:52 },
+    index:{ x:775, y:470, rot:3, w:50 }, thumb:{ x:935, y:690, rot:35, w:46 } } },
+};
+const FINGERS = ['thumb', 'index', 'middle', 'ring', 'pinky'];
+const LABEL = { index:'Index', middle:'Middle', ring:'Ring', pinky:'Pinky', thumb:'Thumb' };
+const RANGE = [-14, 44];
+// Where each finger's nail starts (photo px). The ring can slide from the knuckle up to here.
+const TIPS = {
+  back: { pinky:[362, 330], ring:[513, 160], middle:[646, 100], index:[790, 185], thumb:[1000, 580] },
+};
+function rangeOf(id) {
+  const hd = HANDS[state.orient], f = hd.fit, g = geo(id), k = g.w / 19, tp = TIPS[state.orient][id];
+  return [-(BASE[id] - 2), Math.max(30, Math.hypot(tp[0] * f.s + f.dx - g.x, tp[1] * f.s + f.dy - g.y) / k)];
+}
+const SKIN = [[1.06,1.04,1.05],[1,1,1],[.94,.82,.72],[.8,.64,.52],[.6,.44,.34],[.42,.29,.22]];
+const rad = d => d * Math.PI / 180, clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+const money = n => EMBED?.currency
+  ? new Intl.NumberFormat(EMBED.locale || undefined, { style:'currency', currency:EMBED.currency }).format(n)
+  : '$' + n.toLocaleString();
+const toParent = msg => window.parent !== window && window.parent.postMessage({ source:'ring-tryon', ...msg }, EMBED?.origin || '*');
+const $ = id => document.getElementById(id);
+
+/* =====================================================================
+   STATE: one product, its chosen options, and where the ring sits
+   ===================================================================== */
+const state = { float:null, tab:'hand', pid:(PRODUCTS.find(p => p.key === EMBED?.current) || PRODUCTS[0]).id, cfg:null, finger:'ring', slide:0, side:'right', orient:'back', panel:'ring', tone:20,
+  yaw:0, pitch:0, zoom:1, panX:0, panY:0, open:false, cart:[], sizeSys:'US' };
+const product = () => byId[state.pid];
+const freshCfg = p => ({ metal:p.metal, stone:p.stone, shape:p.shape, carat:1, band:1, size:4 });
+state.cfg = freshCfg(product());
+const geo = id => { const h = HANDS[state.orient], g = h.geo[id], f = h.fit; return { x:g.x * f.s + f.dx, y:g.y * f.s + f.dy, rot:g.rot, w:g.w * f.s }; };
+const caratFee = () => hasCenter(product()) ? Math.round((Math.pow(state.cfg.carat, 1.7) - 1) * 1400 / 10) * 10 : 0;
+const price = () => EMBED ? (product().metalPrices?.[state.cfg.metal] ?? product().price) : product().price + METALS[state.cfg.metal].add + caratFee();
+const spec = () => ({ style:product().style, ...state.cfg });
+
+/* =====================================================================
+   3D RING BUILDER — torus band, faceted stones, prongs
+   Local frame: band axis = +Y (along the finger), stone faces +Z.
+   ===================================================================== */
+const matCache = {};
+const metalMat = k => matCache['m' + k] ||= new THREE.MeshStandardMaterial({ color:METALS[k].c, metalness:1, roughness:.14, envMapIntensity:1.35 });
+function gemMat(stone) {
+  const dia = stone === 'diamond';
+  return matCache['g' + stone] ||= new THREE.MeshPhysicalMaterial({
+    color:STONES[stone].c, metalness:0, roughness:0, transmission:dia ? 1 : .55, thickness:2.5, ior:2.42,
+    flatShading:true, envMapIntensity:dia ? 3.2 : 2.2, specularIntensity:1, clearcoat:1, clearcoatRoughness:0,
+    attenuationColor:STONES[stone].c, attenuationDistance:dia ? 50 : 4 });
+}
+const gemGeoCache = {};
+function gemGeo(shape) {
+  if (gemGeoCache[shape]) return gemGeoCache[shape];
+  const P = a => a.map(([x, y]) => new THREE.Vector2(x, y));
+  const brilliant = P([[.001, -.43], [1, 0], [1, .035], [.56, .18], [.001, .18]]);
+  let g;
+  if (shape === 'princess') g = new THREE.LatheGeometry(brilliant, 4, Math.PI / 4);
+  else if (shape === 'emerald') g = new THREE.LatheGeometry(P([[.001, -.3], [1, 0], [1, .04], [.7, .16], [.001, .16]]), 8, Math.PI / 8);
+  else g = new THREE.LatheGeometry(brilliant, 16);
+  g.rotateX(Math.PI / 2);
+  return gemGeoCache[shape] = g;
+}
+function gem(shape, stone, s) {
+  const m = new THREE.Mesh(gemGeo(shape), gemMat(stone));
+  const sx = { oval:.78, emerald:.74, princess:.86 }[shape] || 1, sy = { oval:1.18, emerald:1.05, princess:.86 }[shape] || 1;
+  m.scale.set(s * sx, s * sy, s);
+  return m;
+}
+function onBand(obj, R, theta) {
+  const n = new THREE.Vector3(Math.sin(theta), 0, Math.cos(theta));
+  obj.position.copy(n).multiplyScalar(R);
+  obj.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), n);
+  return obj;
+}
+// px = screen px per mm. Band is 1.8 mm thick; a 1 ct stone is 6.5 mm across and grows with ∛carat.
+function buildRing(sp, R, px = R / 8.26) {
+  const g = new THREE.Group(), t = .9 * px * (sp.band || 1), mm = metalMat(sp.metal);
+  const bg = new THREE.TorusGeometry(R + t, t, 18, 96); bg.rotateX(Math.PI / 2);
+  const band = new THREE.Mesh(bg, mm);
+  band.scale.y = sp.style === 'band' ? 1.9 : sp.style === 'eternity' ? 1.25 : 1;
+  g.add(band);
+  const top = R + 2 * t, s = 3.25 * px * Math.cbrt(sp.carat || 1);
+  const centre = (size, theta = 0) => {
+    const h = new THREE.Group(), st = gem(sp.shape || 'round', sp.stone, size);
+    st.position.z = size * .5; h.add(st);
+    const basket = new THREE.Mesh(new THREE.CylinderGeometry(size * .45, size * .3, size * .5, 16), mm);
+    basket.rotation.x = Math.PI / 2; h.add(basket);
+    for (let i = 0; i < 4; i++) {
+      const a = Math.PI / 4 + i * Math.PI / 2, ov = sp.shape === 'oval' ? 1.15 : 1;
+      const pr = new THREE.Mesh(new THREE.CylinderGeometry(size * .07, size * .09, size * .95, 8), mm);
+      pr.rotation.x = Math.PI / 2; pr.position.set(Math.cos(a) * size * .82, Math.sin(a) * size * .82 * ov, size * .25); h.add(pr);
+      const tip = new THREE.Mesh(new THREE.SphereGeometry(size * .1, 10, 8), mm);
+      tip.position.set(pr.position.x * .97, pr.position.y * .97, size * .72); h.add(tip);
+    }
+    g.add(onBand(h, top - t * .3, theta));
+  };
+  const small = (theta, size) => g.add(onBand(gem('round', sp.style === 'pave' ? 'diamond' : sp.stone, size), top - t * .35, theta));
+  switch (sp.style) {
+    case 'solitaire': centre(s); break;
+    case 'halo': {
+      centre(s * .82);
+      const h = new THREE.Group(), ov = sp.shape === 'oval' ? 1.15 : 1;
+      for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2, m = gem('round', 'diamond', s * .17); m.position.set(Math.cos(a) * s * 1.12, Math.sin(a) * s * 1.12 * ov, s * .38); h.add(m); }
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(s * 1.12, s * .1, 8, 40), mm); rim.scale.y = ov; rim.position.z = s * .3; h.add(rim);
+      g.add(onBand(h, top - t * .3, 0)); break;
+    }
+    case 'three': centre(s * .9); centre(s * .6, rad(-27)); centre(s * .6, rad(27)); break;
+    case 'pave': centre(s * .85); for (let d = 22; d <= 80; d += 9) { small(rad(d), t * .7); small(rad(-d), t * .7); } break;
+    case 'eternity': for (let d = 0; d < 360; d += 15) small(rad(d), t * .95); break;
+  }
+  return g;
+}
+
+/* =====================================================================
+   PRODUCT PAGE: 360° viewer
+   ===================================================================== */
+const media = $('media');
+// Off-screen renderer that produces the product photo (in production: the store's existing product images)
+const vr = new THREE.WebGLRenderer({ antialias:true, alpha:true, preserveDrawingBuffer:true });
+vr.outputColorSpace = THREE.SRGBColorSpace; vr.toneMapping = THREE.ACESFilmicToneMapping;
+vr.setSize(900, 900, false);
+const vScene = new THREE.Scene();
+vScene.environment = new THREE.PMREMGenerator(vr).fromScene(new RoomEnvironment(), .04).texture;
+const vKey = new THREE.DirectionalLight('#fff', 1.4); vKey.position.set(2, 3, 4); vScene.add(vKey);
+const vCam = new THREE.PerspectiveCamera(30, 1, .1, 300); vCam.position.set(0, 17, 40); vCam.lookAt(0, 1, 0);
+let vRing = null;
+function refreshViewer() {
+  if (vRing) vScene.remove(vRing);
+  vRing = buildRing(spec(), 9); vRing.rotation.set(-rad(12), rad(-25), 0); vScene.add(vRing);
+  const p = product();
+  if (p.img) { metalPhoto(p, state.cfg.metal).then(src => { if (product() === p) $('pImg').src = src; }); return; }
+  vr.render(vScene, vCam); $('pImg').src = vr.domElement.toDataURL('image/png');
+}
+function sizeViewer() {}
+
+/* Product photo in the chosen metal: the yellow-gold photo is recoloured in the browser.
+   Only warm, saturated (metal) pixels change; the diamonds stay as they are.
+   In production each metal has its own photo in Shopify, so this step is not needed. */
+const photoCache = {};
+const METAL_TINT = {
+  Y:null,
+  W:L => [L * 1.04, L * 1.05, L * 1.08],
+  P:L => [L * .98, L * 1.0, L * 1.03],
+  R:L => [L * 1.10 + 10, L * .84, L * .76],
+};
+function metalPhoto(p, metal) {
+  const key = p.id + metal, src = p.metalImages?.[metal] || window.PRODUCT_IMGS?.[p.id] || p.img;
+  if (p.metalImages?.[metal]) return Promise.resolve(src);   // real photo of this metal in Shopify
+  if (photoCache[key]) return Promise.resolve(photoCache[key]);
+  if (!METAL_TINT[metal]) return Promise.resolve(photoCache[key] = src);
+  return new Promise(res => {
+    const img = new Image(); img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const c = document.createElement("canvas"); c.width = img.width; c.height = img.height;
+      const x = c.getContext("2d"); x.drawImage(img, 0, 0);
+      let d; try { d = x.getImageData(0, 0, c.width, c.height); } catch { return res(src); }
+      const a = d.data, tint = METAL_TINT[metal];
+      for (let i = 0; i < a.length; i += 4) {
+        const r = a[i], g = a[i + 1], b = a[i + 2], mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+        const sat = mx ? (mx - mn) / mx : 0;
+        if (r < g || g < b) continue;                       // not a warm gold tone
+        const w = Math.min(1, Math.max(0, (sat - .07) / .13)); if (!w) continue;
+        const L = .3 * r + .59 * g + .11 * b, t = tint(L);
+        a[i] = r + (Math.min(255, t[0]) - r) * w; a[i + 1] = g + (Math.min(255, t[1]) - g) * w; a[i + 2] = b + (Math.min(255, t[2]) - b) * w;
+      }
+      x.putImageData(d, 0, 0);
+      res(photoCache[key] = c.toDataURL("image/jpeg", .92));
+    };
+    img.src = src;
+  });
+}
+
+/* =====================================================================
+   TRY-ON SCENE: fixed hand photo + the product's 3D ring + finger occluders
+   ===================================================================== */
+const view = $('view');
+const renderer = new THREE.WebGLRenderer({ antialias:true, preserveDrawingBuffer:true });
+renderer.setPixelRatio(Math.min(2, devicePixelRatio)); renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.05;
+view.prepend(renderer.domElement);
+const canvas = renderer.domElement;
+const scene = new THREE.Scene(); scene.background = new THREE.Color('#ffffff');
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), .04).texture;
+const camera = new THREE.PerspectiveCamera(30, 1, 10, 6000);
+const key = new THREE.DirectionalLight('#fff', 1.6); key.position.set(-200, 400, 600); scene.add(key);
+const glint = new THREE.PointLight('#fff', 2.5, 0, 0); scene.add(glint);
+scene.add(new THREE.AmbientLight('#fff', .25));
+const handGroup = new THREE.Group(), mirror = new THREE.Group();
+handGroup.add(mirror); scene.add(handGroup);
+const P2L = (x, y, z = 0) => new THREE.Vector3(x - W / 2, H / 2 - y, z);
+/* The hand photo is turned into a 3D relief: every pixel inside the hand is lifted by its distance
+   from the hand outline, so fingers become rounded tubes and the palm a soft dome. The surface is
+   re-lit every frame from its real normals, so it shades like a 3D object as it turns. */
+const SEG_X = 170, SEG_Y = 272;
+const handMat = new THREE.MeshBasicMaterial({ alphaTest:.5, toneMapped:false, vertexColors:true, side:THREE.DoubleSide });
+const reliefs = {};                       // per view: { mesh, heights }
+const LIGHT = new THREE.Vector3(.35, .55, 1).normalize();
+function buildRelief(tex, thickness) {
+  const geo = new THREE.PlaneGeometry(W, H, SEG_X, SEG_Y);
+  const cols = SEG_X + 1, rows = SEG_Y + 1;
+  // hand mask sampled at vertex resolution
+  const c = document.createElement('canvas'); c.width = cols; c.height = rows;
+  const x = c.getContext('2d'); x.drawImage(tex.image, 0, 0, cols, rows);
+  const a = x.getImageData(0, 0, cols, rows).data;
+  const INF = 1e9, dist = new Float32Array(cols * rows);
+  for (let i = 0; i < cols * rows; i++) dist[i] = a[i * 4 + 3] > 128 ? INF : 0;
+  // two-pass chamfer distance transform (distance to the hand outline, in cells)
+  const D1 = 1, D2 = Math.SQRT2;
+  for (let y = 0; y < rows; y++) for (let xx = 0; xx < cols; xx++) {
+    const i = y * cols + xx; if (!dist[i]) continue;
+    let v = dist[i];
+    if (xx > 0) v = Math.min(v, dist[i - 1] + D1);
+    if (y > 0) { v = Math.min(v, dist[i - cols] + D1); if (xx > 0) v = Math.min(v, dist[i - cols - 1] + D2); if (xx < cols - 1) v = Math.min(v, dist[i - cols + 1] + D2); }
+    dist[i] = v;
+  }
+  for (let y = rows - 1; y >= 0; y--) for (let xx = cols - 1; xx >= 0; xx--) {
+    const i = y * cols + xx; if (!dist[i]) continue;
+    let v = dist[i];
+    if (xx < cols - 1) v = Math.min(v, dist[i + 1] + D1);
+    if (y < rows - 1) { v = Math.min(v, dist[i + cols] + D1); if (xx < cols - 1) v = Math.min(v, dist[i + cols + 1] + D2); if (xx > 0) v = Math.min(v, dist[i + cols - 1] + D2); }
+    dist[i] = v;
+  }
+  // circular profile: a finger of half-width r rises to height r → round cross-section
+  const cell = W / SEG_X, hgt = new Float32Array(cols * rows);
+  for (let i = 0; i < hgt.length; i++) { const d = Math.min(dist[i] * cell, thickness) / thickness; hgt[i] = thickness * Math.sqrt(Math.max(0, 1 - (1 - d) * (1 - d))); }
+  // soften
+  const sm = hgt.slice();
+  for (let y = 1; y < rows - 1; y++) for (let xx = 1; xx < cols - 1; xx++) {
+    const i = y * cols + xx; if (!hgt[i]) continue;
+    sm[i] = (hgt[i] * 4 + hgt[i - 1] + hgt[i + 1] + hgt[i - cols] + hgt[i + cols]) / 8;
+  }
+  const pos = geo.attributes.position;
+  for (let i = 0; i < pos.count; i++) pos.setZ(i, sm[i]);
+  geo.computeVertexNormals();
+  geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(pos.count * 3).fill(1), 3));
+  const mesh = new THREE.Mesh(geo, handMat);
+  mesh.visible = false;
+  mirror.add(mesh);
+  return { mesh, heights:sm, cols, rows };
+}
+// Height of the hand surface at a photo point (used to seat the ring and its shadow)
+function surfaceAt(px, py) {
+  const r = reliefs[state.orient]; if (!r) return 0;
+  const cx = Math.round(px / W * SEG_X), cy = Math.round(py / H * SEG_Y);
+  return r.heights[clamp(cy, 0, r.rows - 1) * r.cols + clamp(cx, 0, r.cols - 1)] || 0;
+}
+// Re-light the surface for the current turn (normals rotated into view space)
+const _n = new THREE.Vector3(), _q = new THREE.Quaternion(), _ms = new THREE.Vector3();
+let lastLit = '';
+function relight() {
+  const r = reliefs[state.orient]; if (!r) return;
+  const keyStr = state.orient + state.side + state.yaw.toFixed(1) + state.pitch.toFixed(1) + state.tone;
+  if (keyStr === lastLit) return; lastLit = keyStr;
+  r.mesh.getWorldQuaternion(_q); r.mesh.getWorldScale(_ms);
+  const nor = r.mesh.geometry.attributes.normal, col = r.mesh.geometry.attributes.color, tone = toneColor();
+  for (let i = 0; i < nor.count; i++) {
+    _n.set(nor.getX(i) * Math.sign(_ms.x), nor.getY(i), nor.getZ(i)).applyQuaternion(_q);
+    const lit = .66 + .44 * Math.max(0, _n.dot(LIGHT)) + .06 * Math.max(0, _n.z);
+    col.setXYZ(i, tone.r * lit, tone.g * lit, tone.b * lit);
+  }
+  col.needsUpdate = true;
+}
+const pickPlane = new THREE.Mesh(new THREE.PlaneGeometry(W * 6, H * 6), new THREE.MeshBasicMaterial({ visible:false }));
+const occluders = new THREE.Group(), ringRoot = new THREE.Group();
+mirror.add(pickPlane, occluders, ringRoot);
+occluders.visible = false;
+const shadowMat = new THREE.MeshBasicMaterial({ transparent:true, depthWrite:false, toneMapped:false, map:(() => {
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const x = c.getContext('2d'), gr = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+  gr.addColorStop(0, 'rgba(50,25,12,.7)'); gr.addColorStop(.55, 'rgba(50,25,12,.25)'); gr.addColorStop(1, 'rgba(50,25,12,0)');
+  x.fillStyle = gr; x.fillRect(0, 0, 128, 128); return new THREE.CanvasTexture(c); })() });
+
+const textures = {};
+const photoTexture = hand => new Promise(res => {
+  const img = new Image();
+  img.onload = () => {
+    const c = document.createElement('canvas'); c.width = W * 2; c.height = H * 2;
+    const x = c.getContext('2d'), { crop, fit } = hand;
+    x.drawImage(img, crop.x, crop.y, crop.w, crop.h, fit.dx * 2, fit.dy * 2, crop.w * fit.s * 2, crop.h * fit.s * 2);
+    const d = x.getImageData(0, 0, c.width, c.height), p = d.data;
+    for (let i = 0; i < p.length; i += 4) {   // remove the white studio background
+      const mx = Math.max(p[i], p[i + 1], p[i + 2]), mn = Math.min(p[i], p[i + 1], p[i + 2]);
+      if (mn > 200 && mx - mn < 22) p[i + 3] = mn > 238 ? 0 : Math.round(255 * (238 - mn) / 38);
+    }
+    x.putImageData(d, 0, 0);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; res(t);
+  };
+  img.src = hand.src;
+});
+
+function toneColor() {
+  const f = state.tone / 100 * (SKIN.length - 1), i = Math.min(SKIN.length - 2, Math.floor(f)), t = f - i;
+  const m = SKIN[i].map((v, c) => v + (SKIN[i + 1][c] - v) * t);
+  return new THREE.Color(m[0], m[1], m[2]);
+}
+function applyHand() {
+  handMat.map = textures[state.orient]; handMat.needsUpdate = true;
+  Object.entries(reliefs).forEach(([k, r]) => r.mesh.visible = k === state.orient);
+  lastLit = '';
+  mirror.scale.x = state.side === 'right' ? 1 : -1;
+  occluders.clear();
+  const occ = new THREE.MeshBasicMaterial({ colorWrite:false });
+  FINGERS.forEach(id => {
+    const g = geo(id), c = new THREE.Mesh(new THREE.CylinderGeometry(g.w * .93, g.w * .93, g.w * 5, 24), occ);
+    c.position.copy(P2L(g.x, g.y)); c.position.z = surfaceAt(g.x, g.y) * .45 - g.w * .1; c.rotation.z = -rad(g.rot); c.renderOrder = -1; c.userData = { id, r:g.w * .93, p0:c.position.clone(), rot0:c.rotation.z }; occluders.add(c);
+  });
+  rebuildRing();
+}
+const TILT = rad(20);
+/* ---------- REAL-WORLD FIT: all of this is done in millimetres ----------
+   PROFILE = the finger's width in photo px, measured from latest.png along each finger,
+   one value per slide step from -14 (below the ring spot) up to where the nail starts.
+   A ring goes on from the fingertip. It can only reach a point if its inner diameter
+   (plus a little skin squeeze) is at least as big as every point it has to pass on the way,
+   so a knuckle that is thicker than the base stops it, just like a real hand. */
+const PROFILE = {
+  pinky:[88,89,87,89,87,89,87,89,88,87,88,87,87,88,86,87,86,87,85,86,86,85,86,85,84,86,84,85,85,85,84,84,85,84,84,84,84,84,84,84,84,85,83,84,84,82,83,81,80,81,80,80,79,78,77,77,78,76,75,76,75,75,75,75,74,74,73,74,74,72,73,72,73,73,72,73,72,73,72,73,73,72,73,72,73,73,72,72,72,71,73,71,71,71,71,70,70,69,69,68,68,69,68,68,67,67,66,65,66,66,65,64,64,63,62,62,61,26,26],
+  ring:[96,96,95,96,96,96,97,96,96,96,97,96,96,98,97,97,97,97,97,96,97,98,97,98,97,97,97,97,98,97,98,98,97,98,98,99,97,98,98,98,97,97,99,98,98,98,97,96,96,95,96,95,94,93,92,91,91,91,90,89,88,88,87,87,88,86,86,86,85,85,85,84,83,83,82,82,82,82,81,82,81,80,80,80,80,80,80,79,79,79,79,79,79,79,78,79,79,79,79,79,79,79,79,79,79,79,79,79,79,78,78,78,78,77,77,78,77,77,77,77,76,76,77,76,75,76,76,76,76,76,76,76,76,76,76,76],
+  middle:[99,98,98,98,98,98,98,98,97,97,97,97,98,98,98,98,98,98,98,99,99,99,99,99,99,99,99,100,100,100,100,100,100,100,100,100,100,101,101,101,101,101,101,101,101,101,101,102,103,103,103,103,103,103,103,103,103,103,104,104,104,104,104,104,104,104,103,103,103,102,102,101,100,100,99,98,98,97,96,95,95,95,94,94,93,92,92,92,92,91,91,90,89,89,89,89,88,88,88,88,87,86,86,86,85,85,85,85,85,84,84,84,84,84,85,84,85,84,84,84,84,84,84,85,85,84,84,84,84,84,84,84,83,83,83,82,82,82,82,81,81,81,81,80,80,80,80,80,79,79,79,79],
+  index:[104,104,102,102,102,103,103,103,104,102,103,103,103,103,103,104,103,103,102,103,103,103,103,102,102,103,102,102,102,101,102,102,101,101,101,101,100,102,101,100,100,100,101,100,101,100,101,100,100,101,101,101,100,101,101,100,100,100,100,101,100,99,99,98,98,97,98,96,96,94,94,93,93,93,91,91,91,90,90,89,89,88,87,87,87,86,86,86,87,86,86,86,85,85,85,85,84,84,85,84,84,85,86,85,85,84,84,85,85,85,84,84,84,84,84,83,83,84,82,82,82,81,80,80,81,80,79,79,79,78,77,78,76,76,76,74],
+  thumb:[110,109,107,106,104,102,101,102,101,101,101,101,100,100,100,100,100,100,99,99,99,99,99,99,99,98,99,98,97,98,98,97,98,98,99,98,99,98,98,97,97,96,97,97,99,98,100,100,101,101,101,101,102,102,102,102,101,101,101,100,100,99,99,98,97,96,94,93,93,91,91,90,89,88,87,88,85,85,83,83,83,81,79,80,78,79,78,78,76,76,76,76,76,74],
+};
+// CENTRE = how far the finger's real centre line sits from the straight geo line, in photo px
+// (measured the same way, sideways from the line), so the ring stays centred on curved or angled fingers.
+const CENTRE = {
+  pinky:[-18,-18,-18,-18,-18,-18,-18,-18,-18,-18,-18,-18,-18,-18,-18,-18,-18,-18,-18,-18,-18,-18,-18,-18,-18,-18,-18,-18,-18,-18,-18,-18,-19,-19,-19,-19,-19,-19,-19,-19,-19,-19,-19,-19,-19,-19,-19,-19,-19,-19,-19,-19,-19,-19,-19,-19,-19,-19,-18,-18,-18,-18,-18,-18,-18,-18,-18,-18,-18,-18,-18,-17,-17,-17,-17,-17,-17,-16,-16,-16,-16,-16,-15,-15,-15,-15,-15,-15,-15,-14,-14,-14,-14,-13,-13,-13,-13,-12,-12,-12,-12,-11,-11,-11,-10,-10,-10,-10,-9,-9,-9,-9,-8,-8,-8,-8,-7,-7,9],
+  ring:[-1,-1,-1,-1,-2,-2,-2,-2,-2,-2,-2,-2,-2,-3,-3,-3,-3,-3,-3,-3,-4,-4,-4,-4,-4,-4,-4,-4,-5,-5,-5,-5,-5,-5,-5,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-5,-5,-5,-5,-5,-5,-5,-5,-5,-5,-5,-5,-5,-5,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-3,-3,-3,-2,-2,-2,-2,-2,-2,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0],
+  middle:[-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,5,6,6,6,6,6,6,6,6,6,7,7,7,7],
+  index:[-9,-9,-9,-9,-9,-9,-9,-8,-8,-8,-8,-8,-8,-8,-8,-8,-8,-8,-8,-7,-7,-7,-7,-7,-7,-7,-7,-7,-7,-7,-7,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-6,-5,-5,-5,-5,-5,-5,-5,-4,-4,-4,-4,-4,-4,-4,-4,-4,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-2,-2,-2,-2,-2],
+  thumb:[26,26,26,26,25,25,25,24,24,23,23,22,21,20,20,19,19,18,18,17,17,16,16,15,15,14,14,13,13,12,11,11,10,9,9,8,8,7,6,6,6,5,5,4,3,2,1,0,0,-1,-1,-2,-3,-4,-4,-5,-5,-6,-6,-8,-8,-9,-9,-11,-11,-12,-13,-13,-14,-14,-15,-16,-16,-17,-17,-18,-18,-18,-19,-19,-20,-20,-20,-20,-21,-21,-21,-21,-21,-21,-21,-21,-21,-21],
+};
+const offAt = (id, t) => { const a = CENTRE[id]; return a[clamp(Math.round(t) + BASE[id], 0, a.length - 1)]; };
+// The finger's real direction at slide t: the geo angle plus the slope of its centre line there.
+const rotAt = (id, t) => { const k = HANDS[state.orient].geo[id].w / 19; return HANDS[state.orient].geo[id].rot + clamp(Math.atan2(offAt(id, t + 6) - offAt(id, t - 6), 12 * k) * 180 / Math.PI, -6, 6); };   // small correction only: the edge scan is noisy
+// How far below the ring spot each finger's real base is (where it meets the web), in slide steps, measured from the photo.
+// PROFILE and CENTRE start there, so index BASE[id] is slide 0.
+const BASE = { pinky:44, ring:17, middle:23, index:26, thumb:40 };
+const SHAPE = { thumb:1.05 };                   // the thumb is photographed side-on, so it looks narrower than it is
+const COMP = .35;                               // mm the skin squeezes when a snug ring is pushed on
+const usOf = () => state.cfg ? +RING_SIZES[state.cfg.size][0] : 6;
+const dia = us => 11.63 + .8128 * us;           // US size → inner diameter in mm (standard formula)
+// mm per photo px, calibrated so this hand's ring finger takes a US 6 (a common women's size)
+const SC = (dia(6) + COMP * .5) / Math.max(...PROFILE.ring.slice(BASE.ring));
+const VPX = () => HANDS[state.orient].fit.s / SC;                       // screen px per mm
+const topOf = id => PROFILE[id].length - 1 - BASE[id];
+const needAt = (id, t) => { const a = PROFILE[id]; return a[clamp(Math.round(t) + BASE[id], 0, a.length - 1)] * SC * (SHAPE[id] || 1); };
+const passAt = (id, t) => { const a = PROFILE[id]; let m = 0; for (let i = clamp(Math.round(t) + BASE[id], 0, a.length - 1); i < a.length; i++) m = Math.max(m, a[i]); return m * SC * (SHAPE[id] || 1); };
+// Band width in mm; bands wider than 4 mm feel tighter, so they behave like a smaller ring.
+const bandMM = (sp = spec()) => 1.8 * (sp.band || 1) * (sp.style === 'band' ? 1.9 : sp.style === 'eternity' ? 1.25 : 1);
+const wideAdj = sp => { const w = bandMM(sp); return w > 6 ? .4 : w > 4 ? .2 : 0; };
+const ringMM = (S = usOf()) => dia(S) - wideAdj();                      // effective inner diameter
+function stopOf(id) {                                                   // lowest slide the ring can reach on this finger
+  const [lo, mx] = rangeOf(id), E = ringMM() + COMP, top = Math.min(Math.floor(mx), topOf(id));
+  if (needAt(id, top) > E) return mx;                                   // won't even start over the fingertip
+  let t = top;
+  while (t - 1 >= lo && needAt(id, t - 1) <= E) t--;
+  return t;
+}
+const seat = (id, t) => Math.max(t, stopOf(id));
+// Smallest size that goes over the knuckle (with a light push) and down to the ring spot.
+function bestSize(id) {
+  const need = passAt(id, rangeOf(id)[0]), s = RING_SIZES.find(([us]) => ringMM(+us) + COMP * .5 >= need);
+  return s ? s[0] : null;
+}
+const ringR = () => dia(usOf()) / 2 * VPX();                           // the ring's real inner radius on screen
+function fitStatus() {
+  const id = state.finger, name = id === 'thumb' ? 'thumb' : LABEL[id].toLowerCase() + ' finger', S = usOf(), [, mx] = rangeOf(id), stop = stopOf(id);
+  const best = bestSize(id), tip = best ? (+best === S ? '' : ` Best for this finger: US ${best}.`) : ' Even our largest size is tight here.';
+  if (stop >= mx - .5) return { tight:true, msg:`US ${S} won't go over the tip of the ${name}.${tip}` };
+  if (stop > 0) {
+    const short = stop * geo(id).w / 19 / HANDS[state.orient].fit.s * SC;   // slide steps → mm
+    return { tight:true, msg:`US ${S} gets stuck ${short.toFixed(0)} mm before the base of the ${name}.${tip}` };
+  }
+  const gap = ringMM() - needAt(id, state.slide);
+  if (+best === S) return { msg:`US ${S} is the best fit for the ${name}: snug over the knuckle, secure at the base.` };
+  if (gap < 0) return { msg:`US ${S} is snug on the ${name}: it needs a firm push over the knuckle.${tip}` };
+  if (gap > .9) return { msg:`US ${S} is loose on the ${name} (${gap.toFixed(1)} mm gap) and may spin.${tip}` };
+  return { msg:`US ${S} fits the ${name} well.` };
+}
+// Dragging the ring down: it lags behind the pointer while the skin is squeezed, and bounces when it hits the stop.
+function glide(id, cur, target, d) {
+  const stop = stopOf(id);
+  if (target < stop - 1.5) { if (!d.bumped) { d.bumped = true; bump(id, stop); } return stop; }
+  d.bumped = false;
+  let t = Math.max(target, stop);
+  const squeeze = needAt(id, Math.min(cur, t)) - ringMM();             // > 0 → the ring is tighter than the finger here
+  if (t < cur && squeeze > 0) t = cur + (t - cur) * clamp(1 - squeeze / COMP, .15, 1);
+  return t;
+}
+function bump(id, stop) {
+  [1.6, .6, 0].forEach((o, i) => setTimeout(() => { if (state.finger === id) { state.slide = stop + o; rebuildRing(); } }, i * 70));
+  if (navigator.vibrate) navigator.vibrate(25);
+}
+
+/* Shopify: the product's AI-made try-on image (transparent PNG, ring seen from above, band left→right).
+   Drawn as a flat card in the ring's local frame: X = across the finger, Y = along it, +Z = towards the camera. */
+const tryonTex = {};
+function loadTryonTexture(url) {
+  return tryonTex[url] ||= new Promise(res => {
+    const l = new THREE.TextureLoader(); l.setCrossOrigin('anonymous');
+    l.load(url, t => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; res(t); }, undefined, () => res(null));
+  });
+}
+function imageRing(R) {
+  const p = product(), g = new THREE.Group();
+  loadTryonTexture(p.tryonImage).then(tex => {
+    if (!tex || p !== product()) return;
+    const a = tex.image.height / tex.image.width, w = R * 2.35 * p.tryonScale;   // ring width ≈ band outer diameter
+    // Wrap the image around the front of the finger (cylinder along the finger axis = local Y),
+    // so the band's ends curve away round the sides like a real ring instead of a flat sticker.
+    // (only for top-view images; a side-angle product photo would look twisted, so it stays a flat card)
+    const r = R * 1.04, theta = Math.min(Math.PI * 0.92, w / r), top = p.tryonView === 'top';
+    const geo = top ? new THREE.CylinderGeometry(r, r, w * a, 48, 1, true, -theta / 2, theta) : new THREE.PlaneGeometry(w, w * a);
+    const m = new THREE.Mesh(geo,
+      new THREE.MeshBasicMaterial({ map:tex, transparent:true, depthWrite:false, toneMapped:false, side:THREE.FrontSide }));
+    m.position.set(0, p.tryonOffsetY * w, top ? 0 : R * 1.02); m.renderOrder = 5;
+    g.add(m);
+  });
+  return g;
+}
+function rebuildRing() {
+  ringRoot.clear();
+  const g = { ...geo(state.finger) }, k = g.w / 19, fs = HANDS[state.orient].fit.s;
+  if (!state.float) {                                   // shift onto the finger's measured centre line
+    const o = offAt(state.finger, state.slide) * fs, r0 = rad(g.rot);
+    g.x += Math.cos(r0) * o; g.y += Math.sin(r0) * o; g.rot = rotAt(state.finger, state.slide);
+    g.x -= Math.sin(rad(g.rot)) * state.slide * k - Math.sin(r0) * state.slide * k;   // keep the same point along the finger
+    g.y += Math.cos(rad(g.rot)) * state.slide * k - Math.cos(r0) * state.slide * k;
+  }
+  if ($('hint')) $('hint').textContent = fitStatus().msg;
+  const d = new THREE.Vector3(Math.sin(rad(g.rot)), Math.cos(rad(g.rot)), 0), Z = new THREE.Vector3(0, 0, 1);
+  const axis = d.clone().multiplyScalar(Math.cos(TILT)).addScaledVector(Z, Math.sin(TILT));
+  const front = d.clone().multiplyScalar(-Math.sin(TILT)).addScaledVector(Z, Math.cos(TILT));
+  if (HANDS[state.orient].palm) front.negate();               // stone sits on the far side of the finger
+  const q = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3().crossVectors(axis, front), axis, front));
+  const [, mx] = rangeOf(state.finger), fl = state.float;
+  // Real size decides how far it slides (see stopOf); visually it hugs the finger evenly instead of hanging with a gap.
+  const R = ringR();                                                                   // fixed: only the size dropdown changes it
+  // Keep the finger's hidden occluder just inside the band, so the band's front half is never swallowed by it.
+  occluders.children.forEach(c => {
+    const on = c.userData.id === state.finger && !fl, s = on ? Math.min(1, R * .9 / c.userData.r) : 1;
+    c.scale.x = c.scale.z = s; c.position.copy(c.userData.p0); c.rotation.z = c.userData.rot0;
+    if (on) { const p = P2L(g.x, g.y); c.position.x = p.x; c.position.y = p.y; c.rotation.z = -rad(g.rot); }   // follow the real centre line
+  });
+  const fx = fl ? fl.x : g.x + Math.sin(rad(g.rot)) * state.slide * k, fy = fl ? fl.y : g.y - Math.cos(rad(g.rot)) * state.slide * k;
+  const surf = surfaceAt(fx, fy);
+  const pos = fl ? P2L(fx, fy, surf + R * 1.6)                                          // carried above the hand
+                 : P2L(g.x, g.y).addScaledVector(d, state.slide * k);
+  if (!fl) pos.z = surf * .45;                                                          // on the finger's centre line
+  const ring = product().tryonImage ? imageRing(R) : buildRing(spec(), R, VPX()); ring.position.copy(pos);
+  ring.quaternion.copy(q).multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), state.spin || 0));   // spin around the finger
+  ringRoot.add(ring);
+  const sh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), shadowMat);
+  sh.scale.set(R * 2.6, R * .9, 1); sh.position.copy(pos).addScaledVector(d, -R * .28); sh.position.z = surf + .6; sh.rotation.z = -rad(g.rot);
+  if (fl) { sh.scale.multiplyScalar(1.6); sh.position.x += R * .5; sh.position.y -= R * 1.1; }   // softer, offset shadow while lifted
+  ringRoot.add(sh);
+  ringRoot.userData.ring = ring;
+}
+
+/* ---------- camera: fit, zoom, pan ---------- */
+let baseDist = 1000;
+const overlay = $('overlay'), octx = overlay.getContext('2d');
+function resize() {
+  const w = view.clientWidth, h = view.clientHeight; if (!w || !h) return;
+  renderer.setSize(w, h, false); camera.aspect = w / h;
+  const tan = Math.tan(rad(camera.fov / 2));
+  baseDist = Math.max((H / 2) / tan, (W / 2) / (tan * camera.aspect)) * 1.04;
+  camera.updateProjectionMatrix();
+  overlay.width = w * devicePixelRatio; overlay.height = h * devicePixelRatio;
+}
+const halfView = () => { const hh = Math.tan(rad(camera.fov / 2)) * baseDist / camera.zoom; return { hw:hh * camera.aspect, hh }; };
+function clampPan() { const { hw, hh } = halfView(); state.panX = clamp(state.panX, -Math.max(0, W / 2 - hw), Math.max(0, W / 2 - hw)); state.panY = clamp(state.panY, -Math.max(0, H / 2 - hh), Math.max(0, H / 2 - hh)); }
+function setZoom(z, ndc = { x:0, y:0 }) {
+  const b = halfView(), wx = state.panX + ndc.x * b.hw, wy = state.panY + ndc.y * b.hh;
+  camera.zoom = state.zoom = clamp(z, 1, 6); camera.updateProjectionMatrix();
+  const a = halfView(); state.panX = wx - ndc.x * a.hw; state.panY = wy - ndc.y * a.hh; clampPan();
+}
+function animateTo(target, ms = 400) {
+  const from = { ...state }, t0 = performance.now();
+  (function step(now) {
+    const k = Math.min(1, (now - t0) / ms), e = 1 - Math.pow(1 - k, 3);
+    for (const key in target) state[key] = from[key] + (target[key] - from[key]) * e;
+    camera.zoom = state.zoom; camera.updateProjectionMatrix(); clampPan();
+    if (k < 1) requestAnimationFrame(step);
+  })(t0);
+}
+function focusRing() {
+  const r = ringRoot.userData.ring; if (!r) return;
+  const wp = r.getWorldPosition(new THREE.Vector3());
+  animateTo({ zoom:3.6, panX:wp.x, panY:wp.y });
+}
+
+/* ---------- pointer math ---------- */
+const ray = new THREE.Raycaster();
+const ndcOf = e => { const r = canvas.getBoundingClientRect(); return { x:((e.clientX - r.left) / r.width) * 2 - 1, y:-((e.clientY - r.top) / r.height) * 2 + 1 }; };
+function photoAt(e) {
+  ray.setFromCamera(ndcOf(e), camera);
+  const hit = ray.intersectObject(pickPlane)[0]; if (!hit) return null;
+  const l = mirror.worldToLocal(hit.point.clone()); return { x:l.x + W / 2, y:H / 2 - l.y };
+}
+const toScreen = v => { const p = mirror.localToWorld(v.clone()).project(camera); return { x:(p.x + 1) / 2 * view.clientWidth, y:(1 - p.y) / 2 * view.clientHeight }; };
+function nearestFinger(pt, radius = 60) {
+  if (!pt) return null; let best = null, bd = radius;
+  FINGERS.forEach(id => { const g = geo(id), d = Math.hypot(pt.x - g.x, pt.y - g.y); if (d < bd) { bd = d; best = id; } });
+  return best;
+}
+function ringHit(e) {
+  const r = ringRoot.userData.ring; if (!r) return false;
+  const p = r.getWorldPosition(new THREE.Vector3()).project(camera), rc = canvas.getBoundingClientRect();
+  return Math.hypot(e.clientX - rc.left - (p.x + 1) / 2 * rc.width, e.clientY - rc.top - (1 - p.y) / 2 * rc.height) < 34 + 14 * state.zoom;
+}
+
+/* ---------- guides drawn over the 3D view ---------- */
+let guide = null;
+function drawOverlay() {
+  octx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  octx.clearRect(0, 0, view.clientWidth, view.clientHeight);
+  if (!guide) return;
+  octx.strokeStyle = octx.fillStyle = '#6b4eff';
+  if (guide.type === 'slide') {
+    // sliding along the finger: no guide or labels, the ring itself moves
+  } else {
+    FINGERS.forEach(id => {
+      const g = geo(id), c = toScreen(P2L(g.x, g.y)), e = toScreen(P2L(g.x + Math.cos(rad(g.rot)) * g.w, g.y + Math.sin(rad(g.rot)) * g.w));
+      const r = Math.hypot(e.x - c.x, e.y - c.y), on = guide.hit === id;
+      octx.beginPath(); octx.ellipse(c.x, c.y, r * 1.25, r * .55, rad(g.rot) * (state.side === 'right' ? 1 : -1), 0, Math.PI * 2);
+      octx.setLineDash(on ? [] : [5, 4]); octx.lineWidth = on ? 2.5 : 1.5;
+      octx.fillStyle = on ? 'rgba(107,78,255,.28)' : 'rgba(107,78,255,.08)'; octx.fill(); octx.stroke(); octx.setLineDash([]);
+    });
+  }
+}
+
+/* ---------- interaction ---------- */
+let drag = null;
+canvas.addEventListener('pointerdown', e => {
+  canvas.setPointerCapture(e.pointerId); stopShowcase();
+  drag = { ring:state.tab === 'hand' && ringHit(e), finger0:state.finger, x:e.clientX, y:e.clientY, moved:false, yaw:state.yaw, pitch:state.pitch, panX:state.panX, panY:state.panY, slide0:state.slide };
+});
+canvas.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  if (Math.hypot(dx, dy) > 4) drag.moved = true;
+  if (!drag.moved) return;
+  if (drag.ring) {
+    // The ring follows the pointer: it sits on whichever finger is under it, at that point along the finger.
+    const pt = photoAt(e), f = fingerUnder(pt);
+    if (f) {
+      if (f.id !== state.finger || state.float) { state.finger = f.id; state.slide = seat(f.id, f.slide); }
+      else state.slide = glide(f.id, state.slide, f.slide, drag);
+      state.float = null; rebuildRing();
+    }
+    else if (pt) { state.float = pt; rebuildRing(); }                   // off the finger → carried with the pointer
+  }
+  // The hand stays fixed: dragging empty space does nothing.
+});
+canvas.addEventListener('pointerup', e => {
+  const d = drag; drag = null; guide = null; if (!d) return;
+  if (!d.moved && !d.ring) {                       // tap a finger → ring goes there, at the tapped spot
+    const f = fingerUnder(photoAt(e));
+    if (f) { state.finger = f.id; state.slide = seat(f.id, Math.round(f.slide)); rebuildRing(); if (fitStatus().tight) toast(fitStatus().msg); }
+    return;
+  }
+  if (d.ring) {
+    if (state.float) {                                                   // dropped while carried → nearest finger, else back
+      const f = fingerUnder(state.float, 3.5);
+      if (f) { state.finger = f.id; state.slide = f.slide; } else { state.finger = d.finger0; state.slide = d.slide0; }
+      state.float = null;
+    }
+    state.slide = seat(state.finger, Math.round(state.slide)); rebuildRing();
+    if (fitStatus().tight) toast(fitStatus().msg);
+  }
+});
+
+// Finger nearest to a photo point, measured to the finger's ring-wearing segment (base ↔ top)
+function fingerUnder(pt, maxDist = 1.15) {
+  if (!pt) return null;
+  let best = null, bd = Infinity;
+  FINGERS.forEach(id => {
+    const g = geo(id), k = g.w / 19, d = { x:Math.sin(rad(g.rot)), y:-Math.cos(rad(g.rot)) };
+    const t = clamp(((pt.x - g.x) * d.x + (pt.y - g.y) * d.y) / k, ...rangeOf(id));
+    const dist = Math.hypot(pt.x - (g.x + d.x * t * k), pt.y - (g.y + d.y * t * k)) / g.w;   // in finger-widths
+    if (dist < bd) { bd = dist; best = { id, slide:t }; }
+  });
+  return bd < maxDist ? best : null;              // farther than this → the ring is off the finger
+}
+canvas.addEventListener('dblclick', e => { if (ringHit(e)) focusRing(); });
+canvas.addEventListener('pointermove', e => { if (!drag) canvas.style.cursor = ringHit(e) ? 'grab' : 'default'; });
+
+// Rotate the ring around the finger: mouse wheel over the ring, or the ⟳ button.
+const spinBy = a => { state.spin = ((state.spin || 0) + a) % (Math.PI * 2); rebuildRing(); };
+canvas.addEventListener('wheel', e => { if (!ringHit(e)) return; e.preventDefault(); spinBy(e.deltaY * .01); }, { passive:false });
+$('spinBtn').onclick = () => spinBy(Math.PI / 8);
+
+function moveTo(id) { state.finger = id; state.slide = seat(id, 0); rebuildRing(); }
+
+/* =====================================================================
+   OPTIONS (shared by the product page and try-on mode)
+   ===================================================================== */
+function optionsHTML() {
+  const p = product(), c = state.cfg;
+  return `
+    ${!EMBED || p.metalPrices ? `
+    <div class="optgrp"><div class="optlbl">Metal Type</div><div class="metaltiles">${metalsOf(p).map(k => [k, METALS[k]]).map(([k, m]) => `<button class="mtile ${c.metal === k ? 'on' : ''}" data-metal="${k}"><img src="products/metal-${k}.png" alt="">${m.name}</button>`).join('')}</div></div>` : ''}
+    ${hasCenter(p) && !EMBED ? `
+    <div class="optgrp"><div class="optlbl">Centre Stone Shape</div><div class="pills">${SHAPES.map(s => `<button class="pillopt ${c.shape === s ? 'on' : ''}" data-shape="${s}">${s[0].toUpperCase() + s.slice(1)}</button>`).join('')}</div></div>
+    <div class="optgrp"><div class="optlbl">Carat</div><div class="caratrow"><input data-carat type="range" min="0.5" max="7" step="0.25" value="${c.carat}"><b data-caratv>${c.carat.toFixed(2)} ct</b></div></div>` : ''}
+    <div class="optgrp"><div class="optlbl">Ring Size</div><div class="row"><select class="size" data-size>${RING_SIZES.map((s, i) => `<option value="${i}" ${c.size === i ? 'selected' : ''}>${state.sizeSys === 'US' ? 'US ' + s[0] : 'AU ' + s[1]}</option>`).join('')}</select>
+      <div class="seg"><button data-sys="US" class="${state.sizeSys === 'US' ? 'on' : ''}">US</button><button data-sys="AU" class="${state.sizeSys === 'AU' ? 'on' : ''}">AU/NZ</button></div></div></div>`;
+}
+function bindOptions(box) {
+  const live = patch => { Object.assign(state.cfg, patch); refreshViewer(); rebuildRing(); updatePrices(); };
+  box.querySelectorAll('[data-metal]').forEach(b => b.onclick = () => { live({ metal:b.dataset.metal }); renderOptions(); });
+  box.querySelectorAll('[data-stone]').forEach(b => b.onclick = () => { live({ stone:b.dataset.stone }); renderOptions(); });
+  box.querySelectorAll('[data-shape]').forEach(b => b.onclick = () => { live({ shape:b.dataset.shape }); renderOptions(); });
+  box.querySelector('[data-carat]')?.addEventListener('input', e => { live({ carat:+e.target.value }); box.querySelector('[data-caratv]').textContent = (+e.target.value).toFixed(2) + ' ct'; });
+  box.querySelector('[data-carat]')?.addEventListener('change', renderOptions);
+  box.querySelector('[data-band]')?.addEventListener('input', e => live({ band:+e.target.value }));
+  box.querySelector('[data-size]').onchange = e => { state.cfg.size = +e.target.value; state.slide = seat(state.finger, 0); rebuildRing(); toast(fitStatus().msg); };
+  box.querySelectorAll('[data-sys]').forEach(b => b.onclick = () => { state.sizeSys = b.dataset.sys; renderOptions(); });
+}
+function renderOptions() {
+  [$('pdpOptions'), $('shopOptions')].filter(Boolean).forEach(box => { box.innerHTML = optionsHTML(); bindOptions(box); });
+  updatePrices();
+}
+function updatePrices() {
+  $('pPrice').textContent = money(price()); if ($('tPrice')) $('tPrice').textContent = money(price());
+  const sc = $('shopCart');
+  if (sc) { const out = EMBED && !product().available; sc.disabled = out; sc.textContent = out ? 'Sold out' : 'Add to cart · ' + money(price()); }
+}
+/* Shopify: the ring list inside the try-on */
+function renderShop() {
+  const box = $('shopList'); if (!box) return;
+  box.innerHTML = PRODUCTS.map(p => `<button class="ringcard ${p.id === state.pid ? 'on' : ''}" data-id="${p.id}">
+      ${p.img ? `<img src="${p.img}" alt="" loading="lazy">` : '<span class="noimg">◯</span>'}
+      <span class="rn">${p.name.replace(/</g, '&lt;')}</span><span class="rp">${money(p.metalPrices ? Math.min(...Object.values(p.metalPrices)) : p.price)}</span></button>`).join('');
+  box.querySelectorAll('.ringcard').forEach(b => b.onclick = () => {
+    if (b.dataset.id === state.pid) return;
+    openProduct(b.dataset.id); renderPopupControls(); renderShop();
+  });
+  $('shopName').textContent = product().name;
+}
+
+function renderTryPanel() {}
+
+function openProduct(id) {
+  state.pid = id; state.cfg = freshCfg(product());
+  $('pName').textContent = product().name;
+  $('productPick').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.id === id));
+  refreshViewer(); renderOptions(); rebuildRing();
+}
+
+/* ---------- Shape icons (outline, like a jeweller's shape picker) ---------- */
+const SHAPE_SVG = {
+  round:'<svg viewBox="0 0 44 56" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="22" cy="28" r="19"/><circle cx="22" cy="28" r="9"/><path d="M22 9v10M22 37v10M3 28h10M31 28h10M9 15l7 7M35 15l-7 7M9 41l7-7M35 41l-7-7"/></svg>',
+  oval:'<svg viewBox="0 0 44 56" fill="none" stroke="currentColor" stroke-width="1.2"><ellipse cx="22" cy="28" rx="15" ry="24"/><ellipse cx="22" cy="28" rx="7" ry="12"/><path d="M22 4v12M22 40v12M7 28h8M29 28h8M11 11l6 7M33 11l-6 7M11 45l6-7M33 45l-6-7"/></svg>',
+  princess:'<svg viewBox="0 0 44 56" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="5" y="11" width="34" height="34"/><rect x="13" y="19" width="18" height="18"/><path d="M5 11l8 8M39 11l-8 8M5 45l8-8M39 45l-8-8"/></svg>',
+  emerald:'<svg viewBox="0 0 44 56" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M12 4h20l8 8v32l-8 8H12l-8-8V12z"/><path d="M15 12h14l4 4v24l-4 4H15l-4-4V16z"/><path d="M18 20h8v16h-8z"/></svg>',
+};
+function renderPopupControls() {
+  const p = product(), c = state.cfg;
+  $('tName').textContent = p.name; $('tPrice').textContent = money(price());
+  if (!hasCenter(p)) {
+    $('shapeList').innerHTML = '<div class="nocentre">This ring has no centre stone.</div>';
+    $('caratBox').innerHTML = '<div class="nocentre">Carat size applies to rings with a centre stone.</div>';
+    return;
+  }
+  $('shapeList').innerHTML = SHAPES.map(s => `<button class="shape ${c.shape === s ? 'on' : ''}" data-s="${s}" title="${s}">${SHAPE_SVG[s]}<span>${s[0].toUpperCase() + s.slice(1)}</span></button>`).join('');
+  $('shapeList').querySelectorAll('.shape').forEach(b => b.onclick = () => { setCfg({ shape:b.dataset.s }); renderPopupControls(); });
+  const pct = v => (v - .5) / 6.5 * 100;
+  $('caratBox').innerHTML = `<div class="carat">
+      <div class="ticks">${[1, 2, 3, 4, 5, 6].map(n => `<span style="left:${pct(n)}%">${n}</span>`).join('')}</div>
+      <div class="crow"><span>0.5 ct</span><input class="ct" id="ctR" type="range" min="0.5" max="7" step="0.25" value="${c.carat}" aria-label="Carat size"><span>7 ct</span></div>
+      <div class="ctval">Selected: <b id="ctV">${c.carat.toFixed(2)} ct</b></div></div>`;
+  const r = $('ctR'), paint = () => r.style.background = `linear-gradient(90deg,#e46aa3 ${pct(+r.value)}%,#e9e5e2 ${pct(+r.value)}%)`;
+  paint();
+  r.addEventListener('input', () => { setCfg({ carat:+r.value }); $('ctV').textContent = (+r.value).toFixed(2) + ' ct'; $('tPrice').textContent = money(price()); paint(); });
+  r.addEventListener('change', renderOptions);
+}
+function setCfg(patch) { Object.assign(state.cfg, patch); refreshViewer(); rebuildRing(); updatePrices(); }
+
+/* ---------- "Ring" tab: the ring on its own, turning slowly ---------- */
+const showRing = new THREE.Group(); showRing.visible = false; scene.add(showRing);
+function buildShowRing() { showRing.clear(); const r = buildRing(spec(), 120); r.rotation.x = -rad(12); showRing.add(r); }
+function setTab(t) {
+  state.panel = t;
+  $('tabRing').classList.toggle('on', t === 'ring'); $('tabHand').classList.toggle('on', t === 'you'); $('tabShop')?.classList.toggle('on', t === 'shop');
+  $('panelRing').hidden = t !== 'ring'; $('panelYou').hidden = t !== 'you'; $('qrCard').hidden = t === 'you';
+  if ($('panelShop')) $('panelShop').hidden = t !== 'shop';
+  if (t === 'shop') { renderShop(); renderOptions(); }
+  if (t === 'you') renderModels();
+}
+function renderModels() {
+  const box = $('modelList'); if (!box || !textures.model) return;
+  box.innerHTML = Object.entries(HANDS).map(([k, hd]) => `<button class="model ${state.orient === k ? 'on' : ''}" data-k="${k}" title="${hd.name}"><img src="${textures[k].image.toDataURL('image/png')}" alt="${hd.name}"></button>`).join('');
+  box.querySelectorAll('.model').forEach(b => b.onclick = () => { state.orient = b.dataset.k; applyHand(); renderModels(); animateTo({ zoom:1, panX:0, panY:0, yaw:0, pitch:0 }); });
+}
+let qrMade = false;
+function makeQR() {
+  if (qrMade || !window.QRCode) return; qrMade = true;
+  const u = product().url, text = EMBED && u ? u + (u.includes('?') ? '&' : '?') + 'tryon=1' : location.href.split('#')[0] + '#tryon-' + state.pid;
+  ['qr', 'qr2'].forEach(id => new QRCode($(id), { text, width:256, height:256, correctLevel:QRCode.CorrectLevel.M }));
+}
+$('tabRing').onclick = () => setTab('ring');
+$('tabHand').onclick = () => { setTab('you'); makeQR(); };
+
+/* =====================================================================
+   TRY-ON POP-UP open / close
+   ===================================================================== */
+function openTryOn() {
+  state.open = true; $('tryon').hidden = false; document.body.style.overflow = 'hidden';
+  Object.assign(state, { finger:'ring', slide:0, yaw:0, pitch:0, zoom:1, panX:0, panY:0 });
+  camera.zoom = 1; camera.updateProjectionMatrix();
+  renderPopupControls(); setTab(EMBED ? 'shop' : 'ring'); makeQR();
+  requestAnimationFrame(() => { resize(); applyHand(); });
+}
+function closeTryOn() { if (EMBED) { toParent({ type:'close' }); return; } state.open = false; $('tryon').hidden = true; document.body.style.overflow = ''; renderOptions(); }
+$('tryBtn').onclick = openTryOn; $('tryFab').onclick = openTryOn; $('closeTry').onclick = closeTryOn;
+$('tryon').addEventListener('click', e => { if (e.target.id === 'tryon') closeTryOn(); });
+window.addEventListener('keydown', e => { if (e.key === 'Escape' && state.open) closeTryOn(); });
+$('tone').oninput = e => state.tone = +e.target.value;
+$('zoomBtn').onclick = () => state.zoom > 1.05 ? animateTo({ zoom:1, panX:0, panY:0 }) : focusRing();
+let showStart = 0; const stopShowcase = () => showStart = 0;
+
+/* ---------- cart ---------- */
+function addToCart() {
+  const p = product(), c = state.cfg;
+  const props = { Metal:METALS[c.metal].name, 'Ring size':`US ${RING_SIZES[c.size][0]} / AU ${RING_SIZES[c.size][1]}` };
+  if (c.stone) props['Stone colour'] = STONES[c.stone].name;
+  if (hasCenter(p)) { props.Shape = c.shape; props.Carat = c.carat.toFixed(2); }
+  if (EMBED) {
+    // Real store: only facts the shopper chose (shown on the cart line and the order)
+    const lineProps = { 'Ring size':`US ${RING_SIZES[c.size][0]}` };
+    if (p.metalPrices) lineProps.Metal = METALS[c.metal].name;
+    const btn = $('shopCart'); btn.disabled = true; btn.textContent = 'Adding…';
+    $('addedSheet').hidden = true;
+    toParent({ type:'add', productKey:p.key, metal:c.metal, sizeUS:RING_SIZES[c.size][0], sizeAU:RING_SIZES[c.size][1], properties:{ ...lineProps, _source:'Virtual try-on' } });
+    return;
+  }
+  const item = { id:`gid://shopify/ProductVariant/${p.id}-${c.metal}`, quantity:1, properties:{ ...props, _source:state.open ? 'tryon' : 'pdp' } };
+  state.cart.push({ name:p.name, price:price() }); $('cartCount').textContent = state.cart.length;
+  modal('Added to cart', `<div class="row between"><span>${p.name}</span><b>${money(price())}</b></div><pre>POST /cart/add.js\n${JSON.stringify({ items:[item] }, null, 2)}</pre>`,
+    [['Keep looking'], ['Checkout', () => toast('Demo only'), true]]);
+}
+$('pdpCart').onclick = addToCart;
+$('stoneBtn').onclick = () => { openTryOn(); }; $('tCart').onclick = addToCart;
+$('cartBtn').onclick = () => modal('Cart', state.cart.length ? state.cart.map(l => `<div class="row between"><span>${l.name}</span><b>${money(l.price)}</b></div>`).join('') : 'Your cart is empty.', [['Close', null, true]]);
+
+function modal(title, html, buttons) {
+  const bd = document.createElement('div'); bd.className = 'backdrop';
+  bd.innerHTML = `<div class="modal" role="dialog" aria-modal="true"><h3>${title}</h3><div>${html}</div><div class="actions"></div></div>`;
+  buttons.forEach(([l, fn, pr]) => { const b = document.createElement('button'); b.textContent = l; if (pr) b.className = 'primary'; b.onclick = () => { fn && fn(); bd.remove(); }; bd.querySelector('.actions').appendChild(b); });
+  bd.onclick = e => { if (e.target === bd) bd.remove(); };
+  document.body.appendChild(bd);
+}
+let tt; function toast(m) { document.querySelector('.toast')?.remove(); const t = document.createElement('div'); t.className = 'toast'; t.textContent = m; document.body.appendChild(t); clearTimeout(tt); tt = setTimeout(() => t.remove(), 2600); }
+
+/* =====================================================================
+   RENDER LOOP + BOOT
+   ===================================================================== */
+function frame(now) {
+  if (!state.open) return;
+  if (showStart) {
+    const t = (now - showStart) / 1000, fade = Math.min(1, t * 2, Math.max(0, 6 - t));
+    state.yaw = Math.sin(t * 1.3) * 48 * fade; state.pitch = Math.sin(t * 2.6) * 14 * fade;
+    if (t > 6) showStart = 0;
+  }
+  handGroup.rotation.set(rad(state.pitch), rad(state.yaw), 0);
+  if (state.tab === 'ring') { showRing.rotation.set(rad(state.pitch), rad(state.yaw) + (drag ? 0 : now / 3000), 0); }
+  camera.position.set(state.panX, state.panY, baseDist);
+  relight();
+  const a = now / 1400; glint.position.set(Math.cos(a) * 260, 200 + Math.sin(a * 1.3) * 120, 260);
+  renderer.render(scene, camera);
+  drawOverlay();
+}
+window.addEventListener('resize', () => { sizeViewer(); if (state.open) resize(); });
+
+$('productPick').innerHTML = PRODUCTS.map(p => `<button data-id="${p.id}">${p.name}</button>`).join('');
+$('productPick').querySelectorAll('button').forEach(b => b.onclick = () => openProduct(b.dataset.id));
+sizeViewer(); openProduct(PRODUCTS[0].id);
+if (EMBED) {
+  document.body.classList.add('embed');
+  if (EMBED.preview) document.body.classList.add('preview');
+  $('tabShop').hidden = false;
+  $('tabRing').hidden = true;   // shape / carat are fixed by the product in a real store
+  $('tabShop').onclick = () => setTab('shop');
+  $('shopCart').onclick = addToCart;
+  $('goCheckout').onclick = () => toParent({ type:'goto', to:'checkout' });
+  $('goCart').onclick = () => toParent({ type:'goto', to:'cart' });
+  $('keepTrying').onclick = () => { $('addedSheet').hidden = true; };
+  window.addEventListener('message', e => {
+    if (e.data?.source !== 'ring-tryon-host') return;
+    if (e.data.type === 'added') {
+      updatePrices();
+      if (!e.data.ok) return toast(e.data.error || 'Could not add to cart');
+      const c = state.cfg;
+      $('addedText').textContent = `${product().name} · US ${RING_SIZES[c.size][0]}${product().metalPrices ? ' · ' + METALS[c.metal].name : ''}`;
+      $('addedCount').textContent = e.data.count ? `${e.data.count} item${e.data.count > 1 ? 's' : ''} in your bag` : '';
+      $('addedSheet').hidden = false;
+    }
+  });
+  openTryOn(); toParent({ type:'ready' });
+}
+renderer.setAnimationLoop(frame);
+Promise.all(Object.entries(HANDS).map(async ([k, h]) => textures[k] = await photoTexture(h))).then(() => {
+  Object.entries(HANDS).forEach(([k, hd]) => reliefs[k] = buildRelief(textures[k], hd.depth));
+  renderModels();
+  $('loading').remove(); applyHand();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+{%- comment -%}
+  "Try it on" button. Shown only when this product has a try-on image from the app
+  (product.metafields.tryon.asset), so merchants don't have to configure anything per product.
+{%- endcomment -%}
+{%- assign t = product.metafields.tryon.asset.value -%}
+{%- if product and t and t.image and t.enabled != false -%}
+  {%- comment -%} Always the app's own viewer. The override is only honoured for local debugging, so an old
+      saved URL (e.g. from a previous version of this block) can't load an outdated viewer. {%- endcomment -%}
+  {%- assign viewer = '/apps/ring-tryon/viewer' -%}
+  {%- if block.settings.viewer_url contains '://localhost' or block.settings.viewer_url contains '://127.0.0.1' -%}
+    {%- assign viewer = block.settings.viewer_url -%}
+  {%- endif -%}
+  <div class="ring-tryon" {{ block.shopify_attributes }}
+       style="--rt-bg: {{ block.settings.button_bg }}; --rt-fg: {{ block.settings.button_fg }}; --rt-radius: {{ block.settings.radius }}px;">
+    <button type="button" class="ring-tryon__btn" data-ring-tryon-open data-viewer="{{ viewer | escape }}">
+      <svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6">
+        <circle cx="12" cy="15" r="6"/><path d="M9 6l3-3 3 3-3 3z"/>
+      </svg>
+      <span>{{ block.settings.label }}</span>
+    </button>
+    <script type="application/json" data-ring-tryon-product>
+      {
+        "currentId": {{ product.id }},
+        "currency": {{ cart.currency.iso_code | json }},
+        "locale": {{ request.locale.iso_code | json }},
+        "settings": {
+          "metalOption": {{ block.settings.metal_option | json }},
+          "sizeOption": {{ block.settings.size_option | json }},
+          "afterAdd": {{ block.settings.after_add | json }}
+        },
+        "products": [
+          {%- render 'tryon-product', p: product -%}
+          {%- if block.settings.collection -%}
+            {%- for p in block.settings.collection.products limit: block.settings.max_products -%}
+              {%- assign pt = p.metafields.tryon.asset.value -%}
+              {%- if p.id != product.id and pt and pt.image and pt.enabled != false -%}
+                ,{%- render 'tryon-product', p: p -%}
+              {%- endif -%}
+            {%- endfor -%}
+          {%- endif -%}
+        ]
+      }
+    </script>
+  </div>
+{%- elsif request.design_mode -%}
+  <div class="ring-tryon ring-tryon--empty" {{ block.shopify_attributes }}>
+    Ring try-on: this product has no try-on image yet. Generate one in the Ring Try-On app.
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Ring try-on",
+  "target": "section",
+  "enabled_on": { "templates": ["product"] },
+  "stylesheet": "tryon.css",
+  "javascript": "tryon.js",
+  "settings": [
+    { "type": "text", "id": "label", "label": "Button label", "default": "Try it on" },
+    { "type": "header", "content": "Rings to switch between" },
+    { "type": "collection", "id": "collection", "label": "Collection", "info": "Shoppers can try other rings from this collection without leaving the try-on. Only rings with a try-on image are shown." },
+    { "type": "range", "id": "max_products", "label": "Max rings", "min": 4, "max": 48, "step": 4, "default": 24 },
+    { "type": "header", "content": "Variant matching" },
+    { "type": "text", "id": "metal_option", "label": "Metal option name", "default": "Metal" },
+    { "type": "text", "id": "size_option", "label": "Ring size option name", "default": "Size" },
+    { "type": "select", "id": "after_add", "label": "After add to cart", "default": "stay",
+      "options": [ { "value": "stay", "label": "Stay in try-on" }, { "value": "cart", "label": "Go to cart" }, { "value": "close", "label": "Close try-on" } ] },
+    { "type": "header", "content": "Button style" },
+    { "type": "color", "id": "button_bg", "label": "Background", "default": "#1f1a17" },
+    { "type": "color", "id": "button_fg", "label": "Text", "default": "#ffffff" },
+    { "type": "range", "id": "radius", "label": "Corner radius", "min": 0, "max": 30, "step": 1, "unit": "px", "default": 4 },
+    { "type": "header", "content": "Advanced" },
+    { "type": "text", "id": "viewer_url", "label": "Viewer URL override", "info": "Leave empty. Only for debugging, e.g. http://localhost:3000/viewer/index.html" }
+  ]
+}
+{% endschema %}

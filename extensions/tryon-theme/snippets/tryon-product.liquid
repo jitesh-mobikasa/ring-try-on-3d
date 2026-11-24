@@ -1,0 +1,17 @@
+{%- comment -%}
+  One product as JSON for the try-on viewer. "tryon" is the app's metafield (image made by the app).
+{%- endcomment -%}
+{%- assign t = p.metafields.tryon.asset.value -%}
+{
+  "productId": {{ p.id }},
+  "title": {{ p.title | json }},
+  "url": {{ shop.url | append: p.url | json }},
+  "image": {% if p.featured_image %}{{ p.featured_image | image_url: width: 600 | prepend: 'https:' | json }}{% else %}null{% endif %},
+  "options": {{ p.options | json }},
+  "tryon": {% if t and t.image %}{ "image": {{ t.image | json }}, "scale": {{ t.scale | default: 1 | json }}, "offsetY": {{ t.offsetY | default: 0 | json }}, "view": {{ t.view | default: "photo" | json }} }{% else %}null{% endif %},
+  "variants": [
+    {%- for v in p.variants -%}
+      { "id": {{ v.id }}, "price": {{ v.price | divided_by: 100.0 }}, "available": {{ v.available | json }}, "options": {{ v.options | json }} }{%- unless forloop.last -%},{%- endunless -%}
+    {%- endfor -%}
+  ]
+}

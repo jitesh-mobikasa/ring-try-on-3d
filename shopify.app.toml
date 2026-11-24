@@ -1,0 +1,48 @@
+client_id = "4b6ebfe3130654a876aaae8e20c26200"
+name = "Try On"
+# `npm run dev` replaces these URLs with the tunnel automatically
+application_url = "https://example.com"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+
+[access_scopes]
+# products: read photos + write the tryon.asset metafield · files: store generated try-on images in Shopify Files
+scopes = "read_products,write_products,read_files,write_files,write_app_proxy"
+
+[auth]
+redirect_urls = [ "https://example.com/auth/callback" ]
+
+# The storefront opens the viewer at https://<store>/apps/ring-tryon/viewer (same domain, nothing for merchants to configure)
+[app_proxy]
+url = "https://example.com/proxy"
+subpath = "ring-tryon"
+prefix = "apps"
+
+[webhooks]
+api_version = "2025-01"
+
+  [[webhooks.subscriptions]]
+  topics = [ "products/create", "products/update" ]
+  uri = "/webhooks/products"
+
+  [[webhooks.subscriptions]]
+  topics = [ "products/delete" ]
+  uri = "/webhooks/products-delete"
+
+  [[webhooks.subscriptions]]
+  topics = [ "app/uninstalled" ]
+  uri = "/webhooks/app/uninstalled"
+
+  [[webhooks.subscriptions]]
+  topics = [ "app/scopes_update" ]
+  uri = "/webhooks/app/scopes_update"
+
+  # Mandatory privacy webhooks for App Store apps
+  [[webhooks.subscriptions]]
+  compliance_topics = [ "customers/data_request", "customers/redact", "shop/redact" ]
+  uri = "/webhooks/compliance"
+
+[pos]
+embedded = false

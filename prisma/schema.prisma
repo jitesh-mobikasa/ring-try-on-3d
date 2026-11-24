@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Naming: models / fields are PascalCase / camelCase in TypeScript,
+// tables / columns / enums are snake_case (plural tables) in PostgreSQL via @@map / @map.
+
+// Shopify OAuth sessions (managed by @shopify/shopify-app-session-storage-prisma — keep the field names)
+model Session {
+  id            String    @id
+  shop          String
+  state         String
+  isOnline      Boolean   @default(false) @map("is_online")
+  scope         String?
+  expires       DateTime?
+  accessToken   String    @map("access_token")
+  userId        BigInt?   @map("user_id")
+  firstName     String?   @map("first_name")
+  lastName      String?   @map("last_name")
+  email         String?
+  accountOwner  Boolean   @default(false) @map("account_owner")
+  locale        String?
+  collaborator  Boolean?  @default(false)
+  emailVerified Boolean?  @default(false) @map("email_verified")
+
+  @@index([shop])
+  @@map("sessions")
+}
+
+enum Plan {
+  free
+  starter
+  pro
+
+  @@map("plan")
+}
+
+/// Where a product's try-on image is in the pipeline
+enum AssetStatus {
+  none
+  queued
+  processing
+  ready
+  failed
+  manual // merchant uploaded their own PNG
+
+  @@map("asset_status")
+}
+
+/// How the try-on image was made, which decides how the viewer draws it
+enum AssetView {
+  photo // cut out of the product photo (side angle) → drawn flat
+  top   // seen from above (AI or uploaded) → wrapped around the finger
+
+  @@map("asset_view")
+}
+
+// One row per installed store: plan + usage for the current 30-day period
+model Shop {
+  shop           String    @id
+  plan           Plan      @default(free)
+  usedThisPeriod Int       @default(0) @map("used_this_period")
+  periodStart    DateTime  @default(now()) @map("period_start")
+  installedAt    DateTime  @default(now()) @map("installed_at")
+  uninstalledAt  DateTime? @map("uninstalled_at")
+
+  @@map("shops")
+}
+
+// One row per product that has (or had) a try-on image
+model TryOnAsset {
+  id            String      @id @default(cuid())
+  shop          String
+  productId     String      @map("product_id")      // gid://shopify/Product/123
+  productTitle  String      @default("") @map("product_title")
+  sourceMediaId String?     @map("source_media_id") // product photo the image was made from
+  sourceUrl     String?     @map("source_url")
+  status        AssetStatus @default(none)
+  resultFileId  String?     @map("result_file_id")  // gid://shopify/MediaImage/… in the store's Shopify Files
+  resultUrl     String?     @map("result_url")
+  error         String?
+  attempts      Int         @default(0)
+  scale         Float       @default(1)             // merchant fine-tuning on the finger
+  offsetY       Float       @default(0) @map("offset_y")
+  enabled       Boolean     @default(true)
+  view          AssetView   @default(photo)
+  createdAt     DateTime    @default(now()) @map("created_at")
+  updatedAt     DateTime    @updatedAt @map("updated_at")
+
+  @@unique([shop, productId])
+  @@index([shop, status])
+  @@index([status, updatedAt])
+  @@map("try_on_assets")
+}
