@@ -21,12 +21,19 @@
     <script type="application/json" data-ring-tryon-product>
       {
         "currentId": {{ product.id }},
+        {%- comment -%} More rings than max_products are loaded page by page from the app (/apps/ring-tryon/products) {%- endcomment -%}
+        "collection": {% if block.settings.collection %}{
+          "handle": {{ block.settings.collection.handle | json }},
+          "offset": {{ block.settings.max_products }},
+          "more": {% if block.settings.collection.products_count > block.settings.max_products %}true{% else %}false{% endif %}
+        }{% else %}null{% endif %},
         "currency": {{ cart.currency.iso_code | json }},
         "locale": {{ request.locale.iso_code | json }},
         "settings": {
           "metalOption": {{ block.settings.metal_option | json }},
           "sizeOption": {{ block.settings.size_option | json }},
-          "afterAdd": {{ block.settings.after_add | json }}
+          "afterAdd": {{ block.settings.after_add | json }},
+          "looks": {{ block.settings.looks | json }}
         },
         "products": [
           {%- render 'tryon-product', p: product -%}
@@ -48,6 +55,12 @@
   </div>
 {%- endif -%}
 
+{%- comment -%}
+  Curated looks are switched off for now. To turn them back on, add this setting after "max_products" below
+  and un-hide the Looks tab in public/viewer/index.html:
+  { "type": "textarea", "id": "looks", "label": "Curated looks",
+    "info": "One look per line: Look name: product-handle@finger, product-handle@finger. Fingers: thumb, index, middle, ring, pinky. Rings must be in the collection above (or be this product) and have a try-on image. Sold-out rings are left out." },
+{%- endcomment -%}
 {% schema %}
 {
   "name": "Ring try-on",

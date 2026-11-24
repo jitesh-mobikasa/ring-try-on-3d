@@ -137,11 +137,38 @@
   .qrcard .phone { width:46px; height:84px; border:2px solid #333; border-radius:8px; display:flex; align-items:center; justify-content:center; }
   .qrcard .phone i { width:12px; height:12px; border-radius:50%; background:#555; }
   .hidden-meta { display:none; }
-  .ringgrid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; padding:14px; }
+  .ringgrid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; padding:14px; align-content:start; }
   .ringcard { border:1px solid var(--line); background:#fff; border-radius:8px; padding:6px; display:flex; flex-direction:column; gap:3px; text-align:left; cursor:pointer; font-size:12px; }
   .ringcard img, .ringcard .noimg { width:100%; aspect-ratio:1; object-fit:cover; border-radius:5px; background:var(--soft); display:flex; align-items:center; justify-content:center; color:var(--muted); }
   .ringcard .rn { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .ringcard .rp { color:var(--muted); }
   .ringcard.on { border-color:var(--pink); box-shadow:0 0 0 1px var(--pink); }
+  /* drawer: rings load in pages as you scroll the grid; cards can be dragged onto a finger */
+  .ringgrid { max-height:min(330px,42vh); overflow:auto; }
+  .ringgrid .more { grid-column:1/-1; text-align:center; font-size:12px; padding:6px; }
+  .ringcard { touch-action:pan-y; user-select:none; -webkit-user-select:none; -webkit-touch-callout:none; }
+  .ringcard img { pointer-events:none; -webkit-user-drag:none; }
+  .drawtip { font-size:12px; color:var(--muted); text-align:center; padding:8px 14px 0; }
+  .dragghost { position:fixed; z-index:80; width:72px; height:72px; border-radius:50%; object-fit:cover; pointer-events:none; transform:translate(-50%,-50%); box-shadow:0 6px 20px rgba(0,0,0,.25); border:2px solid #fff; background:var(--soft); }
+  /* rings on the hand (one per finger) */
+  .worn { display:flex; flex-wrap:wrap; gap:6px; padding:10px 14px 0; }
+  .wornchip { display:inline-flex; align-items:center; gap:4px; border:1px solid var(--line); border-radius:16px; background:#fff; padding:3px 3px 3px 10px; font-size:12px; cursor:pointer; max-width:100%; }
+  .wornchip.on { border-color:var(--pink); box-shadow:0 0 0 1px var(--pink); }
+  .wornchip span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .wornchip .x { border:0; background:none; width:22px; height:22px; border-radius:50%; padding:0; color:var(--muted); flex:none; }
+  .wornchip .x:hover { background:var(--soft); }
+  /* curated looks */
+  .looks { display:flex; flex-direction:column; gap:10px; padding:14px; }
+  .lookcard { display:flex; gap:12px; align-items:center; text-align:left; border:1px solid var(--line); border-radius:10px; background:#fff; padding:10px; }
+  .lookcard:hover:not(:disabled) { border-color:var(--pink); }
+  .lookcard:disabled { opacity:.5; cursor:not-allowed; }
+  .lookcard .thumbs { display:flex; flex:none; }
+  .lookcard .thumbs img { width:44px; height:44px; border-radius:50%; object-fit:cover; border:2px solid #fff; margin-left:-12px; background:var(--soft); }
+  .lookcard .thumbs img:first-child { margin-left:0; }
+  .lookcard b { display:block; font-size:14px; font-weight:500; } .lookcard small { color:var(--muted); font-size:12px; }
+  /* left / right hand */
+  .sideseg { position:absolute; right:20px; top:72px; z-index:3; display:flex; border:1px solid #ddd; border-radius:16px; overflow:hidden; background:#fff; box-shadow:0 2px 10px rgba(0,0,0,.08); }
+  .sideseg button { border:0; background:#fff; padding:5px 11px; font-size:12px; }
+  .sideseg button.on { background:var(--ink); color:#fff; }
   .shopopts { padding:6px 16px; } .shopopts .metaltiles { grid-template-columns:repeat(2,minmax(0,1fr)); }
   .shopbuy { position:sticky; bottom:0; background:#fff; padding:12px 16px 16px; margin-top:auto; }
   .added { border:1px solid var(--line); border-radius:10px; padding:12px; margin-bottom:10px; background:#fbfaf9; font-size:13px; }
@@ -217,12 +244,15 @@
   <div class="tbox" role="dialog" aria-modal="true" aria-label="Virtual try-on">
     <div class="rail">
       <button id="tabShop" hidden><svg viewBox="0 0 40 40" fill="none" stroke="#e46aa3" stroke-width="1.6"><rect x="7" y="7" width="11" height="11" rx="2"/><rect x="22" y="7" width="11" height="11" rx="2"/><rect x="7" y="22" width="11" height="11" rx="2"/><rect x="22" y="22" width="11" height="11" rx="2"/></svg>Rings</button>
+      <button id="tabLooks" hidden><svg viewBox="0 0 40 40" fill="none" stroke="#e46aa3" stroke-width="1.6"><circle cx="14" cy="24" r="7"/><circle cx="26" cy="24" r="7"/><path d="M12 13l2-3 2 3M24 13l2-3 2 3"/></svg>Looks</button>
       <button id="tabRing" class="on"><svg viewBox="0 0 40 40" fill="none" stroke="#e46aa3" stroke-width="1.8"><circle cx="20" cy="25" r="11"/><path d="M16 9l4-4 4 4-4 4z"/></svg>Ring</button>
       <button id="tabHand"><svg viewBox="0 0 40 40" fill="none" stroke="#e46aa3" stroke-width="1.6" stroke-linecap="round"><path d="M12 22V10m5 10V6m5 14V7m5 15V11M12 22c0 7 4 12 10 12s9-5 9-10l3-6"/></svg>On you</button>
     </div>
     <div class="tleft">
       <div id="panelShop" hidden>
         <div class="thead">Choose a ring</div>
+        <div class="worn" id="wornList" hidden></div>
+        <div class="drawtip">Tap a ring to try it, or drag it onto any finger</div>
         <div class="ringgrid" id="shopList"></div>
         <div class="thead" id="shopName"></div>
         <div class="shopopts" id="shopOptions"></div>
@@ -234,6 +264,10 @@
           </div>
           <button class="primary" id="shopCart">Add to cart</button>
         </div>
+      </div>
+      <div id="panelLooks" hidden>
+        <div class="thead">Curated looks</div>
+        <div class="looks" id="lookList"></div>
       </div>
       <div id="panelRing">
         <div class="thead">Shape</div>
@@ -254,6 +288,7 @@
       <canvas id="overlay"></canvas>
       <div class="brand">Powered by<b>AMARA</b></div>
       <button class="closeX" id="closeTry" aria-label="Close try-on">✕</button>
+      <div class="sideseg" role="group" aria-label="Which hand"><button data-side="left">Left</button><button data-side="right" class="on">Right</button></div>
       <div class="skinwrap" title="Skin tone"><input id="tone" class="skinv" type="range" min="0" max="100" value="20" aria-label="Skin tone"></div>
       <button class="zoomBtn" id="zoomBtn" title="Zoom in on the ring">⌕</button>
       <button class="zoomBtn" id="spinBtn" title="Rotate the ring around the finger" style="bottom:82px">⟳</button>
@@ -295,7 +330,7 @@ const DEMO_PRODUCTS = [
   { id:'poppy',  name:'Poppy Oval',  img:'products/poppy.jpg',  style:'three',     shape:'oval', stone:'diamond', metal:'Y', price:3290 },
 ];
 const pick = (v, list, d) => list.includes(v) ? v : d;
-const PRODUCTS = EMBED ? (EMBED.products || []).map(x => ({
+const fromEmbed = x => ({
   id:'s' + x.key, key:x.key, name:x.title, img:x.image, url:x.url, price:x.price || 0,
   style:pick(x.style, ['solitaire', 'halo', 'three', 'pave', 'band', 'eternity'], 'solitaire'),
   shape:pick(x.shape, ['round', 'oval', 'princess', 'emerald'], 'oval'),
@@ -303,10 +338,23 @@ const PRODUCTS = EMBED ? (EMBED.products || []).map(x => ({
   metal:x.metalPrices && !(x.metal in x.metalPrices) ? Object.keys(x.metalPrices)[0] : (x.metal || 'Y'),
   metalPrices:x.metalPrices, metalImages:x.metalImages, available:x.available !== false,
   tryonImage:x.tryon?.image || null, tryonScale:+x.tryon?.scale || 1, tryonView:x.tryon?.view || 'photo', tryonOffsetY:+x.tryon?.offsetY || 0,
-})) : DEMO_PRODUCTS;
+});
+// PRODUCTS grows when more rings are loaded from the store (see requestMore)
+const PRODUCTS = EMBED ? (EMBED.products || []).map(fromEmbed) : DEMO_PRODUCTS;
 const metalsOf = p => Object.keys(METALS).filter(k => !p.metalPrices || k in p.metalPrices);
 const byId = Object.fromEntries(PRODUCTS.map(p => [p.id, p]));
 const hasCenter = p => ['solitaire', 'halo', 'three', 'pave'].includes(p.style);
+/* Curated looks: several rings, one per finger. On the store they come from the theme block's "Curated looks"
+   setting (resolved to products in tryon.js, with stock). Sold-out pieces are left out when a look is loaded. */
+const LOOK_FINGERS = ['thumb', 'index', 'middle', 'ring', 'pinky'];
+const LOOKS = (EMBED ? (EMBED.looks || []).map(l => ({ name:String(l.name || 'Look'),
+    items:(l.items || []).map(i => ({ id:'s' + i.key, finger:LOOK_FINGERS.includes(i.finger) ? i.finger : 'ring', available:i.available !== false })) }))
+  : [{ name:'Bridal stack', items:[{ id:'lara', finger:'ring' }, { id:'blair', finger:'middle' }] },
+     { name:'Statement trio', items:[{ id:'noelle', finger:'index' }, { id:'poppy', finger:'ring' }, { id:'lara', finger:'pinky' }] }]
+       .map(l => ({ ...l, items:l.items.map(i => ({ ...i, available:true })) })))
+  .map(l => ({ ...l, items:l.items.filter(i => byId[i.id]).map(i => ({ ...i, available:i.available && byId[i.id].available !== false })) }))
+  .filter(l => l.items.length);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 const RING_SIZES = [['4','H'],['4.5','I'],['5','J½'],['5.5','K½'],['6','L½'],['6.5','M½'],['7','N½'],['7.5','O½'],['8','P½'],['8.5','Q½'],['9','R½']];
 
 /* =====================================================================
@@ -339,9 +387,11 @@ const toParent = msg => window.parent !== window && window.parent.postMessage({ 
 const $ = id => document.getElementById(id);
 
 /* =====================================================================
-   STATE: one product, its chosen options, and where the ring sits
+   STATE: the ACTIVE ring (product, options, where it sits) lives in pid / cfg / finger / slide / spin,
+   so all the fit and price code works on it unchanged. Other rings on the hand wait in `worn`
+   (finger → { pid, cfg, slide, spin }); touching one makes it the active ring.
    ===================================================================== */
-const state = { float:null, tab:'hand', pid:(PRODUCTS.find(p => p.key === EMBED?.current) || PRODUCTS[0]).id, cfg:null, finger:'ring', slide:0, side:'right', orient:'back', panel:'ring', tone:20,
+const state = { worn:{}, float:null, tab:'hand', pid:(PRODUCTS.find(p => p.key === EMBED?.current) || PRODUCTS[0]).id, cfg:null, finger:'ring', slide:0, side:'right', orient:'back', panel:'ring', tone:20,
   yaw:0, pitch:0, zoom:1, panX:0, panY:0, open:false, cart:[], sizeSys:'US' };
 const product = () => byId[state.pid];
 const freshCfg = p => ({ metal:p.metal, stone:p.stone, shape:p.shape, carat:1, band:1, size:4, stoneK:1 });
@@ -350,6 +400,13 @@ const geo = id => { const h = HANDS[state.orient], g = h.geo[id], f = h.fit; ret
 const caratFee = () => hasCenter(product()) ? Math.round((Math.pow(state.cfg.carat, 1.7) - 1) * 1400 / 10) * 10 : 0;
 const price = () => EMBED ? (product().metalPrices?.[state.cfg.metal] ?? product().price) : product().price + METALS[state.cfg.metal].add + caratFee();
 const spec = () => ({ style:product().style, ...state.cfg });
+const snap = () => ({ pid:state.pid, cfg:state.cfg, slide:state.slide, spin:state.spin || 0 });
+// Run fn as if ring r on `finger` were the active one (fit / size / drawing code all read the active ring).
+function withRing(r, finger, fn) {
+  const keep = { pid:state.pid, cfg:state.cfg, slide:state.slide, spin:state.spin, finger:state.finger, float:state.float };
+  Object.assign(state, { pid:r.pid, cfg:r.cfg, slide:r.slide, spin:r.spin, finger, float:null });
+  try { return fn(); } finally { Object.assign(state, keep); }
+}
 
 /* =====================================================================
    3D RING BUILDER — torus band, faceted stones, prongs
@@ -721,10 +778,11 @@ function loadTryonTexture(url) {
    (or shrinks) just that area and fades back to 1× before the band. The card is made taller (STONE_PAD) so a
    bigger stone has room above and below the image; anything outside the image is transparent. */
 const STONE_MIN = .6, STONE_MAX = 1.6, STONE_PAD = STONE_MAX;
-const stoneUniform = { value:1 };
-function stoneLens(mat, aspect) {
+// Each ring keeps its own stone size (cfg.stoneU is shared with its material, so the slider updates it live).
+const stoneU = cfg => cfg.stoneU ||= { value:cfg.stoneK || 1 };
+function stoneLens(mat, aspect, uniform) {
   mat.onBeforeCompile = sh => {
-    sh.uniforms.uStoneK = stoneUniform;
+    sh.uniforms.uStoneK = uniform;
     sh.uniforms.uAspect = { value:aspect };
     sh.fragmentShader = 'uniform float uStoneK;\nuniform float uAspect;\n' + sh.fragmentShader.replace('#include <map_fragment>', `
       vec2 uv = vec2(vMapUv.x, (vMapUv.y - .5) * ${STONE_PAD.toFixed(2)} + .5);  // padded card → image
@@ -739,9 +797,9 @@ function stoneLens(mat, aspect) {
   return mat;
 }
 function imageRing(R) {
-  const p = product(), g = new THREE.Group();
+  const p = product(), g = new THREE.Group(), u = stoneU(state.cfg);
   loadTryonTexture(p.tryonImage).then(tex => {
-    if (!tex || p !== product()) return;
+    if (!tex) return;                                   // (if the ring was rebuilt meanwhile, g is simply no longer in the scene)
     const a = tex.image.height / tex.image.width, w = R * 2.35 * p.tryonScale;   // ring width ≈ band outer diameter
     // Wrap the image around the front of the finger (cylinder along the finger axis = local Y),
     // so the band's ends curve away round the sides like a real ring instead of a flat sticker.
@@ -750,14 +808,20 @@ function imageRing(R) {
     const h = w * a * (top ? STONE_PAD : 1);
     const geo = top ? new THREE.CylinderGeometry(r, r, h, 48, 1, true, -theta / 2, theta) : new THREE.PlaneGeometry(w, h);
     const mat = new THREE.MeshBasicMaterial({ map:tex, transparent:true, depthWrite:false, toneMapped:false, side:THREE.FrontSide });
-    const m = new THREE.Mesh(geo, top ? stoneLens(mat, a) : mat);
+    const m = new THREE.Mesh(geo, top ? stoneLens(mat, a, u) : mat);
     m.position.set(0, p.tryonOffsetY * w, top ? 0 : R * 1.02); m.renderOrder = 5;
     g.add(m);
   });
   return g;
 }
+/* Draw every ring on the hand: the waiting ones in `worn`, then the active one (which may be carried / dragged). */
 function rebuildRing() {
   ringRoot.clear();
+  occluders.children.forEach(c => { c.scale.x = c.scale.z = 1; c.position.copy(c.userData.p0); c.rotation.z = c.userData.rot0; });
+  ringRoot.userData.parked = Object.entries(state.worn).map(([f, r]) => ({ finger:f, ring:withRing(r, f, () => placeRing(false)) }));
+  ringRoot.userData.ring = placeRing(true);
+}
+function placeRing(active) {
   const g = { ...geo(state.finger) }, k = g.w / 19, fs = HANDS[state.orient].fit.s;
   if (!state.float) {                                   // shift onto the finger's measured centre line
     const o = offAt(state.finger, state.slide) * fs, r0 = rad(g.rot);
@@ -765,7 +829,7 @@ function rebuildRing() {
     g.x -= Math.sin(rad(g.rot)) * state.slide * k - Math.sin(r0) * state.slide * k;   // keep the same point along the finger
     g.y += Math.cos(rad(g.rot)) * state.slide * k - Math.cos(r0) * state.slide * k;
   }
-  if ($('hint')) $('hint').textContent = fitStatus().msg;
+  if (active && $('hint')) $('hint').textContent = fitStatus().msg;
   const d = new THREE.Vector3(Math.sin(rad(g.rot)), Math.cos(rad(g.rot)), 0), Z = new THREE.Vector3(0, 0, 1);
   const axis = d.clone().multiplyScalar(Math.cos(TILT)).addScaledVector(Z, Math.sin(TILT));
   const front = d.clone().multiplyScalar(-Math.sin(TILT)).addScaledVector(Z, Math.cos(TILT));
@@ -775,10 +839,10 @@ function rebuildRing() {
   // Real size decides how far it slides (see stopOf); visually it hugs the finger evenly instead of hanging with a gap.
   const R = ringR();                                                                   // fixed: only the size dropdown changes it
   // Keep the finger's hidden occluder just inside the band, so the band's front half is never swallowed by it.
-  occluders.children.forEach(c => {
-    const on = c.userData.id === state.finger && !fl, s = on ? Math.min(1, R * .9 / c.userData.r) : 1;
-    c.scale.x = c.scale.z = s; c.position.copy(c.userData.p0); c.rotation.z = c.userData.rot0;
-    if (on) { const p = P2L(g.x, g.y); c.position.x = p.x; c.position.y = p.y; c.rotation.z = -rad(g.rot); }   // follow the real centre line
+  if (!fl) occluders.children.forEach(c => {
+    if (c.userData.id !== state.finger) return;
+    const s = Math.min(1, R * .9 / c.userData.r), p = P2L(g.x, g.y);
+    c.scale.x = c.scale.z = s; c.position.x = p.x; c.position.y = p.y; c.rotation.z = -rad(g.rot);   // follow the real centre line
   });
   const fx = fl ? fl.x : g.x + Math.sin(rad(g.rot)) * state.slide * k, fy = fl ? fl.y : g.y - Math.cos(rad(g.rot)) * state.slide * k;
   const surf = surfaceAt(fx, fy);
@@ -792,7 +856,41 @@ function rebuildRing() {
   sh.scale.set(R * 2.6, R * .9, 1); sh.position.copy(pos).addScaledVector(d, -R * .28); sh.position.z = surf + .6; sh.rotation.z = -rad(g.rot);
   if (fl) { sh.scale.multiplyScalar(1.6); sh.position.x += R * .5; sh.position.y -= R * 1.1; }   // softer, offset shadow while lifted
   ringRoot.add(sh);
-  ringRoot.userData.ring = ring;
+  return ring;
+}
+
+/* ---------- several rings: switch, add, remove ---------- */
+function afterRingsChanged() { refreshViewer(); renderOptions(); renderShop(); rebuildRing(); }
+function activate(f) {                                  // make the ring on finger f the active one
+  const r = state.worn[f]; if (!r || f === state.finger) return;
+  delete state.worn[f]; state.worn[state.finger] = snap();
+  Object.assign(state, { pid:r.pid, cfg:r.cfg, slide:r.slide, spin:r.spin, finger:f, float:null });
+  afterRingsChanged();
+}
+function placeNew(pid, f) {                             // a ring from the drawer dropped on finger f (replaces what was there)
+  const size = state.cfg.size;
+  if (f !== state.finger) { delete state.worn[f]; state.worn[state.finger] = snap(); state.finger = f; state.spin = 0; }
+  state.pid = pid; state.cfg = freshCfg(byId[pid]); state.cfg.size = size; state.float = null;
+  state.slide = seat(f, 0);
+  afterRingsChanged();
+  toast(fitStatus().tight ? fitStatus().msg : `${byId[pid].name} on your ${f === 'thumb' ? 'thumb' : LABEL[f].toLowerCase() + ' finger'}`);
+}
+function removeRing(f) {
+  if (f !== state.finger) delete state.worn[f];
+  else { const next = Object.keys(state.worn)[0]; if (!next) return; activate(next); delete state.worn[f]; }
+  afterRingsChanged();
+}
+function renderWorn() {
+  const box = $('wornList'); if (!box) return;
+  const all = [[state.finger, state.pid], ...Object.entries(state.worn).map(([f, r]) => [f, r.pid])]
+    .sort((a, b) => FINGERS.indexOf(a[0]) - FINGERS.indexOf(b[0]));
+  box.hidden = all.length < 2;
+  box.innerHTML = all.map(([f, pid]) => `<span class="wornchip ${f === state.finger ? 'on' : ''}" data-f="${f}" role="button" tabindex="0" title="Edit this ring">
+      <span>${LABEL[f]} · ${esc(byId[pid].name)}</span><button class="x" data-x="${f}" aria-label="Remove the ring from the ${LABEL[f]} finger">✕</button></span>`).join('');
+  box.querySelectorAll('[data-f]').forEach(el => {
+    el.onclick = e => { const x = e.target.closest('[data-x]'); x ? removeRing(x.dataset.x) : activate(el.dataset.f); };
+    el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(el.dataset.f); } };
+  });
 }
 
 /* ---------- camera: fit, zoom, pan ---------- */
@@ -842,11 +940,13 @@ function nearestFinger(pt, radius = 60) {
   FINGERS.forEach(id => { const g = geo(id), d = Math.hypot(pt.x - g.x, pt.y - g.y); if (d < bd) { bd = d; best = id; } });
   return best;
 }
-function ringHit(e) {
-  const r = ringRoot.userData.ring; if (!r) return false;
+function hitObj(e, r) {
+  if (!r) return false;
   const p = r.getWorldPosition(new THREE.Vector3()).project(camera), rc = canvas.getBoundingClientRect();
   return Math.hypot(e.clientX - rc.left - (p.x + 1) / 2 * rc.width, e.clientY - rc.top - (1 - p.y) / 2 * rc.height) < 34 + 14 * state.zoom;
 }
+const ringHit = e => hitObj(e, ringRoot.userData.ring);
+const parkedHit = e => (ringRoot.userData.parked || []).find(x => hitObj(e, x.ring))?.finger || null;
 
 /* ---------- guides drawn over the 3D view ---------- */
 let guide = null;
@@ -858,12 +958,20 @@ function drawOverlay() {
   if (guide.type === 'slide') {
     // sliding along the finger: no guide or labels, the ring itself moves
   } else {
+    // Drop zones: every finger is outlined, the one under the pointer fills in.
+    // Fingers that already wear a ring are pink: dropping there replaces (new ring) or swaps (moved ring).
     FINGERS.forEach(id => {
       const g = geo(id), c = toScreen(P2L(g.x, g.y)), e = toScreen(P2L(g.x + Math.cos(rad(g.rot)) * g.w, g.y + Math.sin(rad(g.rot)) * g.w));
       const r = Math.hypot(e.x - c.x, e.y - c.y), on = guide.hit === id;
+      const taken = !!state.worn[id] || (guide.type === 'drop' && id === state.finger), rgb = taken ? '228,106,163' : '107,78,255';
+      octx.strokeStyle = `rgb(${rgb})`;
       octx.beginPath(); octx.ellipse(c.x, c.y, r * 1.25, r * .55, rad(g.rot) * (state.side === 'right' ? 1 : -1), 0, Math.PI * 2);
       octx.setLineDash(on ? [] : [5, 4]); octx.lineWidth = on ? 2.5 : 1.5;
-      octx.fillStyle = on ? 'rgba(107,78,255,.28)' : 'rgba(107,78,255,.08)'; octx.fill(); octx.stroke(); octx.setLineDash([]);
+      octx.fillStyle = `rgba(${rgb},${on ? .28 : .08})`; octx.fill(); octx.stroke(); octx.setLineDash([]);
+      if (on) {
+        octx.font = '600 12px Inter,system-ui,sans-serif'; octx.textAlign = 'center'; octx.fillStyle = `rgb(${rgb})`;
+        octx.fillText(taken ? (guide.type === 'drop' ? 'Replace' : 'Swap') : LABEL[id], c.x, c.y - r * .55 - 8);
+      }
     });
   }
 }
@@ -872,7 +980,9 @@ function drawOverlay() {
 let drag = null;
 canvas.addEventListener('pointerdown', e => {
   canvas.setPointerCapture(e.pointerId); stopShowcase();
-  drag = { ring:state.tab === 'hand' && ringHit(e), finger0:state.finger, x:e.clientX, y:e.clientY, moved:false, yaw:state.yaw, pitch:state.pitch, panX:state.panX, panY:state.panY, slide0:state.slide };
+  let onRing = state.tab === 'hand' && ringHit(e);
+  if (!onRing && state.tab === 'hand') { const f = parkedHit(e); if (f) { activate(f); onRing = true; } }   // grab another ring on the hand
+  drag = { ring:onRing, finger0:state.finger, x:e.clientX, y:e.clientY, moved:false, yaw:state.yaw, pitch:state.pitch, panX:state.panX, panY:state.panY, slide0:state.slide };
 });
 canvas.addEventListener('pointermove', e => {
   if (!drag) return;
@@ -885,9 +995,9 @@ canvas.addEventListener('pointermove', e => {
     if (f) {
       if (f.id !== state.finger || state.float) { state.finger = f.id; state.slide = seat(f.id, f.slide); }
       else state.slide = glide(f.id, state.slide, f.slide, drag);
-      state.float = null; rebuildRing();
+      state.float = null; guide = f.id !== drag.finger0 ? { type:'move', hit:f.id } : null; rebuildRing();
     }
-    else if (pt) { state.float = pt; rebuildRing(); }                   // off the finger → carried with the pointer
+    else if (pt) { state.float = pt; guide = { type:'move', hit:fingerUnder(pt, 3.5)?.id || null }; rebuildRing(); }   // off the finger → carried with the pointer
   }
   // The hand stays fixed: dragging empty space does nothing.
 });
@@ -895,7 +1005,8 @@ canvas.addEventListener('pointerup', e => {
   const d = drag; drag = null; guide = null; if (!d) return;
   if (!d.moved && !d.ring) {                       // tap a finger → ring goes there, at the tapped spot
     const f = fingerUnder(photoAt(e));
-    if (f) { state.finger = f.id; state.slide = seat(f.id, Math.round(f.slide)); rebuildRing(); if (fitStatus().tight) toast(fitStatus().msg); }
+    if (f && state.worn[f.id]) { activate(f.id); return; }                 // tap a finger that wears a ring → edit that ring
+    if (f) { state.finger = f.id; state.slide = seat(f.id, Math.round(f.slide)); rebuildRing(); renderWorn(); if (fitStatus().tight) toast(fitStatus().msg); }
     return;
   }
   if (d.ring) {
@@ -904,7 +1015,13 @@ canvas.addEventListener('pointerup', e => {
       if (f) { state.finger = f.id; state.slide = f.slide; } else { state.finger = d.finger0; state.slide = d.slide0; }
       state.float = null;
     }
-    state.slide = seat(state.finger, Math.round(state.slide)); rebuildRing();
+    // Dropped on a finger that already wears a ring → that ring moves to where this one came from (swap).
+    const other = state.worn[state.finger];
+    if (other) {
+      delete state.worn[state.finger];
+      if (d.finger0 !== state.finger) state.worn[d.finger0] = { ...other, slide:withRing(other, d.finger0, () => seat(d.finger0, 0)) };
+    }
+    state.slide = seat(state.finger, Math.round(state.slide)); rebuildRing(); renderWorn();
     if (fitStatus().tight) toast(fitStatus().msg);
   }
 });
@@ -922,7 +1039,15 @@ function fingerUnder(pt, maxDist = 1.15) {
   return bd < maxDist ? best : null;              // farther than this → the ring is off the finger
 }
 canvas.addEventListener('dblclick', e => { if (ringHit(e)) focusRing(); });
-canvas.addEventListener('pointermove', e => { if (!drag) canvas.style.cursor = ringHit(e) ? 'grab' : 'default'; });
+canvas.addEventListener('pointermove', e => { if (!drag) canvas.style.cursor = ringHit(e) || parkedHit(e) ? 'grab' : 'default'; });
+
+/* ---------- Left / right hand: the photo is a right hand, the left is its mirror; rings stay where they are ---------- */
+document.querySelectorAll('[data-side]').forEach(b => b.onclick = () => {
+  if (state.side === b.dataset.side) return;
+  state.side = b.dataset.side;
+  document.querySelectorAll('[data-side]').forEach(x => x.classList.toggle('on', x === b));
+  applyHand();
+});
 
 // Rotate the ring around the finger: mouse wheel over the ring, or the ⟳ button.
 const spinBy = a => { state.spin = ((state.spin || 0) + a) % (Math.PI * 2); rebuildRing(); };
@@ -958,7 +1083,7 @@ function bindOptions(box) {
   // Stone size only changes a shader uniform: no rebuild, so it stays smooth while dragging.
   const setStoneK = v => {
     v = Math.round(clamp(v, STONE_MIN, STONE_MAX) * 20) / 20;
-    state.cfg.stoneK = stoneUniform.value = v;
+    state.cfg.stoneK = stoneU(state.cfg).value = v;
     const r = box.querySelector('[data-stonekr]'); if (r) r.value = v;
     const t = box.querySelector('[data-stonekv]'); if (t) t.textContent = Math.round(v * 100) + '%';
   };
@@ -976,23 +1101,127 @@ function updatePrices() {
   const sc = $('shopCart');
   if (sc) { const out = EMBED && !product().available; sc.disabled = out; sc.textContent = out ? 'Sold out' : 'Add to cart · ' + money(price()); }
 }
-/* Shopify: the ring list inside the try-on */
+/* Shopify: the ring list inside the try-on. Shows PAGE rings at a time; scrolling to the end of the grid shows the
+   next page. Once all rings the page passed in are shown, more are fetched from the store's collection
+   (the theme script calls the app's /apps/ring-tryon/products) until there are none left. */
+const PAGE = 12;
+let shown = PAGE, moreObs = null;
+let moreDone = !EMBED?.hasMore, moreBusy = false, moreError = false;
+function requestMore() {
+  if (moreDone || moreBusy) return;
+  moreBusy = true; moreError = false; toParent({ type:'more' });
+}
+function addMore(list) {                                   // rings that arrived from the store
+  list.map(fromEmbed).forEach(p => { if (!byId[p.id]) { PRODUCTS.push(p); byId[p.id] = p; } });
+}
 function renderShop() {
   const box = $('shopList'); if (!box) return;
-  box.innerHTML = PRODUCTS.map(p => `<button class="ringcard ${p.id === state.pid ? 'on' : ''}" data-id="${p.id}">
-      ${p.img ? `<img src="${p.img}" alt="" loading="lazy">` : '<span class="noimg">◯</span>'}
-      <span class="rn">${p.name.replace(/</g, '&lt;')}</span><span class="rp">${money(p.metalPrices ? Math.min(...Object.values(p.metalPrices)) : p.price)}</span></button>`).join('');
-  box.querySelectorAll('.ringcard').forEach(b => b.onclick = () => {
-    if (b.dataset.id === state.pid) return;
-    openProduct(b.dataset.id); renderPopupControls(); renderShop();
+  const idx = PRODUCTS.findIndex(p => p.id === state.pid);
+  if (idx >= shown) shown = Math.ceil((idx + 1) / PAGE) * PAGE;      // the active ring is always in the loaded part
+  const worn = new Set([state.pid, ...Object.values(state.worn).map(r => r.pid)]);
+  box.innerHTML = PRODUCTS.slice(0, shown).map(p => `<button class="ringcard ${worn.has(p.id) ? 'on' : ''}" data-id="${p.id}">
+      ${p.img ? `<img src="${esc(p.img)}" alt="" loading="lazy" draggable="false">` : '<span class="noimg">◯</span>'}
+      <span class="rn">${esc(p.name)}</span><span class="rp">${p.available === false ? 'Sold out' : money(p.metalPrices ? Math.min(...Object.values(p.metalPrices)) : p.price)}</span></button>`).join('')
+    + (shown < PRODUCTS.length || !moreDone
+      ? `<div class="more muted" id="shopMore">${moreError ? 'Couldn’t load more rings. <button class="linkbtn" id="moreRetry">Try again</button>' : 'Loading more rings…'}</div>` : '');
+  box.querySelectorAll('.ringcard').forEach(b => {
+    b.onclick = () => {
+      if (cardDrag.suppress || b.dataset.id === state.pid) return;
+      openProduct(b.dataset.id); renderPopupControls(); renderShop();
+    };
+    b.addEventListener('pointerdown', e => startCardDrag(e, b.dataset.id));
   });
+  moreObs?.disconnect(); moreObs = null;
+  const more = $('shopMore');
+  const next = () => { if (shown < PRODUCTS.length) { shown += PAGE; renderShop(); } else requestMore(); };
+  $('moreRetry')?.addEventListener('click', () => { moreError = false; requestMore(); renderShop(); });
+  if (more && !moreError && 'IntersectionObserver' in window) {
+    moreObs = new IntersectionObserver(es => { if (es.some(x => x.isIntersecting)) next(); }, { root:box, rootMargin:'120px' });
+    moreObs.observe(more);
+  } else if (more && !moreError) { shown = PRODUCTS.length; requestMore(); }
   $('shopName').textContent = product().name;
+  renderWorn();
+}
+
+/* Drag a ring from the drawer onto a finger. Mouse: just drag. Touch: press and hold briefly, then drag
+   (a quick swipe still scrolls the list). Finger drop zones light up while dragging (see drawOverlay). */
+const cardDrag = { active:false, suppress:false };
+$('shopList')?.addEventListener('touchmove', e => { if (cardDrag.active) e.preventDefault(); }, { passive:false });
+function startCardDrag(e, id) {
+  if (e.button > 0) return;
+  const x0 = e.clientX, y0 = e.clientY, touch = e.pointerType !== 'mouse';
+  let ghost = null, over = null;
+  const begin = () => {
+    cardDrag.active = true;
+    ghost = document.createElement(byId[id].img ? 'img' : 'div'); ghost.className = 'dragghost';
+    if (byId[id].img) ghost.src = byId[id].img;
+    ghost.style.left = x0 + 'px'; ghost.style.top = y0 + 'px';
+    document.body.appendChild(ghost); if (touch && navigator.vibrate) navigator.vibrate(15);
+  };
+  const timer = touch ? setTimeout(begin, 280) : null;
+  const move = ev => {
+    if (!cardDrag.active) {
+      if (Math.hypot(ev.clientX - x0, ev.clientY - y0) < 8) return;
+      if (touch) return end();                           // moved before the hold → it's a scroll
+      begin();
+    }
+    ghost.style.left = ev.clientX + 'px'; ghost.style.top = ev.clientY + 'px';
+    const r = canvas.getBoundingClientRect();
+    const inside = ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom;
+    over = inside ? fingerUnder(photoAt(ev), 3.5) : null;
+    guide = inside ? { type:'drop', hit:over?.id || null } : null;
+  };
+  const up = () => {
+    const was = cardDrag.active; end();
+    if (!was) return;
+    cardDrag.suppress = true; setTimeout(() => cardDrag.suppress = false, 0);   // don't also treat it as a tap
+    if (over) placeNew(id, over.id);
+  };
+  function end() {
+    clearTimeout(timer); ghost?.remove(); ghost = null; cardDrag.active = false; guide = null;
+    removeEventListener('pointermove', move); removeEventListener('pointerup', up); removeEventListener('pointercancel', end);
+  }
+  addEventListener('pointermove', move); addEventListener('pointerup', up); addEventListener('pointercancel', end);
+}
+
+/* Curated looks: confirm (it replaces the rings on the hand), then load only the pieces that are in stock. */
+function renderLooks() {
+  const box = $('lookList'); if (!box) return;
+  box.innerHTML = LOOKS.map((l, i) => {
+    const ok = l.items.filter(x => x.available).length, out = l.items.length - ok;
+    return `<button class="lookcard" data-look="${i}" ${ok ? '' : 'disabled'}>
+      <span class="thumbs">${l.items.slice(0, 4).map(x => byId[x.id].img ? `<img src="${esc(byId[x.id].img)}" alt="" loading="lazy">` : '').join('')}</span>
+      <span><b>${esc(l.name)}</b><small>${l.items.length} ring${l.items.length > 1 ? 's' : ''}${out ? ` · ${ok ? out + ' sold out' : 'sold out'}` : ''}</small></span></button>`;
+  }).join('') || '<div class="nocentre">No curated looks yet.</div>';
+  box.querySelectorAll('[data-look]').forEach(b => b.onclick = () => confirmLook(LOOKS[+b.dataset.look]));
+}
+function confirmLook(l) {
+  const n = 1 + Object.keys(state.worn).length, out = l.items.length - l.items.filter(x => x.available).length;
+  modal(`Try “${esc(l.name)}”?`,
+    `This replaces the ${n} ring${n > 1 ? 's' : ''} on your hand.` +
+    (out ? `<br><span class="muted">${out} piece${out > 1 ? 's are' : ' is'} sold out and won't be added.</span>` : ''),
+    [['Cancel'], ['Try this look', () => applyLook(l), true]]);
+}
+function applyLook(l) {
+  const items = l.items.filter(x => x.available && byId[x.id].available !== false); if (!items.length) return toast('This look is sold out');
+  const size = state.cfg.size; state.worn = {};
+  items.forEach(x => {
+    const cfg = freshCfg(byId[x.id]); cfg.size = size;
+    const r = { pid:x.id, cfg, slide:0, spin:0 }; r.slide = withRing(r, x.finger, () => seat(x.finger, 0));
+    state.worn[x.finger] = r;
+  });
+  const first = items[0].finger, r = state.worn[first]; delete state.worn[first];
+  Object.assign(state, { pid:r.pid, cfg:r.cfg, slide:r.slide, spin:0, finger:first, float:null });
+  afterRingsChanged(); renderPopupControls();
+  if (EMBED) setTab('shop');
+  toast(`${l.name}: ${items.length} ring${items.length > 1 ? 's' : ''} on your hand`);
 }
 
 function renderTryPanel() {}
 
 function openProduct(id) {
-  state.pid = id; state.cfg = freshCfg(product()); stoneUniform.value = 1;
+  const size = state.cfg?.size;                          // keep the shopper's ring size when switching rings
+  state.pid = id; state.cfg = freshCfg(product()); if (size != null) state.cfg.size = size;
   $('pName').textContent = product().name;
   $('productPick').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.id === id));
   refreshViewer(); renderOptions(); rebuildRing();
@@ -1035,7 +1264,9 @@ function setTab(t) {
   $('tabRing').classList.toggle('on', t === 'ring'); $('tabHand').classList.toggle('on', t === 'you'); $('tabShop')?.classList.toggle('on', t === 'shop');
   $('panelRing').hidden = t !== 'ring'; $('panelYou').hidden = t !== 'you'; $('qrCard').hidden = t === 'you';
   if ($('panelShop')) $('panelShop').hidden = t !== 'shop';
+  $('tabLooks').classList.toggle('on', t === 'looks'); $('panelLooks').hidden = t !== 'looks';
   if (t === 'shop') { renderShop(); renderOptions(); }
+  if (t === 'looks') renderLooks();
   if (t === 'you') renderModels();
 }
 function renderModels() {
@@ -1050,6 +1281,11 @@ function makeQR() {
   ['qr', 'qr2'].forEach(id => new QRCode($(id), { text, width:256, height:256, correctLevel:QRCode.CorrectLevel.M }));
 }
 $('tabRing').onclick = () => setTab('ring');
+// Curated looks: switched off for now (code kept). To turn back on, use the line below instead of `hidden = true`,
+// and restore the "looks" setting in extensions/tryon-theme/blocks/tryon-button.liquid.
+// $('tabLooks').hidden = !LOOKS.length;
+$('tabLooks').hidden = true;
+$('tabLooks').onclick = () => setTab('looks');
 $('tabHand').onclick = () => { setTab('you'); makeQR(); };
 
 /* =====================================================================
@@ -1057,7 +1293,7 @@ $('tabHand').onclick = () => { setTab('you'); makeQR(); };
    ===================================================================== */
 function openTryOn() {
   state.open = true; $('tryon').hidden = false; document.body.style.overflow = 'hidden';
-  Object.assign(state, { finger:'ring', slide:0, yaw:0, pitch:0, zoom:1, panX:0, panY:0 });
+  Object.assign(state, { worn:{}, finger:'ring', slide:0, yaw:0, pitch:0, zoom:1, panX:0, panY:0 });
   camera.zoom = 1; camera.updateProjectionMatrix();
   renderPopupControls(); setTab(EMBED ? 'shop' : 'ring'); makeQR();
   requestAnimationFrame(() => { resize(); applyHand(); });
@@ -1138,6 +1374,15 @@ if (EMBED) {
   $('keepTrying').onclick = () => { $('addedSheet').hidden = true; };
   window.addEventListener('message', e => {
     if (e.data?.source !== 'ring-tryon-host') return;
+    if (e.data.type === 'more') {
+      moreBusy = false;
+      if (e.data.error) { moreError = true; console.warn('[Ring Try-On]', e.data.error); }
+      addMore(e.data.products || []);
+      moreDone = !!e.data.done;
+      shown = Math.max(shown, Math.min(PRODUCTS.length, shown + PAGE));
+      renderShop();
+      return;
+    }
     if (e.data.type === 'added') {
       updatePrices();
       if (!e.data.ok) return toast(e.data.error || 'Could not add to cart');

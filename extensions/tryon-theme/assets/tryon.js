@@ -55,6 +55,21 @@
         || (p._metalIdx < 0 && p._sizeIdx < 0 ? all[0] : null);
   }
 
+  /* Curated looks from the block setting, one per line: "Name: handle@finger, handle@finger".
+     Resolved to the products we already have (with try-on images); each piece carries its stock. */
+  const FINGERS = ['thumb', 'index', 'middle', 'ring', 'pinky'];
+  function parseLooks(text, products) {
+    const byHandle = Object.fromEntries(products.map(p => [norm(p.handle), p]));
+    return String(text || '').split(/\r?\n/).map(line => {
+      const m = line.match(/^\s*([^:]+):(.+)$/); if (!m) return null;
+      const items = m[2].split(',').map(x => {
+        const [h, f] = x.split('@').map(norm), p = byHandle[h];
+        return p && { key: String(p.productId), finger: FINGERS.includes(f) ? f : 'ring', available: p.variants.some(v => v.available) };
+      }).filter(Boolean);
+      return items.length ? { name: m[1].trim(), items } : null;
+    }).filter(Boolean);
+  }
+
   /* Debug: open any product page with ?tryon_viewer=http://localhost:8800/viewer/ to load the viewer
      from your computer instead of the hosted one (remembered for this tab; ?tryon_viewer=off clears it). */
   function debugViewer() {
@@ -87,7 +102,8 @@
     frame.allow = 'camera; fullscreen; clipboard-write';
     frame.src = viewerUrl.split('#')[0] + '#c=' + encode({
       currency: data.currency, locale: data.locale, origin: location.origin,
-      current: String(data.currentId), products: viewerProducts,
+      current: String(data.currentId), products: viewerProducts, looks: parseLooks(s.looks, products),
+      hasMore: !!data.collection?.more,
     });
     document.body.appendChild(frame);
     document.documentElement.classList.add('ring-tryon-lock');
@@ -129,6 +145,32 @@
     }
   }
 
+  /* The viewer scrolled past the rings it has: fetch the next page of the block's collection from the app
+     (app proxy, same domain) and remember the products so add-to-cart can match their variants. */
+  async function more() {
+    const c = current.data.collection;
+    if (!c || current.done) return reply({ type: 'more', products: [], done: true });
+    if (current.loading) return;
+    current.loading = true;
+    const ctx = current;
+    try {
+      const u = new URL('/apps/ring-tryon/products', location.origin);
+      u.searchParams.set('collection', c.handle);
+      if (ctx.cursor) u.searchParams.set('after', ctx.cursor); else u.searchParams.set('offset', c.offset || 0);
+      if (window.Shopify?.country) u.searchParams.set('country', window.Shopify.country);
+      const res = await fetch(u, { headers: { Accept: 'application/json' } });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.error || 'Could not load more rings');
+      if (ctx !== current) return;                                  // try-on was closed meanwhile
+      ctx.cursor = body.cursor; ctx.done = !body.hasMore;
+      const fresh = (body.products || []).filter(p => !ctx.byKey[String(p.productId)]);
+      fresh.forEach(p => { ctx.byKey[String(p.productId)] = p; });
+      reply({ type: 'more', products: fresh.map(p => prepare(p, ctx.data.settings || {})), done: ctx.done });
+    } catch (e) {
+      if (ctx === current) reply({ type: 'more', products: [], done: false, error: e.message });
+    } finally { ctx.loading = false; }
+  }
+
   /* Update the theme's cart icon / count without reloading the page. Returns the number of items in the cart. */
   async function refreshCart() {
     const root = window.Shopify?.routes?.root || '/';
@@ -158,6 +200,7 @@
     if (!current || e.origin !== current.origin || e.data?.source !== 'ring-tryon') return;
     if (e.data.type === 'close') close();
     else if (e.data.type === 'add') add(e.data);
+    else if (e.data.type === 'more') more();
     else if (e.data.type === 'goto') {
       const root = window.Shopify?.routes?.root || '/';
       location.href = e.data.to === 'checkout' ? '/checkout' : root + 'cart';
