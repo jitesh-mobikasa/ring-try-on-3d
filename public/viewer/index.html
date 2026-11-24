@@ -344,7 +344,7 @@ const $ = id => document.getElementById(id);
 const state = { float:null, tab:'hand', pid:(PRODUCTS.find(p => p.key === EMBED?.current) || PRODUCTS[0]).id, cfg:null, finger:'ring', slide:0, side:'right', orient:'back', panel:'ring', tone:20,
   yaw:0, pitch:0, zoom:1, panX:0, panY:0, open:false, cart:[], sizeSys:'US' };
 const product = () => byId[state.pid];
-const freshCfg = p => ({ metal:p.metal, stone:p.stone, shape:p.shape, carat:1, band:1, size:4 });
+const freshCfg = p => ({ metal:p.metal, stone:p.stone, shape:p.shape, carat:1, band:1, size:4, stoneK:1 });
 state.cfg = freshCfg(product());
 const geo = id => { const h = HANDS[state.orient], g = h.geo[id], f = h.fit; return { x:g.x * f.s + f.dx, y:g.y * f.s + f.dy, rot:g.rot, w:g.w * f.s }; };
 const caratFee = () => hasCenter(product()) ? Math.round((Math.pow(state.cfg.carat, 1.7) - 1) * 1400 / 10) * 10 : 0;
@@ -717,6 +717,27 @@ function loadTryonTexture(url) {
     l.load(url, t => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; res(t); }, undefined, () => res(null));
   });
 }
+/* Stone size: a top-view image has the centre stone in the middle, so a radial "lens" in the shader magnifies
+   (or shrinks) just that area and fades back to 1× before the band. The card is made taller (STONE_PAD) so a
+   bigger stone has room above and below the image; anything outside the image is transparent. */
+const STONE_MIN = .6, STONE_MAX = 1.6, STONE_PAD = STONE_MAX;
+const stoneUniform = { value:1 };
+function stoneLens(mat, aspect) {
+  mat.onBeforeCompile = sh => {
+    sh.uniforms.uStoneK = stoneUniform;
+    sh.uniforms.uAspect = { value:aspect };
+    sh.fragmentShader = 'uniform float uStoneK;\nuniform float uAspect;\n' + sh.fragmentShader.replace('#include <map_fragment>', `
+      vec2 uv = vec2(vMapUv.x, (vMapUv.y - .5) * ${STONE_PAD.toFixed(2)} + .5);  // padded card → image
+      vec2 q = vec2((uv.x - .5) / uAspect, uv.y - .5);   // image-height units, centred on the stone
+      float d = length(q);
+      float rIn = .5, rOut = .5 * max(uStoneK, 1.) + .35;  // stone area, then blend back to the untouched band
+      float k = mix(uStoneK, 1., smoothstep(rIn * uStoneK, rOut, d));
+      q /= k; uv = vec2(q.x * uAspect + .5, q.y + .5);
+      if (uv.y < 0. || uv.y > 1. || uv.x < 0. || uv.x > 1.) discard;
+      diffuseColor *= texture2D(map, uv);`);
+  };
+  return mat;
+}
 function imageRing(R) {
   const p = product(), g = new THREE.Group();
   loadTryonTexture(p.tryonImage).then(tex => {
@@ -726,9 +747,10 @@ function imageRing(R) {
     // so the band's ends curve away round the sides like a real ring instead of a flat sticker.
     // (only for top-view images; a side-angle product photo would look twisted, so it stays a flat card)
     const r = R * 1.04, theta = Math.min(Math.PI * 0.92, w / r), top = p.tryonView === 'top';
-    const geo = top ? new THREE.CylinderGeometry(r, r, w * a, 48, 1, true, -theta / 2, theta) : new THREE.PlaneGeometry(w, w * a);
-    const m = new THREE.Mesh(geo,
-      new THREE.MeshBasicMaterial({ map:tex, transparent:true, depthWrite:false, toneMapped:false, side:THREE.FrontSide }));
+    const h = w * a * (top ? STONE_PAD : 1);
+    const geo = top ? new THREE.CylinderGeometry(r, r, h, 48, 1, true, -theta / 2, theta) : new THREE.PlaneGeometry(w, h);
+    const mat = new THREE.MeshBasicMaterial({ map:tex, transparent:true, depthWrite:false, toneMapped:false, side:THREE.FrontSide });
+    const m = new THREE.Mesh(geo, top ? stoneLens(mat, a) : mat);
     m.position.set(0, p.tryonOffsetY * w, top ? 0 : R * 1.02); m.renderOrder = 5;
     g.add(m);
   });
@@ -920,6 +942,8 @@ function optionsHTML() {
     ${hasCenter(p) && !EMBED ? `
     <div class="optgrp"><div class="optlbl">Centre Stone Shape</div><div class="pills">${SHAPES.map(s => `<button class="pillopt ${c.shape === s ? 'on' : ''}" data-shape="${s}">${s[0].toUpperCase() + s.slice(1)}</button>`).join('')}</div></div>
     <div class="optgrp"><div class="optlbl">Carat</div><div class="caratrow"><input data-carat type="range" min="0.5" max="7" step="0.25" value="${c.carat}"><b data-caratv>${c.carat.toFixed(2)} ct</b></div></div>` : ''}
+    ${p.tryonImage && p.tryonView === 'top' ? `
+    <div class="optgrp"><div class="optlbl">Stone Size</div><div class="caratrow"><button class="pillopt" data-stonek="-1" aria-label="Smaller stone">−</button><input data-stonekr type="range" min="${STONE_MIN}" max="${STONE_MAX}" step="0.05" value="${c.stoneK}" aria-label="Stone size"><button class="pillopt" data-stonek="1" aria-label="Bigger stone">+</button><b data-stonekv>${Math.round(c.stoneK * 100)}%</b></div></div>` : ''}
     <div class="optgrp"><div class="optlbl">Ring Size</div><div class="row"><select class="size" data-size>${RING_SIZES.map((s, i) => `<option value="${i}" ${c.size === i ? 'selected' : ''}>${state.sizeSys === 'US' ? 'US ' + s[0] : 'AU ' + s[1]}</option>`).join('')}</select>
       <div class="seg"><button data-sys="US" class="${state.sizeSys === 'US' ? 'on' : ''}">US</button><button data-sys="AU" class="${state.sizeSys === 'AU' ? 'on' : ''}">AU/NZ</button></div></div></div>`;
 }
@@ -931,6 +955,15 @@ function bindOptions(box) {
   box.querySelector('[data-carat]')?.addEventListener('input', e => { live({ carat:+e.target.value }); box.querySelector('[data-caratv]').textContent = (+e.target.value).toFixed(2) + ' ct'; });
   box.querySelector('[data-carat]')?.addEventListener('change', renderOptions);
   box.querySelector('[data-band]')?.addEventListener('input', e => live({ band:+e.target.value }));
+  // Stone size only changes a shader uniform: no rebuild, so it stays smooth while dragging.
+  const setStoneK = v => {
+    v = Math.round(clamp(v, STONE_MIN, STONE_MAX) * 20) / 20;
+    state.cfg.stoneK = stoneUniform.value = v;
+    const r = box.querySelector('[data-stonekr]'); if (r) r.value = v;
+    const t = box.querySelector('[data-stonekv]'); if (t) t.textContent = Math.round(v * 100) + '%';
+  };
+  box.querySelector('[data-stonekr]')?.addEventListener('input', e => setStoneK(+e.target.value));
+  box.querySelectorAll('[data-stonek]').forEach(b => b.onclick = () => setStoneK(state.cfg.stoneK + .1 * b.dataset.stonek));
   box.querySelector('[data-size]').onchange = e => { state.cfg.size = +e.target.value; state.slide = seat(state.finger, 0); rebuildRing(); toast(fitStatus().msg); };
   box.querySelectorAll('[data-sys]').forEach(b => b.onclick = () => { state.sizeSys = b.dataset.sys; renderOptions(); });
 }
@@ -959,7 +992,7 @@ function renderShop() {
 function renderTryPanel() {}
 
 function openProduct(id) {
-  state.pid = id; state.cfg = freshCfg(product());
+  state.pid = id; state.cfg = freshCfg(product()); stoneUniform.value = 1;
   $('pName').textContent = product().name;
   $('productPick').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.id === id));
   refreshViewer(); renderOptions(); rebuildRing();
