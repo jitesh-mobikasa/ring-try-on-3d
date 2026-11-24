@@ -165,6 +165,114 @@
   .lookcard .thumbs img { width:44px; height:44px; border-radius:50%; object-fit:cover; border:2px solid #fff; margin-left:-12px; background:var(--soft); }
   .lookcard .thumbs img:first-child { margin-left:0; }
   .lookcard b { display:block; font-size:14px; font-weight:500; } .lookcard small { color:var(--muted); font-size:12px; }
+  /* search + filters in the ring drawer */
+  .finder { padding:10px 14px 0; display:flex; flex-direction:column; gap:8px; }
+  .finder input[type=search] { width:100%; border:1px solid var(--line); border-radius:6px; padding:9px 12px; background:#fff; }
+  .chips { display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; scrollbar-width:none; }
+  .chips::-webkit-scrollbar { display:none; }
+  .chip { flex:none; border:1px solid var(--line); background:#fff; border-radius:16px; padding:4px 11px; font-size:12px; white-space:nowrap; }
+  .chip.on { background:var(--ink); color:#fff; border-color:var(--ink); }
+  .chips select.chip { padding-right:6px; }
+  .nomatch { grid-column:1/-1; text-align:center; color:var(--muted); font-size:13px; padding:18px 6px; }
+  .nomatch button { margin-top:6px; }
+  .linkbtn { background:none; border:0; padding:0; color:var(--ink); text-decoration:underline; font-size:inherit; cursor:pointer; }
+  .shopname { display:flex; align-items:center; justify-content:center; gap:8px; }
+  .infobtn { border:1px solid var(--line); background:#fff; border-radius:14px; padding:2px 10px; font-size:12px; }
+  .lookbar { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:8px; }
+  .lookbar button { border:1px solid var(--line); background:#fff; border-radius:6px; padding:8px 4px; font-size:12px; }
+  /* My selections + Buy this look */
+  .selcount { display:inline-block; min-width:18px; padding:0 5px; border-radius:9px; background:var(--pink); color:#fff; font-size:11px; line-height:18px; }
+  .rail button.on .selcount { background:#fff; color:var(--ink); }
+  .sel { padding:12px 14px; display:flex; flex-direction:column; gap:14px; }
+  .selhand { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; display:flex; justify-content:space-between; align-items:center; }
+  .selhand button { font-size:12px; }
+  .selitem { display:grid; grid-template-columns:56px 1fr auto; gap:10px; align-items:center; border:1px solid var(--line); border-radius:10px; padding:8px; }
+  .selitem.on { border-color:var(--pink); box-shadow:0 0 0 1px var(--pink); }
+  .selitem img, .selitem .noimg { width:56px; height:56px; border-radius:8px; object-fit:cover; background:var(--soft); }
+  .selitem b { display:block; font-weight:500; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .selitem small { color:var(--muted); font-size:12px; display:block; }
+  .selitem .out { color:#b3261e; }
+  .selitem .side { display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+  .selitem .side button { border:1px solid var(--line); background:#fff; border-radius:6px; padding:3px 8px; font-size:12px; }
+  .seltotal { display:flex; justify-content:space-between; font-size:15px; margin-bottom:10px; }
+  #buyLook { width:100%; min-height:46px; border:0; border-radius:6px; background:#2a2320; color:#fff; font-size:15px; }
+  #buyLook:disabled { opacity:.6; }
+  /* menu drawer (☰) */
+  .menubtn { position:absolute; right:66px; top:34px; width:26px; height:26px; border-radius:50%; padding:0; font-size:13px; background:#fff; border:1px solid #333; z-index:3; line-height:1; }
+  .drawer { position:absolute; top:0; right:0; bottom:0; width:min(320px,100%); background:#fff; z-index:6; box-shadow:-8px 0 30px rgba(0,0,0,.12);
+    transform:translateX(105%); transition:transform .22s ease; display:flex; flex-direction:column; border-radius:0 14px 14px 0; overflow:auto; }
+  .drawer.open { transform:none; }
+  .drawer header { display:flex; justify-content:space-between; align-items:center; padding:16px 18px; border-bottom:1px solid var(--line); font-size:15px; }
+  .drawer header button { border:0; background:none; font-size:16px; }
+  .drawer section { padding:14px 18px; border-bottom:1px solid var(--line); display:flex; flex-direction:column; gap:10px; }
+  .drawer h4 { margin:0; font-size:12px; font-weight:500; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; }
+  .drawer .seg2 { display:grid; grid-template-columns:1fr 1fr; border:1px solid var(--line); border-radius:6px; overflow:hidden; }
+  .drawer .seg2 button { border:0; background:#fff; padding:9px; }
+  .drawer .seg2 button.on { background:var(--ink); color:#fff; }
+  .drawer .item { display:flex; align-items:center; gap:10px; width:100%; text-align:left; border:0; background:none; padding:8px 0; font-size:14px; }
+  .drawer .item i { width:22px; text-align:center; font-style:normal; }
+  .swatches { display:flex; gap:8px; }
+  .swatch { width:30px; height:30px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1px var(--line); padding:0; }
+  .swatch.on { box-shadow:0 0 0 2px var(--ink); }
+  input.tone2 { width:100%; accent-color:var(--brand); }
+  /* pop-ups built on .modal */
+  .modal.wide { width:min(860px,100%); }
+  .modal input.field { width:100%; border:1px solid var(--line); border-radius:6px; padding:10px 12px; }
+  .modal .thumb { width:100%; max-height:260px; object-fit:contain; background:var(--soft); border-radius:8px; }
+  .modal .muted { color:var(--muted); font-size:13px; }
+  .sharelinks { display:flex; gap:8px; flex-wrap:wrap; }
+  .sharelinks a { border:1px solid var(--line); border-radius:16px; padding:5px 12px; font-size:13px; color:var(--ink); text-decoration:none; }
+  .hands2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .hands2 figure { margin:0; display:flex; flex-direction:column; gap:6px; }
+  .hands2 img { width:100%; aspect-ratio:1; object-fit:contain; background:var(--soft); border-radius:8px; }
+  .hands2 figcaption { font-size:13px; } .hands2 figcaption small { color:var(--muted); display:block; }
+  .pd-main { width:100%; aspect-ratio:1; object-fit:contain; background:var(--soft); border-radius:8px; }
+  .pd-thumbs { display:flex; gap:6px; overflow-x:auto; }
+  .pd-thumbs button { flex:none; width:56px; height:56px; padding:0; border:1px solid var(--line); border-radius:6px; overflow:hidden; background:var(--soft); }
+  .pd-thumbs button.on { border-color:var(--ink); }
+  .pd-thumbs img { width:100%; height:100%; object-fit:cover; }
+  .pd-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  .pd-facts { display:grid; grid-template-columns:auto 1fr; gap:4px 12px; font-size:13px; } .pd-facts dt { color:var(--muted); } .pd-facts dd { margin:0; }
+  .pd-desc { font-size:13px; color:#555; white-space:pre-line; }
+  .faq details { border-bottom:1px solid var(--line); padding:10px 0; } .faq summary { cursor:pointer; font-weight:500; } .faq p { margin:8px 0 0; color:#555; font-size:13px; }
+  /* tutorial */
+  .tour { position:absolute; inset:0; z-index:8; background:rgba(30,24,20,.5); display:flex; align-items:center; justify-content:center; padding:16px; border-radius:14px; }
+  .tourcard { background:#fff; border-radius:14px; padding:22px; width:min(380px,100%); display:flex; flex-direction:column; gap:12px; text-align:center; }
+  .tourcard .ico { font-size:38px; } .tourcard h3 { margin:0; } .tourcard p { margin:0; color:#555; }
+  .tourdots { display:flex; gap:6px; justify-content:center; } .tourdots i { width:7px; height:7px; border-radius:50%; background:var(--line); } .tourdots i.on { background:var(--ink); }
+  .tourbtns { display:flex; justify-content:space-between; }
+  .tourbtns button { border:1px solid var(--line); background:#fff; border-radius:6px; padding:8px 16px; }
+  .tourbtns .primary { background:var(--ink); color:#fff; border-color:var(--ink); }
+  /* My Looks */
+  .mine { padding:14px; display:flex; flex-direction:column; gap:10px; }
+  .mineempty { text-align:center; padding:36px 18px; display:flex; flex-direction:column; gap:10px; align-items:center; color:#555; }
+  .mineempty .ico { font-size:34px; } .mineempty b { color:var(--ink); font-size:15px; font-weight:500; }
+  .mineempty button, .minecard .acts button { border:1px solid var(--ink); background:var(--ink); color:#fff; border-radius:6px; padding:8px 16px; }
+  .minecard { display:flex; gap:10px; border:1px solid var(--line); border-radius:10px; padding:8px; align-items:center; }
+  .minecard img, .minecard .noimg { width:64px; height:64px; border-radius:8px; object-fit:cover; background:var(--soft); flex:none; }
+  .minecard .meta { flex:1; min-width:0; } .minecard b { display:block; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .minecard small { color:var(--muted); }
+  .minecard .acts { display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; }
+  .minecard .acts button { padding:4px 10px; font-size:12px; }
+  .minecard .acts button.ghost { background:#fff; color:var(--ink); border-color:var(--line); }
+  @media (max-width: 640px) {
+    .hands2, .pd-grid { grid-template-columns:1fr; }
+    .drawer { border-radius:0; }
+  }
+  /* Mobile: hand on top, products in a bottom sheet you drag up / down (3 heights), rings in swipeable rows */
+  .sheethandle { display:none; }
+  @media (max-width: 1100px) {
+    .tbox { grid-template-rows:auto minmax(0,1fr) var(--sheet, 42vh) !important; }
+    .tleft { max-height:none !important; height:auto; border-radius:16px 16px 0 0 !important; box-shadow:0 -6px 24px rgba(0,0,0,.12); position:relative; z-index:4; background:#fff; }
+    .sheethandle { display:flex; flex:none; justify-content:center; align-items:center; position:sticky; top:0; z-index:5; height:26px; min-height:26px; background:#fff; touch-action:none; cursor:grab; border:0; width:100%; padding:0; }
+    .sheethandle::before { content:""; width:42px; height:5px; border-radius:3px; background:#d6cfca; }
+    .ringgrid { grid-template-columns:none; grid-auto-flow:column; grid-auto-columns:minmax(118px,36%); overflow-x:auto; overflow-y:hidden; max-height:none;
+      scroll-snap-type:x mandatory; overscroll-behavior-x:contain; padding-bottom:10px; }
+    .ringgrid .ringcard { scroll-snap-align:start; touch-action:pan-x; }
+    .ringgrid .more, .ringgrid .nomatch { grid-column:auto; display:flex; align-items:center; justify-content:center; min-width:110px; }
+    .thead { padding:8px; font-size:14px; }
+    .sideseg { top:66px; right:14px; } .menubtn { right:54px; top:20px; } .closeX { right:18px; top:20px; }
+  }
   /* left / right hand */
   .sideseg { position:absolute; right:20px; top:72px; z-index:3; display:flex; border:1px solid #ddd; border-radius:16px; overflow:hidden; background:#fff; box-shadow:0 2px 10px rgba(0,0,0,.08); }
   .sideseg button { border:0; background:#fff; padding:5px 11px; font-size:12px; }
@@ -245,16 +353,23 @@
     <div class="rail">
       <button id="tabShop" hidden><svg viewBox="0 0 40 40" fill="none" stroke="#e46aa3" stroke-width="1.6"><rect x="7" y="7" width="11" height="11" rx="2"/><rect x="22" y="7" width="11" height="11" rx="2"/><rect x="7" y="22" width="11" height="11" rx="2"/><rect x="22" y="22" width="11" height="11" rx="2"/></svg>Rings</button>
       <button id="tabLooks" hidden><svg viewBox="0 0 40 40" fill="none" stroke="#e46aa3" stroke-width="1.6"><circle cx="14" cy="24" r="7"/><circle cx="26" cy="24" r="7"/><path d="M12 13l2-3 2 3M24 13l2-3 2 3"/></svg>Looks</button>
+      <button id="tabSel"><svg viewBox="0 0 40 40" fill="none" stroke="#e46aa3" stroke-width="1.6"><path d="M9 13h22l-2 17H11z"/><path d="M15 13a5 5 0 0 1 10 0"/></svg>Selected <span class="selcount" id="selCount">1</span></button>
+      <button id="tabMine"><svg viewBox="0 0 40 40" fill="none" stroke="#e46aa3" stroke-width="1.6"><path d="M20 32s-11-6.6-11-14a6 6 0 0 1 11-3.3A6 6 0 0 1 31 18c0 7.4-11 14-11 14z"/></svg>My looks</button>
       <button id="tabRing" class="on"><svg viewBox="0 0 40 40" fill="none" stroke="#e46aa3" stroke-width="1.8"><circle cx="20" cy="25" r="11"/><path d="M16 9l4-4 4 4-4 4z"/></svg>Ring</button>
       <button id="tabHand"><svg viewBox="0 0 40 40" fill="none" stroke="#e46aa3" stroke-width="1.6" stroke-linecap="round"><path d="M12 22V10m5 10V6m5 14V7m5 15V11M12 22c0 7 4 12 10 12s9-5 9-10l3-6"/></svg>On you</button>
     </div>
-    <div class="tleft">
+    <div class="tleft" id="tleft">
+      <button class="sheethandle" id="sheetHandle" aria-label="Drag to resize the panel, tap to expand or collapse"></button>
       <div id="panelShop" hidden>
         <div class="thead">Choose a ring</div>
         <div class="worn" id="wornList" hidden></div>
+        <div class="finder">
+          <input type="search" id="findQ" placeholder="Search rings" aria-label="Search rings" autocomplete="off">
+          <div class="chips" id="findChips" role="group" aria-label="Filters"></div>
+        </div>
         <div class="drawtip">Tap a ring to try it, or drag it onto any finger</div>
         <div class="ringgrid" id="shopList"></div>
-        <div class="thead" id="shopName"></div>
+        <div class="thead shopname"><span id="shopName"></span><button class="infobtn" id="pdBtn" aria-label="Product details">ⓘ Details</button></div>
         <div class="shopopts" id="shopOptions"></div>
         <div class="shopbuy">
           <div class="added" id="addedSheet" hidden>
@@ -263,11 +378,28 @@
             <button id="keepTrying" class="linkbtn">Keep trying on</button>
           </div>
           <button class="primary" id="shopCart">Add to cart</button>
+          <div class="lookbar"><button data-act="save">♡ Save look</button><button data-act="share">↗ Share</button><button data-act="download">⤓ Download</button></div>
         </div>
       </div>
       <div id="panelLooks" hidden>
         <div class="thead">Curated looks</div>
         <div class="looks" id="lookList"></div>
+      </div>
+      <div id="panelSel" hidden>
+        <div class="thead">My selections</div>
+        <div class="sel" id="selList"></div>
+        <div class="shopbuy" id="selBuy">
+          <div class="added" id="lookAdded" hidden>
+            <div class="addedhead"><span class="tick">✓</span><div><b id="lookAddedTitle">Added to your bag</b><div class="muted" id="lookAddedText"></div></div></div>
+            <div class="addedbtns"><button class="dark" data-goto="checkout">Checkout</button><button data-goto="cart">View bag</button></div>
+          </div>
+          <div class="seltotal"><span>Total</span><b id="selTotal"></b></div>
+          <button class="primary" id="buyLook">Buy this look</button>
+        </div>
+      </div>
+      <div id="panelMine" hidden>
+        <div class="thead">My looks</div>
+        <div class="mine" id="mineList"></div>
       </div>
       <div id="panelRing">
         <div class="thead">Shape</div>
@@ -288,8 +420,31 @@
       <canvas id="overlay"></canvas>
       <div class="brand">Powered by<b>AMARA</b></div>
       <button class="closeX" id="closeTry" aria-label="Close try-on">✕</button>
+      <button class="menubtn" id="menuBtn" aria-label="Menu" aria-expanded="false" aria-controls="drawer">☰</button>
       <div class="sideseg" role="group" aria-label="Which hand"><button data-side="left">Left</button><button data-side="right" class="on">Right</button></div>
       <div class="skinwrap" title="Skin tone"><input id="tone" class="skinv" type="range" min="0" max="100" value="20" aria-label="Skin tone"></div>
+      <!-- Menu drawer: hand, complexion, both hands, save / share / download, help -->
+      <aside class="drawer" id="drawer" aria-label="Menu" aria-hidden="true">
+        <header><span>Menu</span><button id="drawerClose" aria-label="Close menu">✕</button></header>
+        <section><h4>Hand</h4>
+          <div class="seg2" role="group" aria-label="Which hand"><button data-side="left">Left hand</button><button data-side="right" class="on">Right hand</button></div>
+          <button class="item" data-act="both"><i>🖐🖐</i>View both hands</button>
+        </section>
+        <section><h4>Complexion</h4>
+          <div class="swatches" id="swatches"></div>
+          <input class="tone2" id="tone2" type="range" min="0" max="100" value="20" aria-label="Skin tone">
+        </section>
+        <section><h4>Your look</h4>
+          <button class="item" data-act="save"><i>♡</i>Save look</button>
+          <button class="item" data-act="mine"><i>☰</i>My looks</button>
+          <button class="item" data-act="share"><i>↗</i>Share look</button>
+          <button class="item" data-act="download"><i>⤓</i>Download image</button>
+        </section>
+        <section><h4>Help</h4>
+          <button class="item" data-act="tour"><i>▶</i>How it works</button>
+          <button class="item" data-act="help"><i>?</i>Help &amp; FAQ</button>
+        </section>
+      </aside>
       <button class="zoomBtn" id="zoomBtn" title="Zoom in on the ring">⌕</button>
       <button class="zoomBtn" id="spinBtn" title="Rotate the ring around the finger" style="bottom:82px">⟳</button>
       <div class="hint" id="hint">Drag the ring along the finger · slide it off the tip onto another finger</div>
@@ -338,6 +493,7 @@ const fromEmbed = x => ({
   metal:x.metalPrices && !(x.metal in x.metalPrices) ? Object.keys(x.metalPrices)[0] : (x.metal || 'Y'),
   metalPrices:x.metalPrices, metalImages:x.metalImages, available:x.available !== false,
   tryonImage:x.tryon?.image || null, tryonScale:+x.tryon?.scale || 1, tryonView:x.tryon?.view || 'photo', tryonOffsetY:+x.tryon?.offsetY || 0,
+  desc:x.description || '', type:x.type || '', images:(x.images && x.images.length ? x.images : [x.image]).filter(Boolean),
 });
 // PRODUCTS grows when more rings are loaded from the store (see requestMore)
 const PRODUCTS = EMBED ? (EMBED.products || []).map(fromEmbed) : DEMO_PRODUCTS;
@@ -391,7 +547,7 @@ const $ = id => document.getElementById(id);
    so all the fit and price code works on it unchanged. Other rings on the hand wait in `worn`
    (finger → { pid, cfg, slide, spin }); touching one makes it the active ring.
    ===================================================================== */
-const state = { worn:{}, float:null, tab:'hand', pid:(PRODUCTS.find(p => p.key === EMBED?.current) || PRODUCTS[0]).id, cfg:null, finger:'ring', slide:0, side:'right', orient:'back', panel:'ring', tone:20,
+const state = { worn:{}, hands:{ left:null, right:null }, float:null, tab:'hand', pid:(PRODUCTS.find(p => p.key === EMBED?.current) || PRODUCTS[0]).id, cfg:null, finger:'ring', slide:0, side:'right', orient:'back', panel:'ring', tone:20,
   yaw:0, pitch:0, zoom:1, panX:0, panY:0, open:false, cart:[], sizeSys:'US' };
 const product = () => byId[state.pid];
 const freshCfg = p => ({ metal:p.metal, stone:p.stone, shape:p.shape, carat:1, band:1, size:4, stoneK:1 });
@@ -401,6 +557,11 @@ const caratFee = () => hasCenter(product()) ? Math.round((Math.pow(state.cfg.car
 const price = () => EMBED ? (product().metalPrices?.[state.cfg.metal] ?? product().price) : product().price + METALS[state.cfg.metal].add + caratFee();
 const spec = () => ({ style:product().style, ...state.cfg });
 const snap = () => ({ pid:state.pid, cfg:state.cfg, slide:state.slide, spin:state.spin || 0 });
+/* Each hand has its own rings. The hand on screen lives in the active-ring fields + worn; the other hand's set
+   waits in state.hands[side] (null = no rings yet). */
+const handSet = () => ({ pid:state.pid, cfg:state.cfg, finger:state.finger, slide:state.slide, spin:state.spin || 0, worn:{ ...state.worn } });
+const loadSet = s => Object.assign(state, { pid:s.pid, cfg:s.cfg, finger:s.finger, slide:s.slide, spin:s.spin || 0, worn:{ ...s.worn }, float:null });
+const ringsIn = s => s ? [[s.finger, s.pid, s.cfg], ...Object.entries(s.worn).map(([f, r]) => [f, r.pid, r.cfg])] : [];
 // Run fn as if ring r on `finger` were the active one (fit / size / drawing code all read the active ring).
 function withRing(r, finger, fn) {
   const keep = { pid:state.pid, cfg:state.cfg, slide:state.slide, spin:state.spin, finger:state.finger, float:state.float };
@@ -767,11 +928,11 @@ function bump(id, stop) {
 
 /* Shopify: the product's AI-made try-on image (transparent PNG, ring seen from above, band left→right).
    Drawn as a flat card in the ring's local frame: X = across the finger, Y = along it, +Z = towards the camera. */
-const tryonTex = {};
+const tryonTex = {}, tryonTexDone = {};   // tryonTexDone: already loaded → drawn at once (snapshots need that)
 function loadTryonTexture(url) {
   return tryonTex[url] ||= new Promise(res => {
     const l = new THREE.TextureLoader(); l.setCrossOrigin('anonymous');
-    l.load(url, t => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; res(t); }, undefined, () => res(null));
+    l.load(url, t => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; tryonTexDone[url] = t; res(t); }, undefined, () => res(null));
   });
 }
 /* Stone size: a top-view image has the centre stone in the middle, so a radial "lens" in the shader magnifies
@@ -798,7 +959,7 @@ function stoneLens(mat, aspect, uniform) {
 }
 function imageRing(R) {
   const p = product(), g = new THREE.Group(), u = stoneU(state.cfg);
-  loadTryonTexture(p.tryonImage).then(tex => {
+  const build = tex => {
     if (!tex) return;                                   // (if the ring was rebuilt meanwhile, g is simply no longer in the scene)
     const a = tex.image.height / tex.image.width, w = R * 2.35 * p.tryonScale;   // ring width ≈ band outer diameter
     // Wrap the image around the front of the finger (cylinder along the finger axis = local Y),
@@ -811,7 +972,8 @@ function imageRing(R) {
     const m = new THREE.Mesh(geo, top ? stoneLens(mat, a, u) : mat);
     m.position.set(0, p.tryonOffsetY * w, top ? 0 : R * 1.02); m.renderOrder = 5;
     g.add(m);
-  });
+  };
+  if (tryonTexDone[p.tryonImage]) build(tryonTexDone[p.tryonImage]); else loadTryonTexture(p.tryonImage).then(build);
   return g;
 }
 /* Draw every ring on the hand: the waiting ones in `worn`, then the active one (which may be carried / dragged). */
@@ -881,6 +1043,7 @@ function removeRing(f) {
   afterRingsChanged();
 }
 function renderWorn() {
+  renderSelections();                                   // keep "My selections" + its count in sync
   const box = $('wornList'); if (!box) return;
   const all = [[state.finger, state.pid], ...Object.entries(state.worn).map(([f, r]) => [f, r.pid])]
     .sort((a, b) => FINGERS.indexOf(a[0]) - FINGERS.indexOf(b[0]));
@@ -1041,13 +1204,52 @@ function fingerUnder(pt, maxDist = 1.15) {
 canvas.addEventListener('dblclick', e => { if (ringHit(e)) focusRing(); });
 canvas.addEventListener('pointermove', e => { if (!drag) canvas.style.cursor = ringHit(e) || parkedHit(e) ? 'grab' : 'default'; });
 
-/* ---------- Left / right hand: the photo is a right hand, the left is its mirror; rings stay where they are ---------- */
-document.querySelectorAll('[data-side]').forEach(b => b.onclick = () => {
-  if (state.side === b.dataset.side) return;
-  state.side = b.dataset.side;
-  document.querySelectorAll('[data-side]').forEach(x => x.classList.toggle('on', x === b));
+/* ---------- Left / right hand: the photo is a right hand, the left is its mirror.
+   Each hand keeps its own rings; switching back shows them exactly as they were left. A hand with no rings yet
+   starts with the ring being edited, on the same finger. ---------- */
+const updateSideButtons = () => document.querySelectorAll('[data-side]').forEach(x => x.classList.toggle('on', x.dataset.side === state.side));
+function switchSide(side) {
+  if (side === state.side) return;
+  state.hands[state.side] = handSet();
+  const next = state.hands[side]; state.hands[side] = null; state.side = side;
+  if (next) loadSet(next);
+  else {
+    const cfg = { ...state.cfg }; delete cfg.stoneU;               // own copy: the hands don't share a ring
+    Object.assign(state, { cfg, worn:{}, float:null });
+    toast(`${side === 'left' ? 'Left' : 'Right'} hand: try different rings on each hand`);
+  }
+  updateSideButtons(); applyHand(); afterRingsChanged();
+}
+document.querySelectorAll('[data-side]').forEach(b => b.onclick = () => switchSide(b.dataset.side));
+
+/* ---------- Snapshots of a hand with its rings (download, share, both hands, saved-look thumbnails) ---------- */
+function withSide(side, fn) {                     // draw `side` for a moment without touching the UI
+  if (side === state.side) return fn();
+  const cur = handSet(), curSide = state.side, other = state.hands[side];
+  state.side = side;
+  if (other) loadSet(other); else ringRoot.visible = false;        // that hand has no rings yet
   applyHand();
-});
+  try { return fn(); } finally { state.side = curSide; loadSet(cur); ringRoot.visible = true; applyHand(); }
+}
+function snapshot(side = state.side, type = 'image/png', q) {
+  if (!textures[state.orient]) return null;                       // hand photo still loading
+  return withSide(side, () => {
+    const keep = { zoom:state.zoom, panX:state.panX, panY:state.panY, yaw:state.yaw, pitch:state.pitch };
+    Object.assign(state, { zoom:1, panX:0, panY:0, yaw:0, pitch:0 });
+    camera.zoom = 1; camera.updateProjectionMatrix(); camera.position.set(0, 0, baseDist);
+    handGroup.rotation.set(0, 0, 0); lastLit = ''; relight();
+    renderer.render(scene, camera);
+    const url = canvas.toDataURL(type, q);
+    Object.assign(state, keep); camera.zoom = keep.zoom; camera.updateProjectionMatrix(); lastLit = '';
+    return url;
+  });
+}
+// Make sure every try-on image on both hands is loaded, so snapshots show all rings.
+const allRings = () => [...ringsIn(handSet()), ...ringsIn(state.hands.left), ...ringsIn(state.hands.right)];
+const ready = () => Promise.all(allRings().map(([, pid]) => byId[pid]?.tryonImage && loadTryonTexture(byId[pid].tryonImage)));
+const loadImg = src => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
+const fingerName = f => f === 'thumb' ? 'Thumb' : LABEL[f] + ' finger';
+const ringLine = (f, pid, cfg) => `${fingerName(f)}: ${byId[pid].name} · US ${RING_SIZES[cfg.size][0]}${byId[pid].metalPrices ? ' · ' + METALS[cfg.metal].name : ''}`;
 
 // Rotate the ring around the finger: mouse wheel over the ring, or the ⟳ button.
 const spinBy = a => { state.spin = ((state.spin || 0) + a) % (Math.PI * 2); rebuildRing(); };
@@ -1114,16 +1316,54 @@ function requestMore() {
 function addMore(list) {                                   // rings that arrived from the store
   list.map(fromEmbed).forEach(p => { if (!byId[p.id]) { PRODUCTS.push(p); byId[p.id] = p; } });
 }
+/* Search + filters. They work on the rings loaded so far; while a search / filter is on, the rest of the
+   collection keeps loading in the background so nothing is missed. */
+const filt = { q:'', stock:false, metals:new Set(), sort:'' };
+const filtering = () => !!(filt.q || filt.stock || filt.metals.size || filt.sort);
+const minPrice = p => p.metalPrices ? Math.min(...Object.values(p.metalPrices)) : p.price;
+function visibleProducts() {
+  const words = filt.q.toLowerCase().split(/\s+/).filter(Boolean);
+  let list = PRODUCTS.filter(p => {
+    if (filt.stock && p.available === false) return false;
+    if (filt.metals.size && ![...filt.metals].some(k => (p.metalPrices ? k in p.metalPrices : p.metal === k))) return false;
+    const hay = `${p.name} ${p.type || ''} ${p.desc || ''}`.toLowerCase();
+    return words.every(w => hay.includes(w));
+  });
+  if (filt.sort === 'low') list = [...list].sort((a, b) => minPrice(a) - minPrice(b));
+  if (filt.sort === 'high') list = [...list].sort((a, b) => minPrice(b) - minPrice(a));
+  return list;
+}
+function renderChips() {
+  const box = $('findChips'); if (!box) return;
+  const metals = Object.keys(METALS).filter(k => PRODUCTS.some(p => p.metalPrices ? k in p.metalPrices : false));
+  box.innerHTML = `<button class="chip ${filt.stock ? 'on' : ''}" data-stock aria-pressed="${filt.stock}">In stock</button>`
+    + metals.map(k => `<button class="chip ${filt.metals.has(k) ? 'on' : ''}" data-metalf="${k}" aria-pressed="${filt.metals.has(k)}">${METALS[k].name.replace('18 ct ', '')}</button>`).join('')
+    + `<select class="chip" data-sort aria-label="Sort"><option value="">Featured</option><option value="low" ${filt.sort === 'low' ? 'selected' : ''}>Price: low to high</option><option value="high" ${filt.sort === 'high' ? 'selected' : ''}>Price: high to low</option></select>`
+    + (filtering() ? '<button class="chip" data-clear>Clear</button>' : '');
+  box.querySelector('[data-stock]').onclick = () => { filt.stock = !filt.stock; refilter(); };
+  box.querySelectorAll('[data-metalf]').forEach(b => b.onclick = () => { const k = b.dataset.metalf; filt.metals.has(k) ? filt.metals.delete(k) : filt.metals.add(k); refilter(); });
+  box.querySelector('[data-sort]').onchange = e => { filt.sort = e.target.value; refilter(); };
+  box.querySelector('[data-clear]')?.addEventListener('click', clearFilters);
+}
+function refilter() { shown = PAGE; renderChips(); renderShop(); $('shopList').scrollTop = 0; }
+function clearFilters() { Object.assign(filt, { q:'', stock:false, sort:'' }); filt.metals.clear(); $('findQ').value = ''; refilter(); }
+let findT;
+$('findQ')?.addEventListener('input', e => { clearTimeout(findT); findT = setTimeout(() => { filt.q = e.target.value.trim(); refilter(); }, 150); });
+
 function renderShop() {
   const box = $('shopList'); if (!box) return;
-  const idx = PRODUCTS.findIndex(p => p.id === state.pid);
+  const list = visibleProducts();
+  const idx = list.findIndex(p => p.id === state.pid);
   if (idx >= shown) shown = Math.ceil((idx + 1) / PAGE) * PAGE;      // the active ring is always in the loaded part
+  if (filtering() && !moreDone) requestMore();                     // search the whole collection, not just what's loaded
   const worn = new Set([state.pid, ...Object.values(state.worn).map(r => r.pid)]);
-  box.innerHTML = PRODUCTS.slice(0, shown).map(p => `<button class="ringcard ${worn.has(p.id) ? 'on' : ''}" data-id="${p.id}">
+  box.innerHTML = (!list.length && (moreDone || moreError) ? `<div class="nomatch">No rings match.<br><button class="linkbtn" id="noMatchClear">Clear search and filters</button></div>` : '')
+    + list.slice(0, shown).map(p => `<button class="ringcard ${worn.has(p.id) ? 'on' : ''}" data-id="${p.id}">
       ${p.img ? `<img src="${esc(p.img)}" alt="" loading="lazy" draggable="false">` : '<span class="noimg">◯</span>'}
       <span class="rn">${esc(p.name)}</span><span class="rp">${p.available === false ? 'Sold out' : money(p.metalPrices ? Math.min(...Object.values(p.metalPrices)) : p.price)}</span></button>`).join('')
-    + (shown < PRODUCTS.length || !moreDone
-      ? `<div class="more muted" id="shopMore">${moreError ? 'Couldn’t load more rings. <button class="linkbtn" id="moreRetry">Try again</button>' : 'Loading more rings…'}</div>` : '');
+    + (shown < list.length || !moreDone
+      ? `<div class="more muted" id="shopMore">${moreError ? 'Couldn’t load more rings. <button class="linkbtn" id="moreRetry">Try again</button>' : filtering() && !moreDone ? 'Searching all rings…' : 'Loading more rings…'}</div>` : '');
+  $('noMatchClear')?.addEventListener('click', clearFilters);
   box.querySelectorAll('.ringcard').forEach(b => {
     b.onclick = () => {
       if (cardDrag.suppress || b.dataset.id === state.pid) return;
@@ -1133,12 +1373,12 @@ function renderShop() {
   });
   moreObs?.disconnect(); moreObs = null;
   const more = $('shopMore');
-  const next = () => { if (shown < PRODUCTS.length) { shown += PAGE; renderShop(); } else requestMore(); };
+  const next = () => { if (shown < list.length) { shown += PAGE; renderShop(); } else requestMore(); };
   $('moreRetry')?.addEventListener('click', () => { moreError = false; requestMore(); renderShop(); });
   if (more && !moreError && 'IntersectionObserver' in window) {
     moreObs = new IntersectionObserver(es => { if (es.some(x => x.isIntersecting)) next(); }, { root:box, rootMargin:'120px' });
     moreObs.observe(more);
-  } else if (more && !moreError) { shown = PRODUCTS.length; requestMore(); }
+  } else if (more && !moreError) { shown = list.length; requestMore(); }
   $('shopName').textContent = product().name;
   renderWorn();
 }
@@ -1227,6 +1467,391 @@ function openProduct(id) {
   refreshViewer(); renderOptions(); rebuildRing();
 }
 
+/* =====================================================================
+   STUDIO SCREENS & POP-UPS
+   ===================================================================== */
+// Pop-up helper on top of modal(): returns the dialog element so callers can wire extra controls.
+function popup(title, html, buttons, wide) {
+  modal(title, html, buttons);
+  const m = [...document.querySelectorAll('.modal')].pop();
+  if (wide) m.classList.add('wide');
+  return m;
+}
+
+/* ---------- My selections + Buy this look: every ring on both hands, in sync with the canvas ---------- */
+const ringPrice = (pid, cfg) => { const p = byId[pid]; return EMBED ? (p.metalPrices?.[cfg.metal] ?? p.price) : p.price + METALS[cfg.metal].add; };
+const handRings = side => ringsIn(side === state.side ? handSet() : state.hands[side]).sort((a, b) => FINGERS.indexOf(a[0]) - FINGERS.indexOf(b[0]));
+function cartLine(side, [f, pid, cfg]) {
+  const p = byId[pid], props = { 'Ring size':`US ${RING_SIZES[cfg.size][0]}`, 'Worn on':`${side === 'left' ? 'Left' : 'Right'} hand, ${fingerName(f).toLowerCase()}` };
+  if (p.metalPrices) props.Metal = METALS[cfg.metal].name;
+  return { productKey:p.key, metal:cfg.metal, sizeUS:RING_SIZES[cfg.size][0], sizeAU:RING_SIZES[cfg.size][1], properties:{ ...props, _source:'Virtual try-on look' } };
+}
+function removeFrom(side, f) {
+  if (side === state.side) return removeRing(f);
+  const s = state.hands[side]; if (!s) return;
+  if (f !== s.finger) delete s.worn[f];
+  else { const next = Object.keys(s.worn)[0]; if (!next) state.hands[side] = null; else { const r = s.worn[next]; delete s.worn[next]; Object.assign(s, { pid:r.pid, cfg:r.cfg, finger:next, slide:r.slide, spin:r.spin }); } }
+  renderSelections();
+}
+function renderSelections() {
+  const all = ['right', 'left'].map(side => [side, handRings(side)]);
+  const n = all.reduce((s, [, r]) => s + r.length, 0);
+  $('selCount').textContent = n;
+  const box = $('selList'); if (!box || $('panelSel').hidden) return;
+  let total = 0, out = 0;
+  box.innerHTML = all.filter(([, r]) => r.length).map(([side, rings]) => `
+    <div><div class="selhand"><span>${side === 'left' ? 'Left' : 'Right'} hand · ${rings.length} ring${rings.length === 1 ? '' : 's'}</span>
+      ${side !== state.side ? `<button class="linkbtn" data-show="${side}">Show</button>` : ''}</div>
+    ${rings.map(r => {
+      const [f, pid, cfg] = r, p = byId[pid], sold = p.available === false, pr = ringPrice(pid, cfg);
+      if (sold) out++; else total += pr;
+      return `<div class="selitem ${side === state.side && f === state.finger ? 'on' : ''}">
+        ${p.img ? `<img src="${esc(p.img)}" alt="">` : '<span class="noimg"></span>'}
+        <div style="min-width:0"><b>${esc(p.name)}</b><small>${fingerName(f)} · US ${RING_SIZES[cfg.size][0]}${p.metalPrices ? ' · ' + METALS[cfg.metal].name.replace('18 ct ', '') : ''}</small>
+          <small class="${sold ? 'out' : ''}">${sold ? 'Sold out' : money(pr)}</small></div>
+        <div class="side"><button data-edit="${side}:${f}">Edit</button>${sold ? '' : `<button data-add1="${side}:${f}">Add</button>`}
+          ${n > 1 ? `<button data-rm="${side}:${f}" aria-label="Remove ${esc(p.name)}">✕</button>` : ''}</div></div>`;
+    }).join('')}</div>`).join('');
+  $('selTotal').textContent = money(total);
+  const avail = n - out;
+  $('buyLook').disabled = !avail;
+  $('buyLook').textContent = avail ? `Buy this look · ${avail} ring${avail === 1 ? '' : 's'}${out ? ` (${out} sold out)` : ''}` : 'Sold out';
+  const at = v => { const [side, f] = v.split(':'); return { side, f }; };
+  box.querySelectorAll('[data-show]').forEach(b => b.onclick = () => switchSide(b.dataset.show));
+  box.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => { const { side, f } = at(b.dataset.edit); if (side !== state.side) switchSide(side); activate(f); setTab(EMBED ? 'shop' : state.panel); });
+  box.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => { const { side, f } = at(b.dataset.rm); removeFrom(side, f); });
+  box.querySelectorAll('[data-add1]').forEach(b => b.onclick = () => { const { side, f } = at(b.dataset.add1); buyRings([[side, handRings(side).find(r => r[0] === f)]]); });
+}
+// Add rings to the cart in one go (one /cart/add.js call on the store). list: [[side, [finger, pid, cfg]], …]
+function buyRings(list) {
+  const lines = list.filter(([, r]) => r && byId[r[1]].available !== false).map(([side, r]) => cartLine(side, r));
+  if (!lines.length) return toast('Sold out');
+  if (!EMBED) {
+    lines.forEach(l => state.cart.push({ name:byId['s' + l.productKey]?.name || l.productKey }));
+    return modal('Added to cart', `${lines.length} ring${lines.length === 1 ? '' : 's'} (demo only)<pre>${esc(JSON.stringify(lines, null, 2))}</pre>`, [['Close', null, true]]);
+  }
+  $('buyLook').disabled = true; $('buyLook').textContent = 'Adding…'; $('lookAdded').hidden = true;
+  toParent({ type:'addMany', items:lines });
+}
+$('buyLook').onclick = () => buyRings(['right', 'left'].flatMap(side => handRings(side).map(r => [side, r])));
+document.querySelectorAll('[data-goto]').forEach(b => b.onclick = () => toParent({ type:'goto', to:b.dataset.goto }));
+$('tabSel').onclick = () => setTab('sel');
+
+/* ---------- Mobile bottom sheet: drag the handle; it snaps to small / half / tall. The hand view resizes with it. ---------- */
+const SHEET = [.26, .45, .78];                         // share of the screen height
+let sheetAt = 1;
+const isMobile = () => matchMedia('(max-width: 1100px)').matches;
+function setSheet(px, snap) {
+  const h = innerHeight, v = clamp(px, h * SHEET[0], h * SHEET[2]);
+  if (snap) { sheetAt = SHEET.reduce((b, s, i) => Math.abs(s * h - v) < Math.abs(SHEET[b] * h - v) ? i : b, 0); }
+  $('tryon').querySelector('.tbox').style.setProperty('--sheet', (snap ? SHEET[sheetAt] * h : v) + 'px');
+  requestAnimationFrame(resize);
+}
+(() => {
+  const hd = $('sheetHandle'); let start = null;
+  hd.addEventListener('pointerdown', e => { hd.setPointerCapture(e.pointerId); start = { y:e.clientY, h:$('tleft').getBoundingClientRect().height, moved:false }; });
+  hd.addEventListener('pointermove', e => { if (!start) return; const dy = start.y - e.clientY; if (Math.abs(dy) > 4) start.moved = true; if (start.moved) setSheet(start.h + dy); });
+  hd.addEventListener('pointerup', e => {
+    if (!start) return;
+    if (start.moved) setSheet(start.h + start.y - e.clientY, true);
+    else { sheetAt = sheetAt === 2 ? 0 : sheetAt + 1; setSheet(SHEET[sheetAt] * innerHeight, true); }   // tap: grow, then back to small
+    start = null;
+  });
+  addEventListener('resize', () => { if (isMobile()) setSheet(SHEET[sheetAt] * innerHeight, true); });
+})();
+
+/* ---------- Product detail panel ---------- */
+function showDetails(p = product()) {
+  const imgs = p.images?.length ? p.images : [p.img].filter(Boolean);
+  const metals = p.metalPrices ? Object.keys(p.metalPrices).map(k => METALS[k].name).join(', ') : '';
+  const sizes = `US ${RING_SIZES[0][0]}–${RING_SIZES.at(-1)[0]} · AU ${RING_SIZES[0][1]}–${RING_SIZES.at(-1)[1]}`;
+  const m = popup(esc(p.name), `<div class="pd-grid">
+      <div>${imgs.length ? `<img class="pd-main" id="pdMain" src="${esc(imgs[0])}" alt="${esc(p.name)}">
+        ${imgs.length > 1 ? `<div class="pd-thumbs">${imgs.map((u, i) => `<button class="${i ? '' : 'on'}" data-img="${esc(u)}" aria-label="Photo ${i + 1}"><img src="${esc(u)}" alt="" loading="lazy"></button>`).join('')}</div>` : ''}` : ''}</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="price">${p.available === false ? 'Sold out' : (p.metalPrices && new Set(Object.values(p.metalPrices)).size > 1 ? 'From ' : '') + money(minPrice(p))}</div>
+        <dl class="pd-facts">
+          ${p.type ? `<dt>Type</dt><dd>${esc(p.type)}</dd>` : ''}
+          ${metals ? `<dt>Metal</dt><dd>${esc(metals)}</dd>` : ''}
+          <dt>Sizes</dt><dd>${sizes}</dd>
+          <dt>Availability</dt><dd>${p.available === false ? 'Sold out' : 'In stock'}</dd>
+        </dl>
+        ${p.desc ? `<div class="pd-desc">${esc(p.desc)}</div>` : ''}
+      </div></div>`,
+    [...(p.url && EMBED ? [['View full product page', () => toParent({ type:'goto', to:'product', url:p.url })]] : []),
+     ...(p.id !== state.pid ? [['Try it on', () => { openProduct(p.id); renderShop(); }]] : []), ['Close', null, true]], true);
+  m.querySelectorAll('[data-img]').forEach(b => b.onclick = () => {
+    m.querySelector('#pdMain').src = b.dataset.img; m.querySelectorAll('[data-img]').forEach(x => x.classList.toggle('on', x === b));
+  });
+}
+$('pdBtn').onclick = () => showDetails();
+
+/* ---------- Menu drawer ---------- */
+const TONES = [[0, '#fbeee6'], [20, '#f6dcc8'], [40, '#ecc8ad'], [60, '#d9a37e'], [80, '#b97f58'], [100, '#5e3a26']];
+function setTone(v) {
+  state.tone = +v; $('tone').value = v; $('tone2').value = v;
+  $('swatches').querySelectorAll('.swatch').forEach(s => s.classList.toggle('on', Math.abs(+s.dataset.tone - v) < 10));
+}
+$('swatches').innerHTML = TONES.map(([v, c]) => `<button class="swatch" data-tone="${v}" style="background:${c}" aria-label="Skin tone ${v / 20 + 1} of 6"></button>`).join('');
+$('swatches').querySelectorAll('.swatch').forEach(s => s.onclick = () => setTone(s.dataset.tone));
+$('tone2').oninput = e => setTone(e.target.value);
+function openMenu(open = true) {
+  $('drawer').classList.toggle('open', open); $('drawer').setAttribute('aria-hidden', String(!open));
+  $('menuBtn').setAttribute('aria-expanded', String(open));
+  if (open) { setTone(state.tone); updateSideButtons(); $('drawerClose').focus(); }
+}
+$('menuBtn').onclick = () => openMenu(!$('drawer').classList.contains('open'));
+$('drawerClose').onclick = () => openMenu(false);
+// Actions shared by the menu and the buttons under "Add to cart"
+const ACTIONS = { save:saveLook, share:shareLook, download:downloadLook, both:bothHands, tour:() => startTour(true), help:showHelp, mine:() => setTab('mine') };
+document.querySelectorAll('[data-act]').forEach(b => b.onclick = () => { openMenu(false); ACTIONS[b.dataset.act]?.(); });
+
+/* ---------- Look data: which rings sit where on each hand (share links + saved looks) ---------- */
+function lookData() {
+  const sets = { ...state.hands, [state.side]: handSet() }, hands = {};
+  for (const [side, s] of Object.entries(sets)) if (s) hands[side] = ringsIn(s).map(([f, pid, cfg]) =>
+    ({ k:byId[pid].key || pid, f, s:cfg.size, m:cfg.metal, z:+(cfg.stoneK || 1).toFixed(2) }));
+  return { v:1, side:state.side, hands };
+}
+const encodeLook = d => btoa(unescape(encodeURIComponent(JSON.stringify(d)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+function decodeLook(s) {
+  try { return JSON.parse(decodeURIComponent(escape(atob(String(s).replace(/-/g, '+').replace(/_/g, '/'))))); } catch { return null; }
+}
+const pidOf = k => byId['s' + k] ? 's' + k : byId[k] ? k : null;
+// Put a look on the hands. Rings that are sold out or not in this store's list are left out (and counted).
+function applyLookData(d) {
+  let placed = 0, skipped = 0; const sets = {};
+  for (const side of ['right', 'left']) {
+    const worn = {};
+    for (const x of d?.hands?.[side] || []) {
+      const pid = pidOf(x.k);
+      if (!pid || byId[pid].available === false || !FINGERS.includes(x.f)) { skipped++; continue; }
+      const p = byId[pid], cfg = freshCfg(p);
+      if (Number.isInteger(x.s)) cfg.size = clamp(x.s, 0, RING_SIZES.length - 1);
+      if (x.m && metalsOf(p).includes(x.m)) cfg.metal = x.m;
+      if (x.z) cfg.stoneK = clamp(+x.z, STONE_MIN, STONE_MAX);
+      worn[x.f] = { pid, cfg, slide:0, spin:0 }; placed++;
+    }
+    const fs = Object.keys(worn); if (!fs.length) continue;
+    fs.forEach(f => worn[f].slide = withRing(worn[f], f, () => seat(f, 0)));
+    const a = worn[fs[0]]; delete worn[fs[0]];
+    sets[side] = { pid:a.pid, cfg:a.cfg, finger:fs[0], slide:a.slide, spin:0, worn };
+  }
+  if (!placed) return { placed, skipped };
+  const side = sets[d.side] ? d.side : Object.keys(sets)[0];
+  state.hands = { left:null, right:null };
+  for (const s of ['left', 'right']) if (s !== side) state.hands[s] = sets[s] || null;
+  state.side = side; loadSet(sets[side]);
+  updateSideButtons(); applyHand(); afterRingsChanged();
+  return { placed, skipped };
+}
+const lookSummary = () => { const n = allRings().length; return `${n} ring${n === 1 ? '' : 's'}`; };
+function shareUrl(code) {
+  const base = EMBED?.shareUrl || location.href.split('#')[0];
+  return EMBED ? `${base}?tryon=1&look=${code}` : `${base}#look=${code}`;
+}
+
+/* ---------- Download: the hand with its rings + a list of what's on it, as a PNG ---------- */
+async function lookImage(sides = [state.side]) {
+  await ready();
+  const shots = await Promise.all(sides.map(s => loadImg(snapshot(s))));
+  const lines = sides.flatMap(s => {
+    const set = s === state.side ? handSet() : state.hands[s];
+    return [`${s === 'left' ? 'Left' : 'Right'} hand`, ...(set ? ringsIn(set).map(r => '  ' + ringLine(...r)) : ['  No rings'])];
+  });
+  const cell = 900, W2 = cell * sides.length, top = 90, bottom = 40 + lines.length * 34;
+  const c = document.createElement('canvas'); c.width = W2; c.height = top + cell + bottom;
+  const x = c.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
+  shots.forEach((img, i) => { const s = Math.min(cell / img.width, cell / img.height); x.drawImage(img, i * cell + (cell - img.width * s) / 2, top + (cell - img.height * s) / 2, img.width * s, img.height * s); });
+  x.fillStyle = '#2a2320'; x.font = '600 34px Inter, system-ui, sans-serif'; x.fillText(EMBED?.shopName || 'House of Amara', 40, 58);
+  x.fillStyle = '#8a7f78'; x.font = '24px Inter, system-ui, sans-serif'; x.textAlign = 'right'; x.fillText('Virtual try-on', W2 - 40, 58); x.textAlign = 'left';
+  x.fillStyle = '#2a2320'; x.font = '24px Inter, system-ui, sans-serif';
+  lines.forEach((l, i) => x.fillText(l, 40, top + cell + 40 + i * 34));
+  return c;
+}
+async function downloadLook(sides) {
+  if (!textures[state.orient]) return toast('Still loading, try again in a moment');
+  const c = await lookImage(Array.isArray(sides) ? sides : [state.side]);
+  c.toBlob(b => {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'my-ring-look.png';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    toast('Image downloaded');
+  }, 'image/png');
+}
+
+/* ---------- Share pop-up ---------- */
+async function copyText(t, input) {
+  try { await navigator.clipboard.writeText(t); return true; }
+  catch { try { input?.select(); return document.execCommand('copy'); } catch { return false; } }
+}
+async function shareLook() {
+  if (!textures[state.orient]) return toast('Still loading, try again in a moment');
+  await ready();
+  const url = shareUrl(encodeLook(lookData())), text = `My ring look (${lookSummary()})`;
+  const m = popup('Share your look', `<img class="thumb" src="${snapshot()}" alt="Your hand with the rings">
+      <div class="muted">Anyone with this link sees the same rings on the same fingers.</div>
+      <input class="field" id="shareLink" readonly value="${esc(url)}" aria-label="Share link">
+      <div class="sharelinks">
+        <a href="https://wa.me/?text=${encodeURIComponent(text + ' ' + url)}" target="_blank" rel="noopener">WhatsApp</a>
+        <a href="mailto:?subject=${encodeURIComponent(text)}&body=${encodeURIComponent(url)}" target="_blank" rel="noopener">Email</a>
+      </div>`,
+    [...(navigator.share ? [['Share…', () => navigator.share({ title:text, url }).catch(() => {})]] : []),
+     ['Close'], ['Copy link', async () => toast(await copyText(url, $('shareLink')) ? 'Link copied' : 'Copy the link above'), true]], true);
+  m.querySelector('#shareLink').onfocus = e => e.target.select();
+}
+
+/* ---------- Save look + My Looks ---------- */
+// Store: the app (logged-in shopper's account) on the real store; this browser in the stand-alone demo.
+const LOOKS_API = EMBED ? location.origin + '/apps/ring-tryon/looks' : null;
+const localLooks = {
+  get() { try { return JSON.parse(localStorage.getItem('ringTryonLooks') || '[]'); } catch { return []; } },
+  set(v) { try { localStorage.setItem('ringTryonLooks', JSON.stringify(v)); } catch {} },
+};
+async function looksApi(method = 'GET', body, query = '') {
+  if (!LOOKS_API) {                                   // demo: keep looks in this browser
+    let all = localLooks.get();
+    if (method === 'POST' && query.startsWith('?delete=')) { all = all.filter(l => l.id !== query.slice(8)); localLooks.set(all); return { ok:true }; }
+    if (method === 'POST') { const look = { id:String(Date.now()), createdAt:new Date().toISOString(), ...body }; localLooks.set([look, ...all]); return { look }; }
+    return { looks:all };
+  }
+  const res = await fetch(LOOKS_API + query, { method, headers:{ Accept:'application/json', ...(body ? { 'Content-Type':'application/json' } : {}) }, body:body ? JSON.stringify(body) : undefined });
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 401) { if (EMBED) EMBED.loggedIn = false; throw Object.assign(new Error('login'), { login:true }); }
+  if (!res.ok) throw new Error(data.error || 'Something went wrong');
+  return data;
+}
+const loggedOut = () => EMBED && !EMBED.loggedIn;
+const signIn = () => toParent({ type:'goto', to:'login', look:encodeLook(lookData()) });
+function askSignIn(why) {
+  popup('Sign in to save looks', `<div class="muted">${why} Your current rings come back after you sign in.</div>`,
+    [['Not now'], ['Sign in', signIn, true]]);
+}
+async function thumbnail() {                         // small JPEG of the hand for the My Looks list
+  const img = await loadImg(snapshot(state.side, 'image/jpeg', .8));
+  const c = document.createElement('canvas'), s = 240 / Math.max(img.width, img.height);
+  c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+  const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', .72);
+}
+async function saveLook() {
+  if (loggedOut()) return askSignIn('Save looks to your account and come back to them any time.');
+  if (!textures[state.orient]) return toast('Still loading, try again in a moment');
+  await ready();
+  const def = byId[state.pid].name + (allRings().length > 1 ? ` + ${allRings().length - 1} more` : '');
+  const m = popup('Save this look', `<img class="thumb" src="${snapshot()}" alt="">
+      <label class="muted" for="lookName">Name</label>
+      <input class="field" id="lookName" maxlength="60" value="${esc(def)}">
+      <div class="muted">${lookSummary()} on ${state.hands[state.side === 'left' ? 'right' : 'left'] ? 'both hands' : 'your ' + state.side + ' hand'}.</div>`,
+    [['Cancel'], ['Save', async () => {
+      const name = (document.getElementById('lookName')?.value || def).trim();
+      try {
+        await looksApi('POST', { name, data:lookData(), thumbnail:await thumbnail() });
+        toast(`Saved to My looks: ${name}`);
+        if (state.panel === 'mine') renderMine();
+      } catch (e) { e.login ? askSignIn('Your session has ended.') : toast(e.message); }
+    }, true]]);
+  const inp = m.querySelector('#lookName'); inp.focus(); inp.select();
+  inp.onkeydown = e => { if (e.key === 'Enter') m.querySelector('.actions .primary').click(); };
+}
+// "Signed in · Sign out" above My looks (store only: Shopify's normal customer logout)
+const signedInBar = () => EMBED ? `<div class="muted" style="text-align:right;font-size:12px">Signed in · <button class="linkbtn" data-signout>Sign out</button></div>` : '';
+document.addEventListener('click', e => { if (e.target.closest?.('[data-signout]')) toParent({ type:'goto', to:'logout' }); });
+async function renderMine() {
+  const box = $('mineList'); if (!box) return;
+  if (loggedOut()) {
+    box.innerHTML = `<div class="mineempty"><div class="ico">♡</div><b>Keep the looks you love</b>
+      <div>Sign in to save rings you've tried on and open them again on any device.</div><button id="mineSignIn">Sign in</button></div>`;
+    return $('mineSignIn').onclick = signIn;
+  }
+  box.innerHTML = '<div class="mineempty">Loading your looks…</div>';
+  let looks;
+  try { looks = (await looksApi()).looks || []; }
+  catch (e) { if (e.login) return renderMine(); box.innerHTML = `<div class="mineempty">Couldn't load your looks. <button id="mineRetry">Try again</button></div>`; return $('mineRetry').onclick = renderMine; }
+  if (!looks.length) {
+    box.innerHTML = signedInBar() + `<div class="mineempty"><div class="ico">♡</div><b>No saved looks yet</b>
+      <div>Put rings on your hand, then tap “Save look” to keep them here.</div><button id="mineSave">Save this look</button></div>`;
+    return $('mineSave').onclick = saveLook;
+  }
+  box.innerHTML = signedInBar() + looks.map((l, i) => {
+    const n = Object.values(l.data?.hands || {}).reduce((s, h) => s + h.length, 0);
+    return `<div class="minecard">${l.thumbnail ? `<img src="${esc(l.thumbnail)}" alt="">` : '<span class="noimg"></span>'}
+      <div class="meta"><b>${esc(l.name)}</b><small>${n} ring${n === 1 ? '' : 's'} · ${new Date(l.createdAt).toLocaleDateString(EMBED?.locale || undefined)}</small>
+        <div class="acts"><button data-open="${i}">Open</button><button class="ghost" data-share="${i}">Share</button><button class="ghost" data-del="${i}" aria-label="Delete ${esc(l.name)}">Delete</button></div></div></div>`;
+  }).join('');
+  box.querySelectorAll('[data-open]').forEach(b => b.onclick = () => openLook(looks[+b.dataset.open]));
+  box.querySelectorAll('[data-share]').forEach(b => b.onclick = async () => {
+    const url = shareUrl(encodeLook(looks[+b.dataset.share].data)); toast(await copyText(url) ? 'Link copied' : url);
+  });
+  box.querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
+    const l = looks[+b.dataset.del];
+    popup('Delete this look?', `<div class="muted">“${esc(l.name)}” will be removed from My looks.</div>`, [['Cancel'], ['Delete', async () => {
+      try { await looksApi('POST', null, '?delete=' + encodeURIComponent(l.id)); toast('Look deleted'); renderMine(); } catch (e) { toast(e.message); }
+    }, true]]);
+  });
+}
+// Open-look confirmation: a saved or shared look replaces the rings on both hands.
+function openLook(l) {
+  const n = allRings().length;
+  popup(`Open “${esc(l.name)}”?`, `<div class="muted">This replaces the ${n} ring${n === 1 ? '' : 's'} on your hands. Rings that are sold out are left out.</div>`,
+    [['Cancel'], ['Open look', () => {
+      const r = applyLookData(l.data);
+      if (!r.placed) return toast('These rings are no longer available');
+      setTab(EMBED ? 'shop' : state.panel);
+      toast(`${l.name}: ${r.placed} ring${r.placed === 1 ? '' : 's'}${r.skipped ? ` (${r.skipped} unavailable)` : ''}`);
+    }, true]]);
+}
+
+/* ---------- View both hands ---------- */
+async function bothHands() {
+  if (!textures[state.orient]) return toast('Still loading, try again in a moment');
+  await ready();
+  const fig = side => {
+    const set = side === state.side ? handSet() : state.hands[side], rings = ringsIn(set);
+    return `<figure><img src="${snapshot(side)}" alt="${side} hand">
+      <figcaption><b>${side === 'left' ? 'Left' : 'Right'} hand</b>${rings.length ? rings.map(r => `<small>${esc(ringLine(...r))}</small>`).join('') : '<small>No rings yet</small>'}</figcaption></figure>`;
+  };
+  popup('Both hands', `<div class="hands2">${fig('left')}${fig('right')}</div>`,
+    [['Download', () => downloadLook(['left', 'right'])], ['Edit left hand', () => switchSide('left')], ['Edit right hand', () => switchSide('right'), true]], true);
+}
+
+/* ---------- Help & FAQ ---------- */
+function showHelp() {
+  popup('Help & FAQ', `<div class="faq">
+    <details open><summary>How do I try a ring on?</summary><p>Tap a ring in the list, or drag it onto any finger. Drag a ring on the hand to move it along the finger or onto another finger. Each finger can wear its own ring.</p></details>
+    <details><summary>Which size should I pick?</summary><p>Choose your size under Ring Size (US or AU/NZ). The try-on shows how that size fits: whether it slides over the knuckle and sits at the base. The message under the hand suggests the best size for that finger.</p></details>
+    <details><summary>Is the ring shown at its real size?</summary><p>Yes. The ring is drawn to scale for the size you choose, on a hand with a typical US 6 ring finger. Your own hand may differ, so use it as a guide.</p></details>
+    <details><summary>Can I try rings on both hands?</summary><p>Yes. Open the menu (☰), pick Left or Right hand, and choose “View both hands” to see them side by side.</p></details>
+    <details><summary>How do I keep or share a look?</summary><p>“Save look” keeps it in My looks (sign in needed). “Share” gives a link that opens the same rings on the same fingers. “Download” saves a picture.</p></details>
+    <details><summary>How do I buy?</summary><p>Pick the ring and size, then “Add to cart”. Checkout is the store's normal checkout.</p></details>
+  </div>`, [['How it works', () => startTour(true)], ['Close', null, true]]);
+}
+
+/* ---------- Tutorial (first visit, or from the menu) ---------- */
+const TOUR = [
+  ['💍', 'Pick a ring', 'Tap a ring to try it on, or drag it from the list onto any finger.'],
+  ['👆', 'Move it', 'Drag the ring along the finger, or onto another finger. Every finger can wear its own ring.'],
+  ['📏', 'Make it yours', 'Choose your size and metal. Open the menu ☰ for left or right hand, skin tone and both hands.'],
+  ['♡', 'Save & share', 'Save looks to My looks, share a link, download a picture, or add the ring to your cart.'],
+];
+function startTour(force) {
+  let seen = false; try { seen = localStorage.getItem('ringTryonTour') === '1'; } catch {}
+  if ((seen && !force) || EMBED?.preview || document.querySelector('.tour')) return;
+  const el = document.createElement('div'); el.className = 'tour'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'How the try-on works');
+  let i = 0;
+  const done = () => { el.remove(); try { localStorage.setItem('ringTryonTour', '1'); } catch {} };
+  const draw = () => {
+    const [ico, h, p] = TOUR[i];
+    el.innerHTML = `<div class="tourcard"><div class="ico">${ico}</div><h3>${h}</h3><p>${p}</p>
+      <div class="tourdots">${TOUR.map((_, k) => `<i class="${k === i ? 'on' : ''}"></i>`).join('')}</div>
+      <div class="tourbtns"><button data-t="skip">${i ? 'Back' : 'Skip'}</button><button class="primary" data-t="next">${i === TOUR.length - 1 ? 'Start' : 'Next'}</button></div></div>`;
+    el.querySelector('[data-t="skip"]').onclick = () => { if (i) { i--; draw(); } else done(); };
+    el.querySelector('[data-t="next"]').onclick = () => { if (i < TOUR.length - 1) { i++; draw(); } else done(); };
+    el.querySelector('[data-t="next"]').focus();
+  };
+  draw(); document.querySelector('.tbox').appendChild(el);
+}
+
 /* ---------- Shape icons (outline, like a jeweller's shape picker) ---------- */
 const SHAPE_SVG = {
   round:'<svg viewBox="0 0 44 56" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="22" cy="28" r="19"/><circle cx="22" cy="28" r="9"/><path d="M22 9v10M22 37v10M3 28h10M31 28h10M9 15l7 7M35 15l-7 7M9 41l7-7M35 41l-7-7"/></svg>',
@@ -1265,7 +1890,11 @@ function setTab(t) {
   $('panelRing').hidden = t !== 'ring'; $('panelYou').hidden = t !== 'you'; $('qrCard').hidden = t === 'you';
   if ($('panelShop')) $('panelShop').hidden = t !== 'shop';
   $('tabLooks').classList.toggle('on', t === 'looks'); $('panelLooks').hidden = t !== 'looks';
-  if (t === 'shop') { renderShop(); renderOptions(); }
+  $('tabMine').classList.toggle('on', t === 'mine'); $('panelMine').hidden = t !== 'mine';
+  $('tabSel').classList.toggle('on', t === 'sel'); $('panelSel').hidden = t !== 'sel';
+  if (t === 'sel') { $('lookAdded').hidden = true; renderSelections(); }
+  if (t === 'mine') renderMine();
+  if (t === 'shop') { renderChips(); renderShop(); renderOptions(); }
   if (t === 'looks') renderLooks();
   if (t === 'you') renderModels();
 }
@@ -1286,6 +1915,7 @@ $('tabRing').onclick = () => setTab('ring');
 // $('tabLooks').hidden = !LOOKS.length;
 $('tabLooks').hidden = true;
 $('tabLooks').onclick = () => setTab('looks');
+$('tabMine').onclick = () => setTab('mine');
 $('tabHand').onclick = () => { setTab('you'); makeQR(); };
 
 /* =====================================================================
@@ -1293,7 +1923,7 @@ $('tabHand').onclick = () => { setTab('you'); makeQR(); };
    ===================================================================== */
 function openTryOn() {
   state.open = true; $('tryon').hidden = false; document.body.style.overflow = 'hidden';
-  Object.assign(state, { worn:{}, finger:'ring', slide:0, yaw:0, pitch:0, zoom:1, panX:0, panY:0 });
+  Object.assign(state, { worn:{}, hands:{ left:null, right:null }, side:'right', finger:'ring', slide:0, yaw:0, pitch:0, zoom:1, panX:0, panY:0 });
   camera.zoom = 1; camera.updateProjectionMatrix();
   renderPopupControls(); setTab(EMBED ? 'shop' : 'ring'); makeQR();
   requestAnimationFrame(() => { resize(); applyHand(); });
@@ -1302,7 +1932,7 @@ function closeTryOn() { if (EMBED) { toParent({ type:'close' }); return; } state
 $('tryBtn').onclick = openTryOn; $('tryFab').onclick = openTryOn; $('closeTry').onclick = closeTryOn;
 $('tryon').addEventListener('click', e => { if (e.target.id === 'tryon') closeTryOn(); });
 window.addEventListener('keydown', e => { if (e.key === 'Escape' && state.open) closeTryOn(); });
-$('tone').oninput = e => state.tone = +e.target.value;
+$('tone').oninput = e => setTone(e.target.value);
 $('zoomBtn').onclick = () => state.zoom > 1.05 ? animateTo({ zoom:1, panX:0, panY:0 }) : focusRing();
 let showStart = 0; const stopShowcase = () => showStart = 0;
 
@@ -1380,7 +2010,16 @@ if (EMBED) {
       addMore(e.data.products || []);
       moreDone = !!e.data.done;
       shown = Math.max(shown, Math.min(PRODUCTS.length, shown + PAGE));
-      renderShop();
+      renderChips(); renderShop();
+      return;
+    }
+    if (e.data.type === 'addedMany') {
+      renderSelections();
+      if (!e.data.ok) return toast(e.data.error || 'Could not add to cart');
+      $('lookAddedTitle').textContent = `${e.data.added} ring${e.data.added === 1 ? '' : 's'} added to your bag`;
+      $('lookAddedText').textContent = (e.data.skipped?.length ? `Not added (sold out): ${e.data.skipped.join(', ')}. ` : '')
+        + (e.data.count ? `${e.data.count} item${e.data.count > 1 ? 's' : ''} in your bag` : '');
+      if (!$('panelSel').hidden) $('lookAdded').hidden = false; else toast($('lookAddedTitle').textContent);
       return;
     }
     if (e.data.type === 'added') {
@@ -1399,6 +2038,14 @@ Promise.all(Object.entries(HANDS).map(async ([k, h]) => textures[k] = await phot
   Object.entries(HANDS).forEach(([k, hd]) => reliefs[k] = buildRelief(textures[k], hd.depth));
   renderModels();
   $('loading').remove(); applyHand();
+  setTone(state.tone);
+  // A shared look (?look=… on the store page, #look=… in the demo) opens on the hand
+  const shared = EMBED?.look || (location.hash.match(/[#&]look=([^&]+)/) || [])[1];
+  const d = shared && decodeLook(shared);
+  if (d) {
+    const r = applyLookData(d);
+    toast(r.placed ? `Shared look: ${r.placed} ring${r.placed === 1 ? '' : 's'}${r.skipped ? ` (${r.skipped} unavailable)` : ''}` : 'The rings in this look are no longer available');
+  } else startTour();
 });
 </script>
 </body>

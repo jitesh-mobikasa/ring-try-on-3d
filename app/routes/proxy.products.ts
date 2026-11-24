@@ -29,6 +29,9 @@ interface ProductNode {
   handle: string;
   onlineStoreUrl: string | null;
   featuredImage: { url: string } | null;
+  description: string;
+  productType: string;
+  images: { nodes: { url: string }[] };
   options: { name: string }[];
   metafield: { jsonValue: Partial<TryOnMetafield> | null } | null;
   variants: { nodes: VariantNode[] };
@@ -37,12 +40,13 @@ interface Page { nodes: ProductNode[]; pageInfo: { hasNextPage: boolean; endCurs
 
 const productsQuery = (withCountry: boolean) => `#graphql
   query TryOnProducts($handle: String!, $first: Int!, $after: String${withCountry ? ", $country: CountryCode!" : ""}) {
-    collectionByHandle(handle: $handle) {
+    collectionByIdentifier(identifier: { handle: $handle }) {
       products(first: $first, after: $after, sortKey: COLLECTION_DEFAULT) {
         pageInfo { hasNextPage endCursor }
         nodes {
-          legacyResourceId title handle onlineStoreUrl
+          legacyResourceId title handle onlineStoreUrl description(truncateAt: 600) productType
           featuredImage { url(transform: { maxWidth: 600 }) }
+          images(first: 6) { nodes { url(transform: { maxWidth: 800 }) } }
           options { name }
           metafield(namespace: "${METAFIELD.namespace}", key: "${METAFIELD.key}") { jsonValue }
           variants(first: 100) {
@@ -61,7 +65,7 @@ const productsQuery = (withCountry: boolean) => `#graphql
 // Cursor after the first n products (the ones the theme block already rendered), without loading them.
 const skipQuery = `#graphql
   query Skip($handle: String!, $first: Int!) {
-    collectionByHandle(handle: $handle) { products(first: $first, sortKey: COLLECTION_DEFAULT) { pageInfo { hasNextPage endCursor } } }
+    collectionByIdentifier(identifier: { handle: $handle }) { products(first: $first, sortKey: COLLECTION_DEFAULT) { pageInfo { hasNextPage endCursor } } }
   }`;
 
 function toViewer(p: ProductNode) {
@@ -73,6 +77,9 @@ function toViewer(p: ProductNode) {
     handle: p.handle,
     url: p.onlineStoreUrl,
     image: p.featuredImage?.url ?? null,
+    description: p.description,
+    type: p.productType,
+    images: p.images.nodes.map((i) => i.url),
     options: p.options.map((o) => o.name),
     tryon: { image: t.image, scale: t.scale ?? 1, offsetY: t.offsetY ?? 0, view: t.view ?? "photo" },
     variants: p.variants.nodes.map((v) => ({
@@ -104,8 +111,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   try {
     if (!after && offset > 0) {
-      const d = await gql<{ collectionByHandle: { products: Page } | null }>(admin as Admin, skipQuery, { handle, first: offset });
-      const info = d.collectionByHandle?.products.pageInfo;
+      const d = await gql<{ collectionByIdentifier: { products: Page } | null }>(admin as Admin, skipQuery, { handle, first: offset });
+      const info = d.collectionByIdentifier?.products.pageInfo;
       if (!info?.hasNextPage) return json({ products: [], cursor: null, hasMore: false });
       after = info.endCursor;
     }
@@ -113,9 +120,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     const products: NonNullable<ReturnType<typeof toViewer>>[] = [];
     let hasMore = true;
     for (let round = 0; round < MAX_ROUNDS && products.length < WANT && hasMore; round++) {
-      const d = await gql<{ collectionByHandle: { products: Page } | null }>(admin as Admin, productsQuery(withCountry),
+      const d = await gql<{ collectionByIdentifier: { products: Page } | null }>(admin as Admin, productsQuery(withCountry),
         { handle, first: BATCH, after, ...(withCountry ? { country } : {}) });
-      const page = d.collectionByHandle?.products;
+      const page = d.collectionByIdentifier?.products;
       if (!page) return json({ products: [], cursor: null, hasMore: false });
       for (const node of page.nodes) { const p = toViewer(node); if (p) products.push(p); }
       hasMore = page.pageInfo.hasNextPage;

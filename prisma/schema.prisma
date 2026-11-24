@@ -97,3 +97,18 @@ model TryOnAsset {
   @@index([status, updatedAt])
   @@map("try_on_assets")
 }
+
+// A look a logged-in shopper saved in the try-on ("My Looks"): which rings sit on which fingers of which hand.
+// Customer data: removed by the customers/redact and shop/redact compliance webhooks.
+model SavedLook {
+  id         String   @id @default(cuid())
+  shop       String
+  customerId String   @map("customer_id") // Shopify customer id (from the app proxy's logged_in_customer_id)
+  name       String
+  data       Json     // { v, side, hands: { right: [...], left: [...] } } — see public/viewer/index.html (lookData)
+  thumbnail  String?  // small JPEG data URL of the hand, for the list
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([shop, customerId, createdAt])
+  @@map("saved_looks")
+}

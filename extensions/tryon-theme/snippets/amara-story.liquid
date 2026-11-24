@@ -1,0 +1,38 @@
+{%- comment -%}
+  Shared layout for the Craftsmanship / Materials / Brand story blocks: image or video beside text,
+  up to three short points, and an optional button. Pass `s` = block.settings and `block`.
+{%- endcomment -%}
+{%- liquid
+  assign has_media = false
+  if s.image or s.video_url != blank
+    assign has_media = true
+  endif
+-%}
+<section class="amara-story amara-story--{{ s.image_position }}{% unless has_media %} amara-story--noimg{% endunless %}"
+         style="--as-bg: {{ s.background }}; --as-fg: {{ s.text_color }};" {{ block.shopify_attributes }}>
+  <div class="amara-story__inner">
+    {%- if has_media -%}
+      <div class="amara-story__media">
+        {%- if s.video_url != blank -%}
+          <video src="{{ s.video_url | escape }}" {% if s.image %}poster="{{ s.image | image_url: width: 1400 }}"{% endif %} autoplay muted loop playsinline></video>
+        {%- else -%}
+          {{ s.image | image_url: width: 1400 | image_tag: loading: 'lazy', widths: '600, 900, 1200, 1400', sizes: '(min-width: 750px) 50vw, 100vw', alt: s.image.alt | default: s.heading }}
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+    <div class="amara-story__body">
+      {%- if s.eyebrow != blank -%}<p class="amara-story__eyebrow">{{ s.eyebrow | escape }}</p>{%- endif -%}
+      {%- if s.heading != blank -%}<h2 class="amara-story__heading">{{ s.heading | escape }}</h2>{%- endif -%}
+      {%- if s.text != blank -%}<div class="amara-story__text">{{ s.text }}</div>{%- endif -%}
+      {%- if s.point1_title != blank or s.point2_title != blank or s.point3_title != blank -%}
+        <div class="amara-story__points">
+          {%- for n in (1..3) -%}
+            {%- assign t = 'point' | append: n | append: '_title' -%}{%- assign x = 'point' | append: n | append: '_text' -%}
+            {%- if s[t] != blank -%}<div class="amara-story__point"><b>{{ s[t] | escape }}</b><p>{{ s[x] | escape }}</p></div>{%- endif -%}
+          {%- endfor -%}
+        </div>
+      {%- endif -%}
+      {%- if s.button_label != blank and s.button_link != blank -%}<a class="amara-story__btn" href="{{ s.button_link }}">{{ s.button_label | escape }}</a>{%- endif -%}
+    </div>
+  </div>
+</section>

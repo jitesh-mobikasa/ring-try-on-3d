@@ -35,6 +35,7 @@
     return {
       key: String(p.productId), title: p.title, image: p.image, price: first?.price || 0,
       url: p.url, tryon: p.tryon || null, available: p.variants.some(v => v.available),
+      description: p.description || '', type: p.type || '', images: p.images || [],
       metal: (p._metalIdx >= 0 && metalOf(first?.options[p._metalIdx])) || 'Y',
       metalPrices: Object.keys(metalPrices).length ? metalPrices : null,
       metalImages: Object.keys(metalImages).length ? metalImages : null,
@@ -99,11 +100,15 @@
     frame = document.createElement('iframe');
     frame.className = 'ring-tryon-frame';
     frame.title = 'Virtual ring try-on';
-    frame.allow = 'camera; fullscreen; clipboard-write';
+    frame.allow = 'camera; fullscreen; clipboard-write; web-share';
     frame.src = viewerUrl.split('#')[0] + '#c=' + encode({
       currency: data.currency, locale: data.locale, origin: location.origin,
       current: String(data.currentId), products: viewerProducts, looks: parseLooks(s.looks, products),
       hasMore: !!data.collection?.more,
+      loggedIn: !!data.customer, shopName: data.shopName || '',
+      // a shared look (?look=… in the page URL) opens on the hand
+      look: new URLSearchParams(location.search).get('look') || null,
+      shareUrl: location.origin + location.pathname,
     });
     document.body.appendChild(frame);
     document.documentElement.classList.add('ring-tryon-lock');
@@ -171,6 +176,34 @@
     } finally { ctx.loading = false; }
   }
 
+  /* "Buy this look": several rings (both hands) in ONE /cart/add.js call. Sold-out / unmatched rings are skipped
+     and reported back; the rest are added together. */
+  async function addMany(msg) {
+    const lines = [], skipped = [];
+    for (const it of msg.items || []) {
+      const p = current.byKey[String(it.productKey)], v = p && findVariant(p, it);
+      if (!v || !v.available) { skipped.push(p ? p.title : 'A ring'); continue; }
+      lines.push({ id: v.id, quantity: 1, properties: it.properties || {} });
+    }
+    if (!lines.length) return reply({ type: 'addedMany', ok: false, error: 'These rings are sold out', skipped });
+    try {
+      const root = window.Shopify?.routes?.root || '/';
+      const res = await fetch(root + 'cart/add.js', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ items: lines }),
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.description || body.message || 'Could not add to cart');
+      const count = await refreshCart();
+      reply({ type: 'addedMany', ok: true, added: lines.length, skipped, count });
+      track('tryon_buy_look', { rings: lines.length });
+      document.dispatchEvent(new CustomEvent('ring-tryon:added', { detail: { items: body.items || [] } }));
+      document.dispatchEvent(new CustomEvent('cart:refresh', { bubbles: true }));
+    } catch (e) {
+      reply({ type: 'addedMany', ok: false, error: e.message, skipped });
+    }
+  }
+
   /* Update the theme's cart icon / count without reloading the page. Returns the number of items in the cart. */
   async function refreshCart() {
     const root = window.Shopify?.routes?.root || '/';
@@ -201,9 +234,18 @@
     if (e.data.type === 'close') close();
     else if (e.data.type === 'add') add(e.data);
     else if (e.data.type === 'more') more();
+    else if (e.data.type === 'addMany') addMany(e.data);
     else if (e.data.type === 'goto') {
       const root = window.Shopify?.routes?.root || '/';
-      location.href = e.data.to === 'checkout' ? '/checkout' : root + 'cart';
+      if (e.data.to === 'login') {
+        // back to this product with the try-on open after signing in
+        const back = location.pathname + '?tryon=1' + (e.data.look ? '&look=' + encodeURIComponent(e.data.look) : '');
+        location.href = root + 'account/login?return_url=' + encodeURIComponent(back);
+      } else if (e.data.to === 'logout') {
+        location.href = root + 'account/logout';                    // Shopify's normal sign-out
+      } else if (e.data.to === 'product' && e.data.url) {
+        try { const u = new URL(e.data.url, location.href); if (u.origin === location.origin) location.href = u.href; } catch {}
+      } else location.href = e.data.to === 'checkout' ? '/checkout' : root + 'cart';
     }
   });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && frame) close(); });

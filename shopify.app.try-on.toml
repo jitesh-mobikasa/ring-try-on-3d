@@ -22,7 +22,7 @@ subpath = "ring-tryon"
 prefix = "apps"
 
 [webhooks]
-api_version = "2025-01"
+api_version = "2026-10"
 
   [[webhooks.subscriptions]]
   topics = [ "products/create", "products/update" ]

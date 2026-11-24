@@ -1,0 +1,91 @@
+{%- comment -%}
+  Customisable PDP: ring configurator (metal, stone colour, shape, carat, ring size, engraving) with live price.
+  Every option is a normal Shopify product option, so price, stock and the order line come from the matching
+  VARIANT (no price maths in the theme). Engraving is a line item property; an optional "engraving fee" product
+  is added with it when the shopper types an engraving.
+  Logic + UI: assets/configurator.js · styles: assets/configurator.css
+{%- endcomment -%}
+{%- if product -%}
+  {%- assign fee = block.settings.engraving_fee_product -%}
+  <div class="rc" data-rc {{ block.shopify_attributes }}
+       style="--rc-accent: {{ block.settings.accent }}; --rc-radius: {{ block.settings.radius }}px;">
+    <div class="rc__price" data-rc-price aria-live="polite"></div>
+    <div class="rc__options" data-rc-options></div>
+    {%- if block.settings.engraving -%}
+      <div class="rc__group rc__engrave">
+        <label class="rc__label" for="rc-engrave-{{ block.id }}">
+          {{ block.settings.engraving_label }}
+          {%- if fee and fee.selected_or_first_available_variant.price > 0 %} <span class="rc__muted">(+{{ fee.selected_or_first_available_variant.price | money }})</span>{% endif %}
+          <span class="rc__muted">· optional</span>
+        </label>
+        <input id="rc-engrave-{{ block.id }}" class="rc__input" type="text" data-rc-engrave
+               maxlength="{{ block.settings.engraving_max }}" autocomplete="off" placeholder="{{ block.settings.engraving_placeholder | escape }}">
+        <div class="rc__hint"><span data-rc-engrave-msg>Letters, numbers, spaces and . , & ' ! ? - ♥</span><span data-rc-engrave-count>0 / {{ block.settings.engraving_max }}</span></div>
+      </div>
+    {%- endif -%}
+    {%- if block.settings.show_button -%}
+      <button type="button" class="rc__add" data-rc-add>Add to cart</button>
+      <div class="rc__status" data-rc-status role="status" hidden></div>
+    {%- endif -%}
+    <script type="application/json" data-rc-data>
+      {
+        "productTitle": {{ product.title | json }},
+        "currency": {{ cart.currency.iso_code | json }},
+        "locale": {{ request.locale.iso_code | json }},
+        "selected": {{ product.selected_or_first_available_variant.id }},
+        "names": {
+          "metal": {{ block.settings.metal_option | json }}, "stone": {{ block.settings.stone_option | json }},
+          "shape": {{ block.settings.shape_option | json }}, "carat": {{ block.settings.carat_option | json }},
+          "size": {{ block.settings.size_option | json }}
+        },
+        "afterAdd": {{ block.settings.after_add | json }},
+        "options": [
+          {%- for o in product.options_with_values -%}
+            { "name": {{ o.name | json }}, "values": {{ o.values | json }} }{%- unless forloop.last -%},{%- endunless -%}
+          {%- endfor -%}
+        ],
+        "variants": [
+          {%- for v in product.variants -%}
+            { "id": {{ v.id }}, "price": {{ v.price }}, "compareAt": {{ v.compare_at_price | default: 0 }}, "available": {{ v.available | json }},
+              "options": {{ v.options | json }}, "image": {% if v.featured_image %}{{ v.featured_image | image_url: width: 1200 | prepend: 'https:' | json }}{% else %}null{% endif %} }
+            {%- unless forloop.last -%},{%- endunless -%}
+          {%- endfor -%}
+        ],
+        "engraving": {% if block.settings.engraving %}{ "max": {{ block.settings.engraving_max }},
+          "fee": {% if fee %}{ "id": {{ fee.selected_or_first_available_variant.id }}, "price": {{ fee.selected_or_first_available_variant.price }} }{% else %}null{% endif %} }{% else %}null{% endif %}
+      }
+    </script>
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Ring configurator",
+  "target": "section",
+  "enabled_on": { "templates": ["product"] },
+  "stylesheet": "configurator.css",
+  "javascript": "configurator.js",
+  "settings": [
+    { "type": "paragraph", "content": "Shows the product's options as a jewellery configurator with live price. Price and stock come from the product's variants. Use it on your customisable product template and hide the theme's own variant picker and buy buttons there." },
+    { "type": "header", "content": "Option names (as in your products)" },
+    { "type": "text", "id": "metal_option", "label": "Metal", "default": "Metal" },
+    { "type": "text", "id": "stone_option", "label": "Stone colour", "default": "Stone" },
+    { "type": "text", "id": "shape_option", "label": "Shape", "default": "Shape" },
+    { "type": "text", "id": "carat_option", "label": "Carat", "default": "Carat" },
+    { "type": "text", "id": "size_option", "label": "Ring size", "default": "Size" },
+    { "type": "header", "content": "Engraving" },
+    { "type": "checkbox", "id": "engraving", "label": "Offer engraving", "default": true },
+    { "type": "text", "id": "engraving_label", "label": "Label", "default": "Engraving" },
+    { "type": "text", "id": "engraving_placeholder", "label": "Placeholder", "default": "e.g. Forever ♥ 2026" },
+    { "type": "range", "id": "engraving_max", "label": "Max characters", "min": 5, "max": 40, "step": 1, "default": 20 },
+    { "type": "product", "id": "engraving_fee_product", "label": "Engraving fee product (optional)", "info": "A product priced at the engraving fee. It is added to the cart with the ring when the shopper types an engraving." },
+    { "type": "header", "content": "Add to cart" },
+    { "type": "checkbox", "id": "show_button", "label": "Show Add to cart button", "default": true },
+    { "type": "select", "id": "after_add", "label": "After add to cart", "default": "stay",
+      "options": [ { "value": "stay", "label": "Stay on the page" }, { "value": "cart", "label": "Go to cart" } ] },
+    { "type": "header", "content": "Style" },
+    { "type": "color", "id": "accent", "label": "Accent", "default": "#1f1a17" },
+    { "type": "range", "id": "radius", "label": "Corner radius", "min": 0, "max": 24, "step": 1, "unit": "px", "default": 6 }
+  ]
+}
+{% endschema %}

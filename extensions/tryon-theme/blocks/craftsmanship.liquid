@@ -1,0 +1,31 @@
+{%- render 'amara-story', s: block.settings, block: block -%}
+
+{% schema %}
+{
+  "name": "Craftsmanship",
+  "target": "section",
+  "stylesheet": "configurator.css",
+  "settings": [
+    { "type": "image_picker", "id": "image", "label": "Image" },
+    { "type": "url", "id": "video_url", "label": "Video URL (optional, .mp4)", "info": "Plays muted on loop instead of the image." },
+    { "type": "select", "id": "image_position", "label": "Image position", "default": "left",
+      "options": [ { "value": "left", "label": "Left" }, { "value": "right", "label": "Right" } ] },
+    { "type": "text", "id": "eyebrow", "label": "Small heading", "default": "Craftsmanship" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Made by hand, made to last" },
+    { "type": "richtext", "id": "text", "label": "Text", "default": "<p>Every ring is made to order in our workshop by jewellers with decades of experience, then finished and checked by hand.</p>" },
+    { "type": "header", "content": "Points (optional)" },
+    { "type": "text", "id": "point1_title", "label": "Point 1 title", "default": "Designed" },
+    { "type": "text", "id": "point1_text", "label": "Point 1 text", "default": "Drawn and modelled for comfort and balance." },
+    { "type": "text", "id": "point2_title", "label": "Point 2 title", "default": "Hand-set" },
+    { "type": "text", "id": "point2_text", "label": "Point 2 text", "default": "Each stone is set and secured under magnification." },
+    { "type": "text", "id": "point3_title", "label": "Point 3 title", "default": "Polished" },
+    { "type": "text", "id": "point3_text", "label": "Point 3 text", "default": "Finished, inspected and hallmarked before it ships." },
+    { "type": "header", "content": "Button (optional)" },
+    { "type": "text", "id": "button_label", "label": "Label" },
+    { "type": "url", "id": "button_link", "label": "Link" },
+    { "type": "header", "content": "Colours" },
+    { "type": "color", "id": "background", "label": "Background", "default": "#f7f3f0" },
+    { "type": "color", "id": "text_color", "label": "Text", "default": "#2a2320" }
+  ]
+}
+{% endschema %}

@@ -21,6 +21,8 @@
     <script type="application/json" data-ring-tryon-product>
       {
         "currentId": {{ product.id }},
+        "customer": {% if customer %}true{% else %}false{% endif %},
+        "shopName": {{ shop.name | json }},
         {%- comment -%} More rings than max_products are loaded page by page from the app (/apps/ring-tryon/products) {%- endcomment -%}
         "collection": {% if block.settings.collection %}{
           "handle": {{ block.settings.collection.handle | json }},
