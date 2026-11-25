@@ -58,6 +58,7 @@ enum AssetStatus {
 enum AssetView {
   photo // cut out of the product photo (side angle) → drawn flat
   top   // seen from above (AI or uploaded) → wrapped around the finger
+  worn  // bracelets: the bracelet as the AI put it ON our hand photo (transparent layer in hand-photo px)
 
   @@map("asset_view")
 }

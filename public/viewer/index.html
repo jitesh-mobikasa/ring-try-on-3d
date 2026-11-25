@@ -1196,9 +1196,12 @@ function rebuildRing() {
   occluders.children.forEach(c => { c.scale.x = c.scale.z = 1; c.position.copy(c.userData.p0); c.rotation.z = c.userData.rot0; });
   ringRoot.userData.parked = Object.entries(state.worn).map(([f, r]) => ({ finger:f, ring:withRing(r, f, () => placeRing(false)) }));
   ringRoot.userData.ring = state.noRing ? null : placeRing(true);
+  // a "worn" bracelet layer stays on the hand while it is still wanted (no flicker on every rebuild)
+  const wantWorn = state.wrist && H_().wrist && byId[state.wrist.pid]?.tryonImage ? wristKey(state.wrist) : null;
+  if (wornMesh && wornMesh.userData.url !== wantWorn) clearWorn();
   ringRoot.userData.wrist = state.wrist && H_().wrist ? placeWrist(state.wrist) : null;
   if ((state.noRing || editingBracelet()) && $('hint'))
-    $('hint').textContent = state.wrist ? 'Drag the bracelet up or down the wrist · tap it to change it' : state.noRing ? 'Pick a ring or a bracelet from the list' : 'Tap a bracelet to try it on';
+    $('hint').textContent = state.wrist && isWorn(state.wrist.pid) ? 'Tap the bracelet to change its options' : state.wrist ? 'Drag the bracelet up or down the wrist · tap it to change it' : state.noRing ? 'Pick a ring or a bracelet from the list' : 'Tap a bracelet to try it on';
 }
 
 /* ---------- Bracelet on the wrist ----------
@@ -1212,9 +1215,123 @@ function wristSpot(slide = 0) {
   const x = w.x * f.s + f.dx, y = w.y * f.s + f.dy;
   return { x:x - Math.sin(r) * slide, y:y + Math.cos(r) * slide, rot:w.rot, R:w.w * f.s };
 }
-// A longer bracelet sits a little looser: +3 % of the wrist per Length step above the shortest
-const looseness = it => { const L = byId[it.pid]?.lengths; const i = L ? Math.max(0, L.indexOf(it.cfg.length)) : 0; return 1 + i * .03; };
+/* Bracelet size = its length. Our model's wrist is about 15.5 cm round; a bracelet that fits comfortably is
+   ~1.5 cm longer (17 cm). Longer → hangs looser and wider on the wrist, shorter → snug. Lengths are read from the
+   variant value ("18 cm", "7 in", '6.5"', "180 mm"); if they can't be read, +3 % per step above the shortest. */
+const MODEL_WRIST_CM = 15.5, COMFORT_CM = 17;
+function lengthCm(v) {
+  const m = String(v ?? '').toLowerCase().match(/(\d+(?:[.,]\d+)?)\s*(cm|mm|in|inch|inches|")?/); if (!m) return null;
+  const n = parseFloat(m[1].replace(',', '.')), u = m[2] || (n < 12 ? 'in' : n > 100 ? 'mm' : 'cm');
+  const cm = u === 'mm' ? n / 10 : u === 'cm' ? n : n * 2.54;
+  return cm >= 10 && cm <= 30 ? cm : null;
+}
+const looseness = it => {
+  const L = byId[it.pid]?.lengths, cm = lengthCm(it.cfg?.length);
+  if (cm) return clamp(cm / COMFORT_CM, .9, 1.25);
+  const i = L ? Math.max(0, L.indexOf(it.cfg?.length)) : 0; return 1 + i * .03;
+};
+// How a length fits our model's wrist, in words (shown under the Length / Size choice)
+function lengthFit(len) {
+  const cm = lengthCm(len); if (!cm) return '';
+  const gap = cm - MODEL_WRIST_CM;
+  return gap < .8 ? `${len}: snug on a ${MODEL_WRIST_CM} cm wrist` : gap < 2.3 ? `${len}: comfortable fit on a ${MODEL_WRIST_CM} cm wrist`
+    : `${len}: loose, hangs lower on a ${MODEL_WRIST_CM} cm wrist`;
+}
+/* "Worn" bracelets (AI put the bracelet ON our hand photo): the image is a transparent layer in hand-photo px.
+   It is drawn into the same canvas box as the hand photo and laid on the hand's own surface mesh, so it sits
+   exactly where the AI drew it — real drape, shadow and light. No sliding along the wrist for these. */
+const isWorn = pid => byId[pid]?.tryonView === 'worn';
+let wornMesh = null;
+const wornTex = {};
+function wornTexture(url) {
+  return wornTex[url] ||= new Promise(res => {
+    const img = new Image(); img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const c = document.createElement('canvas'); c.width = W * 2; c.height = H * 2;
+      const { crop, fit } = HANDS.bracelet;
+      c.getContext('2d').drawImage(img, crop.x, crop.y, crop.w, crop.h, fit.dx * 2, fit.dy * 2, crop.w * fit.s * 2, crop.h * fit.s * 2);
+      const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; t.userData.worn = true; res(t);
+    };
+    img.onerror = () => res(null);
+    img.src = url;
+  });
+}
+function clearWorn() { if (wornMesh) { wornMesh.parent?.remove(wornMesh); if (!isWornTex(wornMesh.material.map)) wornMesh.material.map?.dispose(); wornMesh.material.dispose(); wornMesh = null; } }
+const isWornTex = t => !!t?.userData?.worn;   // worn textures are cached and shared; baked ones are per placement
+function placeWorn(it) {
+  const url = byId[it.pid].tryonImage, r = reliefs.bracelet;
+  if (!r || (wornMesh && wornMesh.userData.url === url)) return null;
+  wornTexture(url).then(t => {
+    if (!t || state.wrist?.pid !== it.pid || (wornMesh && wornMesh.userData.url === url)) return;
+    clearWorn();
+    wornMesh = new THREE.Mesh(r.mesh.geometry, new THREE.MeshBasicMaterial({ map:t, transparent:true, depthWrite:false, toneMapped:false,
+      polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2 }));
+    wornMesh.userData.url = url; wornMesh.renderOrder = 2;
+    r.mesh.add(wornMesh);
+  });
+  return null;
+}
+/* Bracelet images that are NOT "worn" (front / top view of the bracelet alone): fitted to the wrist by calculation
+   and baked into a layer in hand-photo coordinates, then laid on the hand's surface like a worn image:
+   - width = the wrist's measured width (a bangle / longer length a little wider), centred on the wrist spot
+   - wrapped round the wrist: the image is spread over the front half of a circle (θ = −85°…+85°), so the
+     sides are foreshortened and darken as they turn away
+   - a slight smile: the middle sits lower than the sides (camera a little above the wrist)
+   - a soft contact shadow on the skin under it
+   - everything outside the arm's outline is cut away (the ends go behind the wrist, never over the background) */
+const wristKey = it => { const p = byId[it.pid]; return isWorn(it.pid) ? p.tryonImage : `${p.tryonImage}|${Math.round(it.slide || 0)}|${it.cfg?.length ?? ''}|${p.tryonScale}`; };
+function bakeBracelet(it, img) {
+  const p = byId[it.pid], hand = textures.bracelet?.image; if (!hand) return null;
+  const c = document.createElement('canvas'); c.width = W * 2; c.height = H * 2;
+  const x = c.getContext('2d');
+  const g = wristSpot((it.slide || 0) + (looseness(it) - 1) * 40), cx = g.x * 2, cy = g.y * 2;   // looser → a little lower
+  // Rigid bangle / kada (a thick band in the image) vs chain (thin): a bangle is bigger than the wrist, so it stands a
+  // little OUTSIDE the arm at the sides with a small gap; a chain hugs the wrist and its ends go behind the arm.
+  const a = img.height / img.width, rigid = a > .12;
+  const Rw = g.R * 2 * (rigid ? 1.12 : 1.02) * looseness(it) * (p.tryonScale || 1);   // half the bracelet's visible width (canvas px)
+  const h = Rw * 2 * a;                                                      // band height, keeps the image's aspect
+  const TH = rad(85), N = 90, smile = Rw * .1;
+  // contact shadow, on the skin only
+  const sc = document.createElement('canvas'); sc.width = c.width; sc.height = c.height;
+  const sx = sc.getContext('2d'), sy = cy + h * (rigid ? .45 : .35);
+  const sg = sx.createRadialGradient(cx, sy, 0, cx, sy, Rw * 1.05);
+  sg.addColorStop(0, `rgba(60,30,15,${rigid ? .34 : .28})`); sg.addColorStop(1, 'rgba(60,30,15,0)');
+  sx.save(); sx.translate(cx, sy); sx.scale(1, rigid ? .28 : .22); sx.translate(-cx, -sy);
+  sx.fillStyle = sg; sx.fillRect(cx - Rw * 1.1, sy - Rw * 1.1, Rw * 2.2, Rw * 2.2); sx.restore();
+  sx.globalCompositeOperation = 'destination-in'; sx.drawImage(hand, 0, 0, sc.width, sc.height);
+  x.drawImage(sc, 0, 0);
+  // the band, in thin vertical slices round the front of the wrist
+  for (let i = 0; i < N; i++) {
+    const t0 = -TH + 2 * TH * i / N, t1 = -TH + 2 * TH * (i + 1) / N;
+    const sx0 = img.width * i / N, sw = img.width / N;
+    const X0 = cx + Rw * Math.sin(t0), X1 = cx + Rw * Math.sin(t1), tm = (t0 + t1) / 2;
+    const dy = smile * Math.cos(tm);                                          // middle lower than the sides
+    x.globalAlpha = 1;
+    x.drawImage(img, sx0, 0, sw + .6, img.height, X0, cy - h / 2 + dy, Math.max(.6, X1 - X0) + .6, h);
+    const shade = (1 - Math.cos(tm)) * .55;                                   // the sides turn away from the light
+    if (shade > .01) { x.save(); x.globalCompositeOperation = 'source-atop'; x.fillStyle = `rgba(20,12,6,${shade})`; x.fillRect(X0, cy - h, Math.max(.6, X1 - X0) + .6, h * 2); x.restore(); }
+  }
+  // chains: cut away whatever lies outside the arm (their ends go behind the wrist). Bangles keep their sides,
+  // which stand just outside the arm — the small gap a loose kada has.
+  if (!rigid) { x.globalCompositeOperation = 'destination-in'; x.drawImage(hand, 0, 0, c.width, c.height); }
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
+}
+function placeBaked(it) {
+  const key = wristKey(it), r = reliefs.bracelet;
+  if (!r || (wornMesh && wornMesh.userData.url === key)) return null;
+  loadTryonTexture(byId[it.pid].tryonImage).then(src => {
+    if (!src || !state.wrist || wristKey(state.wrist) !== key || (wornMesh && wornMesh.userData.url === key)) return;
+    const t = bakeBracelet(state.wrist, src.image); if (!t) return;
+    clearWorn();
+    wornMesh = new THREE.Mesh(r.mesh.geometry, new THREE.MeshBasicMaterial({ map:t, transparent:true, depthWrite:false, toneMapped:false,
+      polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2 }));
+    wornMesh.userData.url = key; wornMesh.renderOrder = 2; r.mesh.add(wornMesh);
+  });
+  return null;
+}
 function placeWrist(it) {
+  if (isWorn(it.pid)) return placeWorn(it);
+  if (byId[it.pid]?.tryonImage && reliefs.bracelet) return placeBaked(it);
   const g = wristSpot(it.slide || 0), R = g.R * 1.02 * looseness(it);
   const d = new THREE.Vector3(Math.sin(rad(g.rot)), Math.cos(rad(g.rot)), 0), front = new THREE.Vector3(0, 0, 1);
   const q = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3().crossVectors(d, front), d, front));
@@ -1342,9 +1459,13 @@ function animateTo(target, ms = 400) {
   })(t0);
 }
 function focusRing() {
-  const r = (editingBracelet() && ringRoot.userData.wrist) || ringRoot.userData.ring || ringRoot.userData.wrist; if (!r) return;
-  const wp = r.getWorldPosition(new THREE.Vector3());
-  animateTo({ zoom:3.6, panX:wp.x, panY:wp.y });
+  // Bracelets are drawn as a layer on the hand (no object of their own) → zoom to the wrist spot
+  const wristPos = () => { if (!state.wrist || !H_().wrist) return null; const g = wristSpot(state.wrist.slide || 0); return mirror.localToWorld(P2L(g.x, g.y)); };
+  const wantWrist = editingBracelet() || state.noRing;
+  const r = !wantWrist && ringRoot.userData.ring;
+  const wp = r ? r.getWorldPosition(new THREE.Vector3()) : wristPos() || ringRoot.userData.ring?.getWorldPosition(new THREE.Vector3());
+  if (!wp) return;
+  animateTo({ zoom:wantWrist ? 2.4 : 3.6, panX:wp.x, panY:wp.y });
 }
 
 /* ---------- pointer math ---------- */
@@ -1432,7 +1553,8 @@ let drag = null;
 canvas.addEventListener('pointerdown', e => {
   canvas.setPointerCapture(e.pointerId); stopShowcase();
   const pt0 = photoAt(e);
-  if (state.wrist && onWrist(pt0) && !ringHit(e)) {   // the bracelet: drag it up / down the wrist, tap to edit it
+  if (state.wrist && onWrist(pt0) && !ringHit(e)) {
+    if (isWorn(state.wrist.pid)) { drag = { wrist:true, worn:true, x:e.clientX, y:e.clientY, moved:false }; return; }   // tap only   // the bracelet: drag it up / down the wrist, tap to edit it
     drag = { wrist:true, y0:pt0.y, slide0:state.wrist.slide || 0, x:e.clientX, y:e.clientY, moved:false };
     return;
   }
@@ -1446,6 +1568,7 @@ canvas.addEventListener('pointermove', e => {
   if (Math.hypot(dx, dy) > 4) drag.moved = true;
   if (!drag.moved) return;
   if (drag.wrist) {
+    if (drag.worn) return;
     const pt = photoAt(e); if (!pt) return;
     state.wrist.slide = clamp(drag.slide0 + (pt.y - drag.y0), ...WRIST_SLIDE);
     guide = { type:'drop', kind:'bracelet', band:true }; rebuildRing(); return;
@@ -1610,7 +1733,7 @@ function braceletOptionsHTML() {
   const p = byId[it.pid], c = it.cfg;
   return `
     ${p.metalPrices ? `<div class="optgrp"><div class="optlbl">Metal Type</div><div class="metaltiles">${metalsOf(p).map(k => `<button class="mtile ${c.metal === k ? 'on' : ''}" data-bmetal="${k}"><img src="products/metal-${k}.png" alt="">${METALS[k].name}</button>`).join('')}</div></div>` : ''}
-    ${p.lengths ? `<div class="optgrp"><div class="optlbl">Length</div><div class="pills">${p.lengths.map(l => `<button class="pillopt ${c.length === l ? 'on' : ''}" data-blen="${esc(l)}">${esc(l)}</button>`).join('')}</div></div>` : ''}
+    ${p.lengths ? `<div class="optgrp"><div class="optlbl">Size (length)</div><div class="pills">${p.lengths.map(l => `<button class="pillopt ${c.length === l ? 'on' : ''}" data-blen="${esc(l)}">${esc(l)}</button>`).join('')}</div>${lengthFit(c.length) ? `<div class="muted" style="font-size:12px;margin-top:6px">${esc(lengthFit(c.length))}</div>` : ''}</div>` : ''}
     ${SINGLE ? '' : '<div class="optgrp"><button class="linkbtn" data-bremove>Remove bracelet</button></div>'}`;
 }
 function bindBraceletOptions(box) {
@@ -2279,15 +2402,24 @@ function showHelp() {
 }
 
 /* ---------- Tutorial (first visit, or from the menu) ---------- */
-const TOUR = [
-  ['💍', 'Pick a ring', 'Tap a ring to try it on, or drag it from the list onto any finger.'],
-  ['👆', 'Move it', 'Drag the ring along the finger, or onto another finger. Every finger can wear its own ring.'],
-  ['📏', 'Make it yours', 'Choose your size and metal. Open the menu ☰ for left or right hand, skin tone and both hands.'],
-  ['♡', 'Save & share', 'Save looks to My looks, share a link, download a picture, or add the ring to your cart.'],
+// "How it works": the steps for what is being tried on (bracelet page → bracelet steps), matching the current screen
+const TOUR_RING = [
+  ['💍', 'Your ring is on', SINGLE ? 'The ring from this page is already on your hand. Tap any finger to move it there.' : 'Tap a ring to try it on, or drag it from the list onto any finger.'],
+  ['👆', 'Move it', 'Drag the ring along the finger or onto another finger. Use Left / Right to switch hands, and 🔍 to zoom in.'],
+  ['📏', 'Make it yours', 'Choose your ring size, metal and stone size. Drag the Skin slider on the left to match your skin tone.'],
+  ['♡', 'Save & share', 'Save the look, share a link, download a picture, or add the ring to your cart.'],
 ];
+const TOUR_BRACELET = [
+  ['📿', 'Your bracelet is on', SINGLE ? 'The bracelet from this page is already on your wrist.' : 'Tap a bracelet to try it on, or drag it onto the wrist.'],
+  ['👆', 'Move it', 'Drag the bracelet up or down the wrist. Use Left / Right to switch hands, and 🔍 to zoom in on the wrist.'],
+  ['📏', 'Make it yours', 'Choose the size (length) and metal: a longer bracelet sits looser. Drag the Skin slider on the left to match your skin tone.'],
+  ['♡', 'Save & share', 'Save the look, share a link, download a picture, or add the bracelet to your cart.'],
+];
+let TOUR = TOUR_RING;
 function startTour(force) {
   let seen = false; try { seen = localStorage.getItem('ringTryonTour') === '1'; } catch {}
   if ((seen && !force) || EMBED?.preview || document.querySelector('.tour')) return;
+  TOUR = editingBracelet() || BRACELET_ONLY ? TOUR_BRACELET : TOUR_RING;
   const el = document.createElement('div'); el.className = 'tour'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', 'How the try-on works');
   let i = 0;
   const done = () => { el.remove(); try { localStorage.setItem('ringTryonTour', '1'); } catch {} };

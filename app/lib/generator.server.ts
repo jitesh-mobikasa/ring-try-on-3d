@@ -10,8 +10,8 @@ import { withWidth } from "./shared";
 
 export const usesAI = (): boolean => (process.env.TRYON_GENERATOR || "local") === "openai";
 
-/** How images made right now will be drawn on the finger. */
-export const currentView = (): AssetView => (usesAI() ? "top" : "photo");
+/** How images made right now will be drawn: AI → top / front view (ring on the finger, bracelet fitted to the wrist). */
+export const currentView = (_kind: TopViewKind = "ring"): AssetView => (usesAI() ? "top" : "photo");
 
 /** kind: ring → seen from above as worn on a finger; bracelet → front half as worn on the wrist. */
 export async function generateTryOnImage(sourceUrl: string, kind: TopViewKind = "ring"): Promise<Buffer> {

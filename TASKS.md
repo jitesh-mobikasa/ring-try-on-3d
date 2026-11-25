@@ -148,6 +148,12 @@ Last updated: 2026-11-24
 - [x] Fix: bracelet / kangan try-on image is drawn **flat as generated** (was wrapped round a cylinder again + stone lens → squeezed sides, smeared pattern, lost rim); ~10 % wider than the wrist
 
 - [x] Bracelet AI prompt v2: camera exactly level, only the outer front face (no top rim / inside / opening), straight edges, soft daylight → **Regenerate** bracelets to apply
+- [x] ~~Bracelets worn on the hand~~ — **reverted 2026-11-26**: bracelets are generated like rings again (bracelet image alone); only the wrist fitting in the viewer was kept. (Was: TRYON_GENERATOR=openai): OpenAI gets our bracelet hand photo + the product photo + a wrist-only mask and puts the bracelet ON the wrist; we keep only the changed wrist area (bracelet + shadow) as a transparent layer (`app/lib/worn.server.ts`, view `worn`, migration `20261126150000_asset_view_worn`); the try-on lays it on the hand exactly where it was made (no sliding for these)
+- [x] Wrist-fit calculation for non-worn bracelet images: width = measured wrist width (× length looseness × admin scale), wrapped over the front half of the wrist (foreshortened + shaded sides), slight smile, contact shadow, cut to the arm outline; still draggable along the wrist
+- [x] Fix: zoom button zooms to the wrist for bracelets (did nothing since bracelets are drawn as a layer)
+- [x] Kada / bangle fit: rigid bands (thick in the image) are 12 % wider than the wrist and keep their sides just outside the arm (small gap), stronger shadow; chains still hug the wrist (cut to the arm)
+- [x] Bracelet **size (length)**: option found by name (Length / Size / Bracelet size / Wrist size, or values like "18 cm", '7"') and never used as a ring size; fit from real cm vs the model's 15.5 cm wrist (17 cm = comfortable; longer → wider + lower); "Size (length)" pills + fit note (snug / comfortable / loose)
+- [x] "How it works" has ring and bracelet versions (bracelet page → bracelet steps), updated for single-product mode, skin slider and no ☰ menu
 - [ ] Regenerate kangan + bracelets and compare; then decide on contact shadow / lighting / size tweaks in the viewer
 
 ## Product sync (2026-11-26)

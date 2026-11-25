@@ -24,6 +24,13 @@
     p._metalIdx = options.indexOf(norm(s.metalOption || 'Metal'));
     p._sizeIdx = options.indexOf(norm(s.sizeOption || 'Size'));
     p._lengthIdx = options.indexOf(norm(s.lengthOption || 'Length'));        // bracelets
+    if (p.tryon?.kind === 'bracelet') {
+      // Bracelet sizes are lengths, but stores name the option differently ("Length", "Size", "Bracelet size",
+      // "Wrist size") → else take an option whose values look like lengths (18 cm, 7", 6.5 in).
+      const looksLen = i => p.variants.some(v => /\d\s*(cm|mm|in|inch|inches|")\b|\d\s*"/i.test(String(v.options[i] || '')));
+      if (p._lengthIdx < 0) p._lengthIdx = options.findIndex((o, i) => /length|size|wrist/.test(o) || looksLen(i));
+      p._sizeIdx = -1;                                                        // never a ring size
+    }
     const lengths = p._lengthIdx >= 0 ? [...new Set(p.variants.map(v => v.options[p._lengthIdx]))] : null;
     const metalPrices = {}, metalImages = {};
     if (p._metalIdx >= 0) {

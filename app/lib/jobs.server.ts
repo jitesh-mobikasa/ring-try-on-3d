@@ -153,7 +153,7 @@ async function runJob(job: TryOnAsset): Promise<void> {
       data: {
         status: "ready", error: null, productTitle: product.title,
         sourceMediaId: product.mediaId, sourceUrl: product.mediaUrl,
-        resultFileId: file.id, resultUrl: file.url, view: currentView(), kind,
+        resultFileId: file.id, resultUrl: file.url, view: currentView(kind), kind,
       },
     });
     await writeAssetMetafield(admin, done);

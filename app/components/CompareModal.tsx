@@ -28,8 +28,9 @@ export function CompareModal({ open, onClose, title, photo, tryon, view, kind = 
             src={tryon}
             checker
             badge={tryon && (
-              <Badge tone={view === "top" ? "success" : "info"}>
-                {kind === "bracelet"
+              <Badge tone={view === "top" || view === "worn" ? "success" : "info"}>
+                {view === "worn" ? "Worn on the hand · bracelet layer"
+                  : kind === "bracelet"
                   ? (view === "top" ? "Front view · on the wrist" : "Photo angle · on the wrist")
                   : (view === "top" ? "Top view · wraps the finger" : "Photo angle · flat")}
               </Badge>
