@@ -2,16 +2,16 @@
    "Generate all missing" (bulk) is switched off for now — see the commented-out code below. */
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { useFetcher, useLoaderData, useNavigate, useRevalidator, useSearchParams } from "@remix-run/react";
-import { Badge, Banner, BlockStack, Box, Button, Card, IndexTable, InlineStack, Layout, Page, ProgressBar, SkeletonBodyText, Text, TextField } from "@shopify/polaris";
+import { Badge, Banner, BlockStack, Box, Button, Card, IndexTable, InlineStack, Layout, Page, SkeletonBodyText, Text, TextField } from "@shopify/polaris";
 import type { AssetStatus, AssetView } from "@prisma/client";
 import { useEffect, useState } from "react";
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
-import { enqueue, fetchProduct, getShop } from "../lib/jobs.server";
+import { enqueue, fetchProduct } from "../lib/jobs.server";
 import { canGenerate } from "../lib/generator.server";
 import { listProducts } from "../lib/products.server";
 // import { allProducts } from "../lib/products.server"; // bulk generate (disabled)
-import { isBusy, numericId, PLANS, STATUS } from "../lib/shared";
+import { isBusy, numericId, STATUS } from "../lib/shared";
 import { ClickableThumb, CompareModal } from "../components/CompareModal";
 import { ClientOnly } from "../components/ClientOnly";
 
@@ -27,9 +27,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     before: url.searchParams.get("before"),
   });
 
-  const [assets, shop, counts] = await Promise.all([
+  const [assets, counts] = await Promise.all([
     db.tryOnAsset.findMany({ where: { shop: session.shop, productId: { in: products.map((p) => p.id) } } }),
-    getShop(session.shop),
     db.tryOnAsset.groupBy({ by: ["status"], where: { shop: session.shop }, _count: true }),
   ]);
   const byId = new Map(assets.map((a) => [a.productId, a]));
@@ -38,7 +37,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     q,
     pageInfo,
     canGenerate: canGenerate(),
-    shop: { plan: shop.plan, used: shop.usedThisPeriod, limit: PLANS[shop.plan].generations },
     counts: Object.fromEntries(counts.map((c) => [c.status, c._count])) as Partial<Record<AssetStatus, number>>,
     products: products.map((p) => {
       const a = byId.get(p.id);
@@ -97,7 +95,7 @@ export const action = async ({ request }: ActionFunctionArgs): Promise<ActionDat
 type ProductItem = ReturnType<typeof useLoaderData<typeof loader>>["products"][number];
 
 export default function Dashboard() {
-  const { products, pageInfo, q, shop, counts, canGenerate } = useLoaderData<typeof loader>();
+  const { products, pageInfo, q, counts, canGenerate } = useLoaderData<typeof loader>();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const [search, setSearch] = useState(q);
@@ -133,7 +131,7 @@ export default function Dashboard() {
         {result?.queued !== undefined && (
           <Layout.Section>
             <Banner tone={result.limited ? "warning" : "success"}>
-              {result.queued} product(s) queued.{result.limited ? " Monthly limit reached — upgrade to generate more." : ""}
+              {result.queued} product(s) queued.{result.limited ? " Monthly AI image limit reached." : ""}
             </Banner>
           </Layout.Section>
         )}
@@ -146,15 +144,6 @@ export default function Dashboard() {
                   <Text as="h3" variant="headingSm">Try-on ready</Text>
                   <Text as="p" variant="heading2xl">{ready}</Text>
                   <Text as="p" tone="subdued">{counts.queued ?? 0} queued · {counts.processing ?? 0} generating · {counts.failed ?? 0} failed</Text>
-                </BlockStack>
-              </Card>
-            </div>
-            <div style={{ flex: 1 }}>
-              <Card>
-                <BlockStack gap="200">
-                  <Text as="h3" variant="headingSm">AI images this month ({PLANS[shop.plan].name} plan)</Text>
-                  <Text as="p" variant="heading2xl">{shop.used} / {shop.limit}</Text>
-                  <ProgressBar progress={Math.min(100, (shop.used / shop.limit) * 100)} size="small" />
                 </BlockStack>
               </Card>
             </div>

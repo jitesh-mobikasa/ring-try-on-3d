@@ -1,5 +1,5 @@
 client_id = "ed288ae97dc8197a2d1b097419d434e8"
-name = "Try On"
+name = "ring-try-on"
 # `npm run dev` replaces these URLs with the tunnel automatically
 application_url = "https://example.com"
 embedded = true

@@ -20,7 +20,6 @@ export default function App() {
       <NavMenu>
         <Link to="/app" rel="home">Products</Link>
         <Link to="/app/setup">Theme setup</Link>
-        <Link to="/app/plans">Plan & usage</Link>
       </NavMenu>
       <Outlet />
     </AppProvider>

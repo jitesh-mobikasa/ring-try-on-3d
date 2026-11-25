@@ -41,12 +41,12 @@ TypeScript (strict) · Remix + Vite · Shopify App Remix + Polaris · PostgreSQL
 ```
 ring-try-on/
 ├── app/
-│   ├── shopify.server.ts          Shopify auth, billing plans, install hook (creates the metafield definition)
+│   ├── shopify.server.ts          Shopify auth, install hook (creates the metafield definition)
 │   ├── db.server.ts               Prisma client (PostgreSQL)
 │   ├── components/
 │   │   └── CompareModal.tsx       photo vs try-on image, side by side
 │   ├── lib/
-│   │   ├── shared.ts              statuses, plans, small helpers (server + browser)
+│   │   ├── shared.ts              statuses, small helpers (server + browser)
 │   │   ├── graphql.server.ts      typed Shopify Admin GraphQL helper
 │   │   ├── products.server.ts     products read live from Shopify
 │   │   ├── jobs.server.ts         queue, worker, quota, retries
@@ -59,7 +59,6 @@ ring-try-on/
 │   └── routes/
 │       ├── app._index.tsx         dashboard: products, status, Generate / Regenerate / Generate all
 │       ├── app.products.$id.tsx   product: compare, live preview on the hand, fit sliders, own PNG upload
-│       ├── app.plans.tsx          plans + usage (Shopify Billing)
 │       ├── app.setup.tsx          one-click "add block to theme"
 │       ├── proxy.viewer.ts        app proxy → serves the viewer on the store's domain
 │       └── webhooks.*.ts          products, delete, uninstall, scopes, GDPR compliance
@@ -94,18 +93,12 @@ ring-try-on/
 ## Go live (production)
 - Host the app on a server that stays running (Fly.io, Render, Railway, a VPS…), because the background worker lives in the app process.
 - Create a hosted PostgreSQL database and set `DATABASE_URL`; run `npm run db:deploy`.
-- Env: `SHOPIFY_API_KEY`, `SHOPIFY_API_SECRET`, `SHOPIFY_APP_URL`, `SCOPES`, `OPENAI_API_KEY`, `DATABASE_URL`, `TRYON_GENERATOR`, `BILLING_TEST=false`.
+- Env: `SHOPIFY_API_KEY`, `SHOPIFY_API_SECRET`, `SHOPIFY_APP_URL`, `SCOPES`, `OPENAI_API_KEY`, `DATABASE_URL`, `TRYON_GENERATOR`, optional `AI_MONTHLY_LIMIT`.
 - `npm run deploy` pushes the app config, webhooks, app proxy and theme extension.
 
-## Plans (edit in `app/lib/shared.ts`)
-| Plan | Price | AI images / 30 days |
-|---|---|---|
-| Free | $0 | 10 |
-| Starter | $19 | 100 |
-| Pro | $49 | 500 |
-
-Shopper try-ons are unlimited; only generating images counts. Charges go through Shopify Billing
-(test charges while `BILLING_TEST=true`).
+## AI image limit (optional)
+No plans or billing: this is a custom app for one client. To cap OpenAI cost, set `AI_MONTHLY_LIMIT` (AI images per 30 days,
+e.g. `200`) on the server. Unset = no limit. Free cut-outs (`TRYON_GENERATOR=local`) never count. Shopper try-ons are unlimited.
 
 ## Fine-tuning the look
 - **Prompt:** `PROMPT` in `app/lib/openai.server.ts` asks for a top-down ring, band left-to-right, on white (the free cut-out then removes the white).

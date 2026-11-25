@@ -177,14 +177,20 @@ await fr.locator('#tabShop').click();
 await fr.locator('#shopList .ringcard').nth(5).click(); await page.waitForTimeout(300);
 await fr.locator('#tabMine').click(); await page.waitForTimeout(400);
 await fr.locator('.minecard [data-open]').click(); await page.waitForTimeout(200);
-check('Open-look confirmation pop-up', (await fr.locator('.modal h3').innerText()) === 'Open “Date night”?');
-await page.screenshot({ path: OUT + 's11-open-confirm.png' });
-await fr.locator('.modal button', { hasText: 'Open look' }).click(); await page.waitForTimeout(400);
+// Open applies the look straight away (no confirmation pop-up — changed on request, 2026-11-24)
+check('Open: no confirmation pop-up', (await fr.locator('.modal').count()) === 0);
+await page.waitForTimeout(400);
 s = await S(frame);
 check('Saved look restored', s.cur.ring === 's1000', JSON.stringify(s.cur));
+await page.screenshot({ path: OUT + 's11-look-opened.png' });
 await fr.locator('#tabMine').click(); await page.waitForTimeout(400);
 await fr.locator('.minecard [data-del]').click(); await fr.locator('.modal button', { hasText: 'Delete' }).click(); await page.waitForTimeout(600);
 check('Delete removes the look', saved.length === 0 && (await fr.locator('#mineList').innerText()).includes('No saved looks yet'));
+// A saved look whose only ring is sold out (product 1004): card says so and Open is disabled (was "nothing happens")
+saved = [{ id: 'L9', name: 'Old favourite', createdAt: new Date().toISOString(), thumbnail: null, data: { v: 1, side: 'right', hands: { right: [{ k: '1004', f: 'ring', s: 4, m: 'Y', z: 1 }] } } }];
+await fr.locator('#tabShop').click(); await fr.locator('#tabMine').click(); await page.waitForTimeout(500);
+check('Unavailable saved look: note shown, Open disabled', (await fr.locator('.minecard').innerText()).includes('sold out or no longer available') && await fr.locator('.minecard [data-open]').isDisabled());
+saved = [];
 
 // ---------- 10. Help ----------
 await fr.locator('#menuBtn').click(); await page.waitForTimeout(250);

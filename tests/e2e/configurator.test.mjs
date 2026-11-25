@@ -63,9 +63,8 @@ await page.locator('.rc__select').selectOption('7');
 check('Sold-out variant: button disabled, says Sold out', (await page.locator('[data-rc-add]').innerText()) === 'Sold out' && await page.locator('[data-rc-add]').isDisabled());
 check('Sold-out size marked in the list', (await page.locator('.rc__select option[value="7"]').innerText()).includes('sold out'));
 await page.locator('.rc__select').selectOption('6');
-// US / AU sizes
-await page.locator('[data-sys="AU"]').click();
-check('AU/NZ sizes', (await page.locator('.rc__select option').first().innerText()).startsWith('AU L½'), await page.locator('.rc__select option').first().innerText());
+// Sizes are US only (AU/NZ switch removed on request 2026-11-25)
+check('Sizes shown in US only, no AU/NZ switch', (await page.locator('.rc__select option').first().innerText()).startsWith('US 6') && (await page.locator('[data-sys]').count()) === 0, await page.locator('.rc__select option').first().innerText());
 // engraving
 await page.locator('[data-rc-engrave]').fill('Forever <3');
 check('Engraving: bad characters flagged', await page.locator('[data-rc-engrave].bad').count() === 1);

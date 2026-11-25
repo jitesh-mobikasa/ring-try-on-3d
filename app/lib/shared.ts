@@ -1,7 +1,7 @@
 // Shared by server and admin UI (no secrets here). Uses the database enums as the source of truth.
-import type { AssetStatus, AssetView, Plan } from "@prisma/client";
+import type { AssetStatus, AssetView } from "@prisma/client";
 
-export type { AssetStatus, AssetView, Plan };
+export type { AssetStatus, AssetView };
 
 export const METAFIELD = { namespace: "tryon", key: "asset" } as const;
 
@@ -17,20 +17,6 @@ export const STATUS: Record<AssetStatus, { label: string; tone: Tone }> = {
 };
 export const isBusy = (s: AssetStatus) => s === "queued" || s === "processing";
 export const isReady = (s: AssetStatus) => s === "ready" || s === "manual";
-
-export interface PlanInfo { key: Plan; name: string; price: number; generations: number; features: string[] }
-
-/** SaaS plans. `generations` = AI try-on images per 30-day period (free cut-outs don't count). */
-export const PLANS: Record<Plan, PlanInfo> = {
-  free: { key: "free", name: "Free", price: 0, generations: 10, features: ["10 AI try-on images / month", "Unlimited free cut-outs", "Unlimited try-ons"] },
-  starter: { key: "starter", name: "Starter", price: 19, generations: 100, features: ["100 AI try-on images / month", "Unlimited try-ons"] },
-  pro: { key: "pro", name: "Pro", price: 49, generations: 500, features: ["500 AI try-on images / month", "Priority generation"] },
-};
-
-/** Shopify Billing plan names (must match the `billing` keys in shopify.server.ts). */
-export const BILLING_PLAN = { starter: "Starter", pro: "Pro" } as const;
-export type PaidPlan = keyof typeof BILLING_PLAN;
-export const isPaidPlan = (p: string): p is PaidPlan => p in BILLING_PLAN;
 
 /** What the storefront metafield `tryon.asset` holds (read by the theme block → viewer). */
 export interface TryOnMetafield {

@@ -1,9 +1,8 @@
 import "@shopify/shopify-app-remix/adapters/node";
-import { ApiVersion, AppDistribution, BillingInterval, shopifyApp } from "@shopify/shopify-app-remix/server";
+import { ApiVersion, AppDistribution, shopifyApp } from "@shopify/shopify-app-remix/server";
 import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
 import prisma from "./db.server";
 import { ensureDefinition } from "./lib/metafields.server";
-import { BILLING_PLAN, PLANS } from "./lib/shared";
 
 const shopify = shopifyApp({
   apiKey: process.env.SHOPIFY_API_KEY,
@@ -13,11 +12,7 @@ const shopify = shopifyApp({
   appUrl: process.env.SHOPIFY_APP_URL || "",
   authPathPrefix: "/auth",
   sessionStorage: new PrismaSessionStorage(prisma),
-  distribution: AppDistribution.AppStore,
-  billing: {
-    [BILLING_PLAN.starter]: { lineItems: [{ amount: PLANS.starter.price, currencyCode: "USD", interval: BillingInterval.Every30Days }] },
-    [BILLING_PLAN.pro]: { lineItems: [{ amount: PLANS.pro.price, currencyCode: "USD", interval: BillingInterval.Every30Days }] },
-  },
+  distribution: AppDistribution.AppStore,   // Partner-dashboard app (custom OR public distribution both use AppStore + OAuth; ShopifyAdmin = admin-created apps with a fixed token)
   hooks: {
     afterAuth: async ({ session, admin }) => {
       await prisma.shop.upsert({

@@ -10,11 +10,13 @@ import { deleteFile, uploadPng } from "./files.server";
 import { currentView, generateTryOnImage, usesAI } from "./generator.server";
 import { gql, type Admin } from "./graphql.server";
 import { writeAssetMetafield } from "./metafields.server";
-import { PLANS } from "./shared";
 
 const MAX_ATTEMPTS = 3;
 const STUCK_MS = 10 * 60 * 1000;         // a "processing" job older than this crashed mid-way → retry
-const PERIOD_MS = 30 * 24 * 3600 * 1000; // usage period for plan limits
+const PERIOD_MS = 30 * 24 * 3600 * 1000; // counting period for the optional AI image limit
+// No plans / billing (custom app). Optional safety cap on OpenAI cost: AI_MONTHLY_LIMIT=200 in the server env.
+// Unset or 0 = no limit. Free cut-outs (TRYON_GENERATOR=local) never count.
+const AI_MONTHLY_LIMIT = Number(process.env.AI_MONTHLY_LIMIT) || 0;
 const POLL_MS = 15_000;
 
 /** A product as the pipeline needs it: its main photo is the source of the try-on image. */
@@ -25,7 +27,7 @@ export interface ProductRef {
   mediaUrl: string | null;
 }
 
-/* ---------- shop + quota ---------- */
+/* ---------- shop + optional AI limit ---------- */
 
 export async function getShop(shop: string): Promise<Shop> {
   let s = await db.shop.upsert({ where: { shop }, create: { shop }, update: {} });
@@ -36,8 +38,9 @@ export async function getShop(shop: string): Promise<Shop> {
 }
 
 export async function quotaLeft(shop: string): Promise<number> {
+  if (!AI_MONTHLY_LIMIT) return Infinity;
   const s = await getShop(shop);
-  return Math.max(0, PLANS[s.plan].generations - s.usedThisPeriod);
+  return Math.max(0, AI_MONTHLY_LIMIT - s.usedThisPeriod);
 }
 
 /* ---------- queue ---------- */
@@ -59,7 +62,7 @@ export async function enqueue(shop: string, product: ProductRef, { force = false
     update: { productTitle: title, status: "failed", error },
   });
   if (!mediaId || !mediaUrl) return fail("Product has no photo");
-  if (usesAI() && (await quotaLeft(shop)) <= 0) return fail("Monthly limit reached — upgrade your plan");
+  if (usesAI() && (await quotaLeft(shop)) <= 0) return fail("Monthly AI image limit reached (AI_MONTHLY_LIMIT)");
 
   const row = await db.tryOnAsset.upsert({
     where,

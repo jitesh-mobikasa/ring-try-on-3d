@@ -6,7 +6,7 @@
     "dev": "shopify app dev",
     "build": "remix vite:build",
     "start": "remix-serve ./build/server/index.js",
-    "deploy": "shopify app deploy",
+    "deploy": "npm run build:theme && shopify app deploy",
     "config:link": "shopify app config link",
     "setup": "prisma generate && prisma migrate deploy",
     "docker-start": "npm run setup && npm run start",
@@ -16,7 +16,8 @@
     "db:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
     "db:up": "docker compose up -d postgres",
-    "test:e2e": "node tests/e2e/run.mjs"
+    "test:e2e": "node tests/e2e/run.mjs",
+    "build:theme": "for f in tryon configurator; do esbuild theme-src/$f.js --minify --target=es2020 --legal-comments=none --log-level=warning --outfile=extensions/tryon-theme/assets/$f.js; done"
   },
   "engines": {
     "node": ">=20.10"
