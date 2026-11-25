@@ -26,6 +26,7 @@ export async function ensureDefinition(admin: Admin): Promise<UserError[]> {
 
 export function assetValue(asset: TryOnAsset): TryOnMetafield {
   return {
+    kind: asset.kind === "bracelet" ? "bracelet" : "ring",
     enabled: asset.enabled,
     view: asset.view,
     image: asset.resultUrl,

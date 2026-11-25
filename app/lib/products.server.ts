@@ -1,7 +1,8 @@
-/* Products are always read LIVE from Shopify — the app never copies the catalogue.
-   Only the try-on status lives in our database (TryOnAsset). */
+/* Live reads from Shopify. The dashboard list now comes from our own copy (app/lib/catalog.server.ts,
+   "Sync products"); listProducts / allProducts are kept for the (disabled) bulk generate. */
 import { gql, type Admin } from "./graphql.server";
 import type { ProductRef } from "./jobs.server";
+import { detectKind } from "./shared";
 
 export interface ProductRow extends ProductRef {
   status: "ACTIVE" | "ARCHIVED" | "DRAFT";
@@ -15,6 +16,9 @@ interface ProductsQuery {
       id: string;
       title: string;
       status: ProductRow["status"];
+      productType: string;
+      tags: string[];
+      category: { fullName: string } | null;
       featuredMedia: { id: string; image?: { url: string; full: string } | null } | null;
     }[];
     pageInfo: PageInfo;
@@ -24,7 +28,7 @@ interface ProductsQuery {
 const PRODUCTS_QUERY = `#graphql
   query Products($first: Int, $last: Int, $after: String, $before: String, $query: String) {
     products(first: $first, last: $last, after: $after, before: $before, query: $query, sortKey: UPDATED_AT, reverse: true) {
-      nodes { id title status featuredMedia { id ... on MediaImage { image { url(transform: { maxWidth: 160 }) full: url } } } }
+      nodes { id title status productType tags category { fullName } featuredMedia { id ... on MediaImage { image { url(transform: { maxWidth: 160 }) full: url } } } }
       pageInfo { hasNextPage hasPreviousPage startCursor endCursor }
     }
   }`;
@@ -44,6 +48,7 @@ export async function listProducts(admin: Admin, { query, after, before, pageSiz
     thumb: n.featuredMedia?.image?.url ?? null,
     mediaId: n.featuredMedia?.id ?? null,
     mediaUrl: n.featuredMedia?.image?.full ?? null,
+    detectedKind: detectKind({ category: n.category?.fullName, productType: n.productType, tags: n.tags, title: n.title }),
   }));
   return { products, pageInfo: data.products.pageInfo };
 }

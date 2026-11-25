@@ -2,7 +2,7 @@
    - enqueue():      mark a product "queued" (dashboard "Generate" / "Generate all").
    - processQueue(): picks queued products one by one and generates their image.
    - startWorker():  runs processQueue every few seconds inside the app server (also picks up jobs left by a restart). */
-import type { Shop, TryOnAsset } from "@prisma/client";
+import type { JewelleryKind, Shop, TryOnAsset } from "@prisma/client";
 import db from "../db.server";
 import { unauthenticated } from "../shopify.server";
 import { errorMessage, NonRetryable } from "./errors";
@@ -10,6 +10,7 @@ import { deleteFile, uploadPng } from "./files.server";
 import { currentView, generateTryOnImage, usesAI } from "./generator.server";
 import { gql, type Admin } from "./graphql.server";
 import { writeAssetMetafield } from "./metafields.server";
+import { detectKind } from "./shared";
 
 const MAX_ATTEMPTS = 3;
 const STUCK_MS = 10 * 60 * 1000;         // a "processing" job older than this crashed mid-way → retry
@@ -25,7 +26,12 @@ export interface ProductRef {
   title: string;
   mediaId: string | null;
   mediaUrl: string | null;
+  detectedKind: JewelleryKind; // ring / bracelet / other, from Shopify category, type, tags, title
 }
+
+/** The kind the product is treated as: the merchant's choice if set, else what was detected. */
+export const effectiveKind = (product: ProductRef, asset?: Pick<TryOnAsset, "kind" | "kindManual"> | null): JewelleryKind =>
+  asset?.kindManual ? asset.kind : product.detectedKind;
 
 /* ---------- shop + optional AI limit ---------- */
 
@@ -62,15 +68,30 @@ export async function enqueue(shop: string, product: ProductRef, { force = false
     update: { productTitle: title, status: "failed", error },
   });
   if (!mediaId || !mediaUrl) return fail("Product has no photo");
+  const kind = effectiveKind(product, existing);
+  if (kind === "other") return fail("Not a ring or bracelet. Change the type on the product page if this is wrong.");
   if (usesAI() && (await quotaLeft(shop)) <= 0) return fail("Monthly AI image limit reached (AI_MONTHLY_LIMIT)");
 
   const row = await db.tryOnAsset.upsert({
     where,
-    create: { shop, productId, productTitle: title, sourceMediaId: mediaId, sourceUrl: mediaUrl, status: "queued" },
-    update: { productTitle: title, sourceMediaId: mediaId, sourceUrl: mediaUrl, status: "queued", error: null, attempts: 0 },
+    create: { shop, productId, productTitle: title, sourceMediaId: mediaId, sourceUrl: mediaUrl, status: "queued", kind },
+    update: { productTitle: title, sourceMediaId: mediaId, sourceUrl: mediaUrl, status: "queued", error: null, attempts: 0, kind },
   });
   kick();
   return row;
+}
+
+/* ---------- pause / resume / cancel (dashboard) ---------- */
+
+export async function setPaused(shop: string, paused: boolean): Promise<void> {
+  await db.shop.upsert({ where: { shop }, create: { shop, queuePaused: paused }, update: { queuePaused: paused } });
+  if (!paused) kick();
+}
+
+/** Takes every queued product out of the queue (back to "Not generated"). One already generating finishes. */
+export async function cancelQueued(shop: string): Promise<number> {
+  const r = await db.tryOnAsset.updateMany({ where: { shop, status: "queued" }, data: { status: "none", error: null } });
+  return r.count;
 }
 
 /* ---------- worker ---------- */
@@ -82,8 +103,11 @@ export async function processQueue(): Promise<void> {
   running = true;
   try {
     for (;;) {
+      // Shops that pressed "Pause": their queued products wait (one already generating still finishes)
+      const paused = (await db.shop.findMany({ where: { queuePaused: true }, select: { shop: true } })).map((s) => s.shop);
       const job = await db.tryOnAsset.findFirst({
         where: {
+          ...(paused.length ? { shop: { notIn: paused } } : {}),
           OR: [
             { status: "queued" },
             { status: "processing", updatedAt: { lt: new Date(Date.now() - STUCK_MS) } },
@@ -114,8 +138,10 @@ async function runJob(job: TryOnAsset): Promise<void> {
     if (!product) { await db.tryOnAsset.delete({ where: { id: job.id } }); return; }
     if (!product.mediaUrl) throw new NonRetryable("Product has no photo");
 
-    console.log(label, "generating…");
-    const png = await generateTryOnImage(product.mediaUrl);
+    const kind = effectiveKind(product, job);
+    if (kind === "other") throw new NonRetryable("Not a ring or bracelet");
+    console.log(label, `generating ${kind}…`);
+    const png = await generateTryOnImage(product.mediaUrl, kind);
     const file = await uploadPng(admin, png, {
       filename: `tryon-${job.productId.split("/").pop()}-${Date.now()}.png`,
       alt: `Try-on image: ${product.title}`,
@@ -127,7 +153,7 @@ async function runJob(job: TryOnAsset): Promise<void> {
       data: {
         status: "ready", error: null, productTitle: product.title,
         sourceMediaId: product.mediaId, sourceUrl: product.mediaUrl,
-        resultFileId: file.id, resultUrl: file.url, view: currentView(),
+        resultFileId: file.id, resultUrl: file.url, view: currentView(), kind,
       },
     });
     await writeAssetMetafield(admin, done);
@@ -149,6 +175,9 @@ interface ProductQuery {
   product: {
     id: string;
     title: string;
+    productType: string;
+    tags: string[];
+    category: { fullName: string } | null;
     featuredMedia: { id: string; image?: { url: string } | null } | null;
   } | null;
 }
@@ -157,12 +186,15 @@ export async function fetchProduct(admin: Admin, productId: string): Promise<Pro
   const { product: p } = await gql<ProductQuery>(admin, `#graphql
     query P($id: ID!) {
       product(id: $id) {
-        id title
+        id title productType tags category { fullName }
         featuredMedia { id ... on MediaImage { image { url } } }
       }
     }`, { id: productId });
   if (!p) return null;
-  return { id: p.id, title: p.title, mediaId: p.featuredMedia?.id ?? null, mediaUrl: p.featuredMedia?.image?.url ?? null };
+  return {
+    id: p.id, title: p.title, mediaId: p.featuredMedia?.id ?? null, mediaUrl: p.featuredMedia?.image?.url ?? null,
+    detectedKind: detectKind({ category: p.category?.fullName, productType: p.productType, tags: p.tags, title: p.title }),
+  };
 }
 
 function kick(): void {

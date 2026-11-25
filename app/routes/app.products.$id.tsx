@@ -1,19 +1,19 @@
 /* One product: source photo vs try-on image, live preview on the hand, fine-tuning, own upload, regenerate. */
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { useFetcher, useLoaderData, useRevalidator } from "@remix-run/react";
-import { Badge, Banner, BlockStack, Box, Button, Card, Checkbox, DropZone, InlineGrid, InlineStack, Layout, Page, RangeSlider, Text } from "@shopify/polaris";
+import { Badge, Banner, BlockStack, Box, Button, Card, Checkbox, DropZone, InlineGrid, InlineStack, Layout, Page, RangeSlider, Select, Text } from "@shopify/polaris";
 import { useAppBridge } from "@shopify/app-bridge-react";
-import type { AssetStatus } from "@prisma/client";
+import type { AssetStatus, JewelleryKind } from "@prisma/client";
 import { useEffect, useMemo, useState } from "react";
 import { authenticate } from "../shopify.server";
 import db from "../db.server";
-import { enqueue, fetchProduct } from "../lib/jobs.server";
+import { effectiveKind, enqueue, fetchProduct } from "../lib/jobs.server";
 import { deleteFile, uploadPng } from "../lib/files.server";
 import { canGenerate, normaliseUpload, usesAI } from "../lib/generator.server";
 import { deleteAssetMetafield, writeAssetMetafield } from "../lib/metafields.server";
 import { productStoreInfo } from "../lib/products.server";
 import { errorMessage } from "../lib/errors";
-import { encodeViewerConfig, isBusy, isReady, STATUS, withWidth } from "../lib/shared";
+import { encodeViewerConfig, isBusy, isReady, KIND_LABEL, STATUS, withWidth } from "../lib/shared";
 import { CompareModal } from "../components/CompareModal";
 
 const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
@@ -31,6 +31,9 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   ]);
   return {
     product: { ...product, ...info },
+    kind: effectiveKind(product, asset),
+    kindManual: !!asset?.kindManual,
+    madeAs: asset?.resultUrl ? asset.kind : null,   // the kind the current try-on image was made for
     asset: asset && {
       status: asset.status,
       image: asset.resultUrl,
@@ -61,6 +64,22 @@ export const action = async ({ request, params }: ActionFunctionArgs): Promise<A
       if (!product) return { ok: false, error: "Product not found" };
       const row = await enqueue(shop, product, { force: true });
       return row.status === "failed" ? { ok: false, error: row.error ?? "Could not queue" } : { ok: true };
+    }
+
+    case "kind": {
+      // "auto" = use what was detected from Shopify; otherwise the merchant's choice wins
+      const v = String(form.get("kind"));
+      const manual = v !== "auto";
+      const product = await fetchProduct(admin, productId);
+      if (!product) return { ok: false, error: "Product not found" };
+      const kind: JewelleryKind = manual ? (["ring", "bracelet", "other"].includes(v) ? v as JewelleryKind : "ring") : product.detectedKind;
+      const row = await db.tryOnAsset.upsert({
+        where,
+        create: { shop, productId, productTitle: product.title, kind, kindManual: manual },
+        update: { kind, kindManual: manual },
+      });
+      if (row.resultUrl) await writeAssetMetafield(admin, row);
+      return { ok: true, message: `Type: ${KIND_LABEL[kind]}${manual ? "" : " (auto)"}` };
     }
 
     case "upload": {
@@ -122,7 +141,8 @@ const clamp = (n: number, min: number, max: number, fallback: number) =>
 const CHECKER = "repeating-conic-gradient(#eee 0 25%, #fff 0 50%) 0 0/16px 16px";
 
 export default function ProductPage() {
-  const { product, asset, canGenerate, aiMode } = useLoaderData<typeof loader>();
+  const { product, asset, canGenerate, aiMode, kind, kindManual, madeAs } = useLoaderData<typeof loader>();
+  const isBracelet = kind === "bracelet";
   const fetcher = useFetcher<typeof action>();
   const revalidator = useRevalidator();
   const shopify = useAppBridge();
@@ -159,9 +179,9 @@ export default function ProductPage() {
       origin: typeof window !== "undefined" ? window.location.origin : "",
       current: "p",
       preview: true,
-      products: [{ key: "p", title: product.title, image: product.mediaUrl, price: product.price, tryon: { image: asset.image, scale, offsetY, view: asset.view } }],
+      products: [{ key: "p", title: product.title, image: product.mediaUrl, price: product.price, tryon: { kind: isBracelet ? "bracelet" : "ring", image: asset.image, scale, offsetY, view: asset.view } }],
     });
-  }, [asset?.image, asset?.view, scale, offsetY, product.title, product.mediaUrl, product.price]);
+  }, [asset?.image, asset?.view, scale, offsetY, product.title, product.mediaUrl, product.price, isBracelet]);
 
   const busy = isBusy(status);
   const submitting = (intent: string) => fetcher.state !== "idle" && fetcher.formData?.get("intent") === intent;
@@ -205,7 +225,7 @@ export default function ProductPage() {
                 </BlockStack>
               </InlineGrid>
               <InlineStack gap="200">
-                <Button variant="primary" disabled={!canGenerate || !product.mediaUrl || busy} loading={busy || submitting("generate")}
+                <Button variant="primary" disabled={!canGenerate || !product.mediaUrl || busy || kind === "other"} loading={busy || submitting("generate")}
                   onClick={() => submit({ intent: "generate" })}>
                   {generateLabel}
                 </Button>
@@ -216,11 +236,14 @@ export default function ProductPage() {
           </Card>
         </Layout.Section>
 
+        {madeAs && madeAs !== kind && kind !== "other" && (
+          <Layout.Section><Banner tone="warning">This try-on image was made for a {KIND_LABEL[madeAs].toLowerCase()}. Regenerate it as a {KIND_LABEL[kind].toLowerCase()}.</Banner></Layout.Section>
+        )}
         {previewSrc && (
           <Layout.Section>
             <Card>
               <BlockStack gap="300">
-                <Text as="h3" variant="headingSm">Preview on the hand</Text>
+                <Text as="h3" variant="headingSm">{isBracelet ? "Preview on the wrist" : "Preview on the hand"}</Text>
                 <iframe title="Try-on preview" src={previewSrc} style={{ width: "100%", height: 620, border: 0, borderRadius: 8 }} />
               </BlockStack>
             </Card>
@@ -229,10 +252,24 @@ export default function ProductPage() {
 
         <Layout.Section variant="oneThird">
           <BlockStack gap="400">
+            <Card>
+              <BlockStack gap="200">
+                <Text as="h3" variant="headingSm">Type</Text>
+                <Select label="Type" labelHidden value={kindManual ? kind : "auto"}
+                  options={[
+                    { label: `Auto: ${KIND_LABEL[product.detectedKind]}`, value: "auto" },
+                    { label: "Ring", value: "ring" },
+                    { label: "Bracelet", value: "bracelet" },
+                    { label: "Not a ring or bracelet (shop only)", value: "other" },
+                  ]}
+                  onChange={(v) => submit({ intent: "kind", kind: v })} disabled={submitting("kind")} />
+                <Text as="p" tone="subdued" variant="bodySm">Auto uses the product's Shopify category, type, tags or title. Rings go on a finger, bracelets on the wrist.</Text>
+              </BlockStack>
+            </Card>
             {isReady(status) && (
               <Card>
                 <BlockStack gap="300">
-                  <Text as="h3" variant="headingSm">Fit on the finger</Text>
+                  <Text as="h3" variant="headingSm">{isBracelet ? "Fit on the wrist" : "Fit on the finger"}</Text>
                   <RangeSlider label="Size" min={0.5} max={2} step={0.05} value={scale} onChange={(v) => setScale(Number(v))} output />
                   <RangeSlider label="Move up / down" min={-0.5} max={0.5} step={0.01} value={offsetY} onChange={(v) => setOffsetY(Number(v))} output />
                   <Checkbox label="Show try-on for this product" checked={enabled} onChange={setEnabled} />
@@ -246,7 +283,9 @@ export default function ProductPage() {
             <Card>
               <BlockStack gap="300">
                 <Text as="h3" variant="headingSm">Use your own image</Text>
-                <Text as="p" tone="subdued">PNG with a transparent background, ring seen from above with the band left-to-right.</Text>
+                <Text as="p" tone="subdued">{isBracelet
+                  ? "PNG with a transparent background: the front half of the bracelet as worn, running left-to-right."
+                  : "PNG with a transparent background, ring seen from above with the band left-to-right."}</Text>
                 <DropZone accept="image/png" type="image" allowMultiple={false}
                   onDrop={(files: File[]) => {
                     const fd = new FormData();
@@ -263,7 +302,7 @@ export default function ProductPage() {
       </Layout>
 
       <CompareModal open={compareOpen} onClose={() => setCompareOpen(false)} title={product.title}
-        photo={product.mediaUrl} tryon={asset?.image ?? null} view={asset?.view ?? "photo"} />
+        photo={product.mediaUrl} tryon={asset?.image ?? null} view={asset?.view ?? "photo"} kind={isBracelet ? "bracelet" : "ring"} />
     </Page>
   );
 }

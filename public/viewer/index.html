@@ -180,6 +180,10 @@
   .infobtn { border:1px solid var(--line); background:#fff; border-radius:14px; padding:2px 10px; font-size:12px; }
   .lookbar { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:8px; }
   .lookbar button { border:1px solid var(--line); background:#fff; border-radius:6px; padding:8px 4px; font-size:12px; }
+  /* Rings / Bracelets switch in the drawer */
+  .kindtabs { display:grid; grid-template-columns:1fr 1fr; margin:10px 14px 0; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+  .kindtabs button { border:0; background:#fff; padding:9px; font-size:13px; }
+  .kindtabs button.on { background:var(--ink); color:#fff; }
   /* My selections + Buy this look */
   .selcount { display:inline-block; min-width:18px; padding:0 5px; border-radius:9px; background:var(--pink); color:#fff; font-size:11px; line-height:18px; }
   .rail button.on .selcount { background:#fff; color:var(--ink); }
@@ -313,6 +317,160 @@
     .shapes { padding:12px; min-height:0; } .carat { padding:16px; } .qrcard { display:none; }
     .skinwrap { height:200px; right:14px; }
   }
+
+  /* =====================================================================
+     STUDIO THEME — one calm, neutral look for the whole try-on (2026-11-25):
+     stone / ink palette, one type scale, quiet borders, black primary buttons, no brand mark, no pink.
+     ===================================================================== */
+  .tryon {
+    --ink:#1c1917; --ink-2:#44403c; --muted:#78716c; --line:#e7e5e4; --line-2:#d6d3d1; --soft:#f5f5f4; --canvas:#faf9f7;
+    --pink:var(--ink); --brand:var(--ink); --brand-d:#000;
+    --r:12px; --r-sm:8px; --shadow:0 1px 2px rgba(28,25,23,.06), 0 8px 24px rgba(28,25,23,.08);
+    font:14px/1.5 "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+  }
+  .tryon button { font:inherit; }
+  .tryon .tbox { border-radius:16px; box-shadow:0 24px 80px rgba(28,25,23,.28); overflow:visible; }
+  /* left rail: quiet icons, a thin bar marks the open tab */
+  .tryon .rail { background:#fff; border:1px solid var(--line); border-right:0; box-shadow:none; border-radius:14px 0 0 14px; padding:6px 0; gap:2px; }
+  .tryon .rail button { color:var(--muted); font-size:12px; letter-spacing:.01em; padding:12px 6px; position:relative; background:transparent; }
+  .tryon .rail button svg { width:26px; height:26px; stroke:currentColor !important; }
+  .tryon .rail button:hover { color:var(--ink); }
+  .tryon .rail button.on { background:transparent; color:var(--ink); font-weight:600; }
+  .tryon .rail button.on::before { content:""; position:absolute; left:0; top:14px; bottom:14px; width:3px; border-radius:0 3px 3px 0; background:var(--ink); }
+  .tryon .rail button.on svg { stroke:currentColor !important; }
+  .tryon .selcount { background:var(--ink); color:#fff; font-weight:600; }
+  .tryon .rail button.on .selcount { background:var(--ink); color:#fff; }
+  /* drawer column */
+  .tryon .tleft { background:#fff; border-right:1px solid var(--line); }
+  .tryon .thead { background:#fff; text-align:left; padding:18px 20px 6px; font-size:17px; font-weight:600; letter-spacing:-.01em; }
+  .tryon .shopname { justify-content:space-between; padding:16px 20px 8px; border-top:1px solid var(--line); margin-top:6px; font-size:15px; }
+  .tryon .infobtn { border-color:var(--line-2); color:var(--ink-2); border-radius:999px; padding:3px 12px; }
+  .tryon .drawtip { text-align:left; padding:6px 20px 0; font-size:12px; color:var(--muted); }
+  .tryon .finder { padding:10px 20px 0; }
+  .tryon .finder input[type=search] { border-color:var(--line-2); border-radius:var(--r-sm); padding:10px 12px; background:#fff; }
+  .tryon .finder input[type=search]:focus { outline:none; border-color:var(--ink); box-shadow:0 0 0 3px rgba(28,25,23,.08); }
+  .tryon .chip { border-color:var(--line-2); color:var(--ink-2); padding:5px 12px; }
+  .tryon .chip.on { background:var(--ink); border-color:var(--ink); color:#fff; }
+  .tryon .kindtabs { margin:12px 20px 0; border:0; background:var(--soft); padding:3px; border-radius:10px; gap:3px; }
+  .tryon .kindtabs button { background:transparent; border-radius:8px; color:var(--muted); font-weight:500; padding:8px; }
+  .tryon .kindtabs button.on { background:#fff; color:var(--ink); box-shadow:0 1px 2px rgba(28,25,23,.12); }
+  .tryon .ringgrid { padding:12px 20px; gap:12px; }
+  .tryon .ringcard { border:1px solid var(--line); border-radius:var(--r); padding:8px; gap:4px; transition:border-color .15s, box-shadow .15s; }
+  .tryon .ringcard:hover { border-color:var(--line-2); box-shadow:var(--shadow); }
+  .tryon .ringcard.on { border-color:var(--ink); box-shadow:0 0 0 1px var(--ink); }
+  .tryon .ringcard img, .tryon .ringcard .noimg { border-radius:var(--r-sm); background:var(--canvas); object-fit:contain; }
+  .tryon .ringcard .rn { font-weight:500; font-size:13px; }
+  .tryon .ringcard .rp { font-size:12px; }
+  .tryon .wornchip { border-color:var(--line-2); }
+  .tryon .wornchip.on { border-color:var(--ink); box-shadow:0 0 0 1px var(--ink); }
+  .tryon .shopopts { padding:4px 20px; }
+  .tryon .optlbl { font-size:12px; font-weight:600; color:var(--ink-2); text-transform:uppercase; letter-spacing:.06em; }
+  .tryon .mtile, .tryon .pillopt { border-color:var(--line-2); border-radius:var(--r-sm); }
+  .tryon .mtile.on, .tryon .pillopt.on { border-color:var(--ink); box-shadow:inset 0 0 0 1px var(--ink); }
+  .tryon select.size { border-color:var(--line-2); border-radius:var(--r-sm); min-width:0; width:100%; }
+  .tryon .nocentre { text-align:left; padding:14px 0; color:var(--muted); }
+  .tryon .linkbtn { color:var(--muted); font-size:13px; }
+  .tryon .linkbtn:hover { color:var(--ink); }
+  /* buy area */
+  .tryon .shopbuy { padding:14px 20px 18px; border-top:1px solid var(--line); background:#fff; }
+  .tryon .shopbuy #shopCart, .tryon #buyLook { background:var(--ink); border-radius:var(--r-sm); min-height:48px; font-weight:600; letter-spacing:.01em; }
+  .tryon .shopbuy #shopCart:hover:not(:disabled), .tryon #buyLook:hover:not(:disabled) { background:#000; }
+  .tryon .shopbuy #shopCart:disabled { background:var(--line-2); color:var(--muted); opacity:1; }
+  .tryon .lookbar { gap:8px; margin-top:10px; }
+  .tryon .lookbar button { border-color:var(--line-2); border-radius:var(--r-sm); color:var(--ink-2); padding:9px 4px; }
+  .tryon .lookbar button:hover { border-color:var(--ink); color:var(--ink); }
+  .tryon .added { border-color:var(--line); border-radius:var(--r); background:var(--canvas); }
+  .tryon .tick { background:var(--ink); }
+  /* canvas */
+  .tryon #view { background:radial-gradient(120% 90% at 50% 40%, #fff 0%, var(--canvas) 70%, #f1efec 100%); }
+  .tryon .closeX, .tryon .menubtn { width:40px; height:40px; top:18px; border:1px solid var(--line); background:rgba(255,255,255,.92);
+    color:var(--ink); border-radius:999px; display:flex; align-items:center; justify-content:center; box-shadow:0 1px 2px rgba(28,25,23,.06); }
+  .tryon .closeX { right:18px; } .tryon .menubtn { right:66px; }
+  .tryon .closeX svg, .tryon .menubtn svg { width:18px; height:18px; }
+  .tryon .closeX:hover, .tryon .menubtn:hover { border-color:var(--ink); }
+  .tryon .sideseg { top:18px; right:auto; left:18px; border:1px solid var(--line); border-radius:999px; padding:3px; gap:2px; background:rgba(255,255,255,.92); box-shadow:0 1px 2px rgba(28,25,23,.06); }
+  .tryon .sideseg button { border-radius:999px; padding:6px 14px; font-size:13px; color:var(--muted); background:transparent; }
+  .tryon .sideseg button.on { background:var(--ink); color:#fff; }
+  .tryon .viewtools { position:absolute; right:18px; bottom:18px; z-index:3; display:flex; flex-direction:column; border:1px solid var(--line);
+    border-radius:12px; overflow:hidden; background:rgba(255,255,255,.92); box-shadow:0 1px 2px rgba(28,25,23,.06); }
+  .tryon .viewtools button { width:40px; height:40px; border:0; background:transparent; color:var(--ink-2); display:flex; align-items:center; justify-content:center; }
+  .tryon .viewtools button + button { border-top:1px solid var(--line); }
+  .tryon .viewtools button:hover { background:var(--soft); color:var(--ink); }
+  .tryon .viewtools svg { width:18px; height:18px; }
+  .tryon .hint { bottom:18px; font-size:12px; color:var(--ink-2); background:rgba(255,255,255,.92); border:1px solid var(--line);
+    padding:6px 12px; border-radius:999px; max-width:calc(100% - 140px); text-align:center; box-shadow:0 1px 2px rgba(28,25,23,.06); }
+  /* menu drawer, pop-ups, selections, looks */
+  .tryon .drawer { box-shadow:-12px 0 40px rgba(28,25,23,.12); }
+  .tryon .drawer header { font-weight:600; font-size:16px; }
+  .tryon .drawer h4 { font-weight:600; color:var(--muted); font-size:11px; letter-spacing:.08em; }
+  .tryon .drawer .item { color:var(--ink-2); border-radius:var(--r-sm); padding:9px 8px; margin:0 -8px; width:calc(100% + 16px); }
+  .tryon .drawer .item:hover { background:var(--soft); color:var(--ink); }
+  .tryon .drawer .seg2 { border-color:var(--line-2); border-radius:var(--r-sm); }
+  .tryon .selitem { border-color:var(--line); border-radius:var(--r); }
+  .tryon .selitem.on { border-color:var(--ink); box-shadow:0 0 0 1px var(--ink); }
+  .tryon .selitem .side button, .tryon .minecard .acts button.ghost { border-color:var(--line-2); border-radius:6px; }
+  .tryon .minecard { border-color:var(--line); border-radius:var(--r); }
+  .tryon .minecard .acts button:not(.ghost), .tryon .mineempty button { background:var(--ink); border-color:var(--ink); border-radius:var(--r-sm); }
+  .tryon .lookcard { border-color:var(--line); border-radius:var(--r); }
+  .backdrop { background:rgba(28,25,23,.45); backdrop-filter:blur(2px); }
+  .modal { border-radius:16px; padding:22px; box-shadow:0 24px 80px rgba(28,25,23,.3); font:14px/1.5 "Inter", ui-sans-serif, system-ui, sans-serif; color:#1c1917; }
+  .modal h3 { font-size:18px; font-weight:600; letter-spacing:-.01em; }
+  .modal .actions button { border-color:#d6d3d1; border-radius:8px; padding:9px 16px; }
+  .modal .actions button.primary { background:#1c1917; border-color:#1c1917; }
+  .toast { background:#1c1917; border-radius:999px; padding:10px 18px; font:13px/1.4 "Inter", ui-sans-serif, system-ui, sans-serif; }
+  .tryon .tour .tourcard { border-radius:16px; }
+  .tryon .tourbtns .primary { background:var(--ink); border-color:var(--ink); }
+  .tryon .optgrp:has(.linkbtn) { align-items:flex-start; }
+  .tryon .kindtabs + .finder { padding-top:12px; }
+  .toast { top:84px; max-width:min(420px, calc(100% - 32px)); }
+  @media (max-width: 1100px) {
+    .toast { top:118px; }
+    .tryon .rail { border:0; border-bottom:1px solid var(--line); border-radius:0; padding:0; }
+    .tryon .rail button.on::before { left:14px; right:14px; top:auto; bottom:0; width:auto; height:2px; border-radius:2px 2px 0 0; }
+    .tryon .thead { padding:12px 16px 4px; font-size:16px; }
+    .tryon .finder, .tryon .drawtip, .tryon .shopopts { padding-left:16px; padding-right:16px; }
+    .tryon .ringgrid { padding:10px 16px; }
+    .tryon .kindtabs { margin:10px 16px 0; }
+    .tryon .shopbuy { padding:12px 16px 14px; }
+    .tryon .closeX, .tryon .menubtn { top:12px; } .tryon .closeX { right:12px; } .tryon .menubtn { right:58px; }
+    .tryon .sideseg { top:12px; left:12px; }
+    .tryon .viewtools { right:12px; bottom:12px; }
+    .tryon .hint { bottom:12px; max-width:calc(100% - 90px); }
+  }
+
+  /* ---------- Drawer: carousel, 2 at a time (search + filters hidden) ---------- */
+  .finder { display:none !important; }
+  /* ☰ menu hidden: its actions are in the panel (Save / Share / Download / How it works / Help) and on the view (hand, skin tone) */
+  #menuBtn { display:none !important; }
+  .helpbar { display:flex; gap:8px; margin-top:8px; }
+  .helpbar button { flex:1; display:flex; align-items:center; justify-content:center; gap:6px; min-height:40px; border:1px solid var(--line); border-radius:var(--r-sm, 6px); background:transparent; color:var(--ink-2, #44403c); font-size:13px; cursor:pointer; }
+  .helpbar button:hover { border-color:var(--ink, #1c1917); color:var(--ink, #1c1917); }
+  /* vertical skin slider (left edge, middle of the hand view) */
+  .tryon .skinwrap, .skinwrap { left:18px; right:auto; top:50%; transform:translateY(-50%); height:240px; width:40px; padding:12px 0 14px; flex-direction:column; align-items:center; gap:10px;
+    background:rgba(255,255,255,.92); border:1px solid var(--line); border-radius:999px; box-shadow:0 2px 10px rgba(0,0,0,.08); }
+  .skinlbl { font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); }
+  input.skinv { direction:ltr !important; flex:1; width:8px !important; height:auto !important; border-radius:4px; background:linear-gradient(to bottom, #fbeee6, #f6dcc8, #ecc8ad, #d9a37e, #b97f58, #5e3a26) !important; }
+  input.skinv::-webkit-slider-thumb { width:20px !important; height:20px !important; border:2px solid #fff !important; background:var(--ink, #1c1917) !important; box-shadow:0 1px 4px rgba(0,0,0,.3) !important; }
+  input.skinv::-moz-range-thumb { width:18px !important; height:18px !important; border:2px solid #fff !important; background:var(--ink, #1c1917) !important; }
+  @media (max-width: 1100px) { .tryon .skinwrap, .skinwrap { left:10px; height:170px; width:34px; padding:10px 0; } }
+  .skinbar { position:absolute; left:18px; bottom:18px; z-index:3; display:flex; gap:6px; padding:6px 8px; background:rgba(255,255,255,.92); border:1px solid var(--line); border-radius:999px; box-shadow:0 2px 10px rgba(0,0,0,.08); }
+  .skinbar .swatch { width:24px; height:24px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 0 1px var(--line); cursor:pointer; padding:0; }
+  .skinbar .swatch.on { box-shadow:0 0 0 2px var(--ink, #1c1917); }
+  @media (max-width: 1100px) { .skinbar { left:10px; bottom:10px; gap:4px; padding:4px 6px; } .skinbar .swatch { width:20px; height:20px; } }
+  .single #kindTabs, .single .carwrap, .single #carCount, .single #drawTip { display:none !important; }
+  .carwrap { position:relative; }
+  .tryon .ringgrid, .ringgrid { grid-template-columns:none; grid-auto-flow:column; grid-auto-columns:calc(50% - 6px); overflow-x:auto; overflow-y:hidden;
+    max-height:none; scroll-snap-type:x mandatory; overscroll-behavior-x:contain; scrollbar-width:none; scroll-behavior:smooth; }
+  .ringgrid::-webkit-scrollbar { display:none; }
+  .ringgrid .ringcard { scroll-snap-align:start; touch-action:pan-x; }
+  .ringgrid .more, .ringgrid .nomatch { grid-column:auto; display:flex; align-items:center; justify-content:center; }
+  .carbtn { position:absolute; top:50%; transform:translateY(-50%); z-index:3; width:34px; height:34px; border-radius:50%; border:1px solid var(--line);
+    background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.12); display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; }
+  .carbtn[disabled] { opacity:0; pointer-events:none; }
+  .carbtn.prev { left:6px; } .carbtn.next { right:6px; }
+  .cardots { text-align:center; font-size:12px; color:var(--muted); padding:0 0 6px; }
+  @media (max-width: 1100px) { .tryon .ringgrid, .ringgrid { grid-auto-columns:calc(50% - 6px); } .carbtn { width:30px; height:30px; } }
 </style>
 </head>
 <body>
@@ -364,14 +522,20 @@
     <div class="tleft" id="tleft">
       <button class="sheethandle" id="sheetHandle" aria-label="Drag to resize the panel, tap to expand or collapse"></button>
       <div id="panelShop" hidden>
-        <div class="thead">Choose a ring</div>
+        <div class="thead" id="shopTitle">Choose a ring</div>
+        <div class="kindtabs" id="kindTabs" role="group" aria-label="Show" hidden><button data-drawer="ring" class="on" aria-pressed="true">Rings</button><button data-drawer="bracelet" aria-pressed="false">Bracelets</button></div>
         <div class="worn" id="wornList" hidden></div>
         <div class="finder">
           <input type="search" id="findQ" placeholder="Search rings" aria-label="Search rings" autocomplete="off">
           <div class="chips" id="findChips" role="group" aria-label="Filters"></div>
         </div>
-        <div class="drawtip">Tap a ring to try it, or drag it onto any finger</div>
-        <div class="ringgrid" id="shopList"></div>
+        <div class="drawtip" id="drawTip">Tap a ring to try it, or drag it onto any finger</div>
+        <div class="carwrap">
+          <button class="carbtn prev" id="carPrev" aria-label="Previous"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg></button>
+          <div class="ringgrid" id="shopList"></div>
+          <button class="carbtn next" id="carNext" aria-label="Next"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg></button>
+        </div>
+        <div class="cardots" id="carCount"></div>
         <div class="thead shopname"><span id="shopName"></span><button class="infobtn" id="pdBtn" aria-label="Product details">ⓘ Details</button></div>
         <div class="shopopts" id="shopOptions"></div>
         <div class="shopbuy">
@@ -382,6 +546,7 @@
           </div>
           <button class="primary" id="shopCart">Add to cart</button>
           <div class="lookbar"><button data-act="save">♡ Save look</button><button data-act="share">↗ Share</button><button data-act="download">⤓ Download</button></div>
+          <div class="helpbar"><button data-act="tour"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M10 8.5l5 3.5-5 3.5z" fill="currentColor"/></svg>How it works</button><button data-act="help"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5v.4M12 17h.01"/></svg>Help</button></div>
         </div>
       </div>
       <div id="panelLooks" hidden>
@@ -419,11 +584,12 @@
     <div id="view">
       <div class="loading" id="loading">Loading try-on…</div>
       <canvas id="overlay"></canvas>
-      <div class="brand">Powered by<b>AMARA</b></div>
-      <button class="closeX" id="closeTry" aria-label="Close try-on">✕</button>
-      <button class="menubtn" id="menuBtn" aria-label="Menu" aria-expanded="false" aria-controls="drawer">☰</button>
+      <button class="closeX" id="closeTry" aria-label="Close try-on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <button class="menubtn" id="menuBtn" aria-label="Menu" aria-expanded="false" aria-controls="drawer"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
       <div class="sideseg" role="group" aria-label="Which hand"><button data-side="left">Left</button><button data-side="right" class="on">Right</button></div>
-      <div class="skinwrap" title="Skin tone"><input id="tone" class="skinv" type="range" min="0" max="100" value="20" aria-label="Skin tone"></div>
+      <!-- Skin tone: a vertical slider on the hand view, drag up = lighter, down = deeper (the ☰ menu is hidden) -->
+      <div class="skinwrap" title="Skin tone"><span class="skinlbl">Skin</span><input id="tone" class="skinv" type="range" min="0" max="100" value="20" aria-label="Skin tone"></div>
+      <div class="skinbar" id="skinbar" hidden></div>
       <!-- Menu drawer: hand, complexion, both hands, save / share / download, help -->
       <aside class="drawer" id="drawer" aria-label="Menu" aria-hidden="true">
         <header><span>Menu</span><button id="drawerClose" aria-label="Close menu">✕</button></header>
@@ -446,8 +612,10 @@
           <button class="item" data-act="help"><i>?</i>Help &amp; FAQ</button>
         </section>
       </aside>
-      <button class="zoomBtn" id="zoomBtn" title="Zoom in on the ring">⌕</button>
-      <button class="zoomBtn" id="spinBtn" title="Rotate the ring around the finger" style="bottom:82px">⟳</button>
+      <div class="viewtools" role="group" aria-label="View">
+        <button id="zoomBtn" title="Zoom in" aria-label="Zoom in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2M11 8v6M8 11h6"/></svg></button>
+        <button id="spinBtn" title="Rotate the ring" aria-label="Rotate the ring"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v5h-5"/></svg></button>
+      </div>
       <div class="hint" id="hint">Drag the ring along the finger · slide it off the tip onto another finger</div>
     </div>
     <div class="qrcard" id="qrCard">
@@ -495,11 +663,25 @@ const fromEmbed = x => ({
   metalPrices:x.metalPrices, metalImages:x.metalImages, available:x.available !== false,
   tryonImage:x.tryon?.image || null, tryonScale:+x.tryon?.scale || 1, tryonView:x.tryon?.view || 'photo', tryonOffsetY:+x.tryon?.offsetY || 0,
   desc:x.description || '', type:x.type || '', images:(x.images && x.images.length ? x.images : [x.image]).filter(Boolean),
+  kind:x.tryon?.kind === 'bracelet' || x.kind === 'bracelet' ? 'bracelet' : 'ring',   // ring → a finger, bracelet → the wrist
+  lengths:Array.isArray(x.lengths) && x.lengths.length ? x.lengths : null,             // bracelet Length option values (from the variants)
 });
-// PRODUCTS grows when more rings are loaded from the store (see requestMore)
-const PRODUCTS = EMBED ? (EMBED.products || []).map(fromEmbed) : DEMO_PRODUCTS;
+// Rings (PRODUCTS) go on the fingers, bracelets (BRACELETS) on the wrist. Both grow when more are loaded from the store.
+const ALL = EMBED ? [...new Map((EMBED.products || []).map(x => [String(x.key), x])).values()].map(fromEmbed) : DEMO_PRODUCTS;   // no duplicates (a product can be in both collections)
+const PRODUCTS = ALL.filter(p => p.kind !== 'bracelet');
+const BRACELETS = ALL.filter(p => p.kind === 'bracelet');
 const metalsOf = p => Object.keys(METALS).filter(k => !p.metalPrices || k in p.metalPrices);
-const byId = Object.fromEntries(PRODUCTS.map(p => [p.id, p]));
+const byId = Object.fromEntries(ALL.map(p => [p.id, p]));
+// The page's own product, when it is a bracelet: it starts on the wrist
+const CUR_BRACELET = BRACELETS.find(p => p.key === EMBED?.current) || null;
+// Opened from a bracelet's product page: only bracelets (no Rings tab, no ring on the hand)
+const BRACELET_ONLY = !!CUR_BRACELET;
+/* Single-product mode (feedback 2026-11-26): opened from a product page, the try-on shows ONLY that product —
+   no Rings / Bracelets tabs, no carousel of other products. Set to false to bring the carousel back. */
+const SINGLE = !!EMBED;
+if (SINGLE) document.documentElement.classList.add('single');
+const relabelShopTab = () => { const t = document.getElementById('tabShop'); if (t) t.lastChild.textContent = SINGLE ? 'Try on' : 'Bracelets'; };
+if (BRACELET_ONLY || SINGLE) document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', relabelShopTab) : relabelShopTab();
 const hasCenter = p => ['solitaire', 'halo', 'three', 'pave'].includes(p.style);
 /* Curated looks: several rings, one per finger. On the store they come from the theme block's "Curated looks"
    setting (resolved to products in tryon.js, with stock). Sold-out pieces are left out when a look is loaded. */
@@ -522,7 +704,7 @@ const W = 620, H = 635;          // try-on canvas box; each photo is fitted into
 /* Each pose: photo, how it is fitted into the canvas, and its fingers measured from the photo
    (tests/hand-measure: where a ring sits, finger width / centre line every slide step, where the nail starts). */
 const HANDS = {
-  back:{ name:'Classic', src:window.HAND_SRCS?.back, crop:{ x:0, y:0, w:1024, h:1024 }, fit:{ s:.6, dx:3, dy:10 }, depth:18,
+  ring:{ name:'Close-up hand (rings)', src:window.HAND_SRCS?.ring, crop:{ x:0, y:0, w:1024, h:1024 }, fit:{ s:.6, dx:3, dy:10 }, depth:18,
     geo:{ pinky:{ x:355, y:445, rot:-2, w:32 }, ring:{ x:434, y:398, rot:2, w:36 }, middle:{ x:513, y:400, rot:0, w:37 }, index:{ x:598, y:395, rot:-2, w:39 }, thumb:{ x:705, y:540, rot:21, w:38 } },
     tips:{ pinky:[350, 300], ring:[440, 192], middle:[513, 140], index:[590, 188], thumb:[733, 468] },
     base:{ pinky:18, ring:13, middle:13, index:17, thumb:25 },
@@ -538,6 +720,23 @@ const HANDS = {
     middle:[-5,-4,-4,-4,-4,-4,-4,-4,-3,-3,-3,-3,-3,-3,-3,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,3,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,1,1,1],
     index:[-7,-4,-4,-3,-3,-3,-3,-3,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-1,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0,1,1,1,1,1,1,2,2,2,2,2,2,3,4,4,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,5,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,5,5,6,6,6,6,6,6,6,6,6,6,5,5,5,5,5,5,5,4,4,5,5,4,4,4,3,4,4,3,3],
     thumb:[0,-1,-1,-2,-1,-2,-2,-2,-2,-3,-3,-3,-3,-3,-4,-4,-4,-5,-5,-5,-5,-6,-7,-6,-7,-7,-8,-8,-9,-8,-9,-9,-9,-9,-10,-10,-11,-12,-12,-12,-13,-14,-14,-15,-14,-15,-15,-16,-16,-16,-17,-17,-17,-18,-18,-19,-18,-19,-19,-19,-19,-19,-19,-20] } },
+  bracelet:{ name:'Hand with wrist (bracelets)', src:window.HAND_SRCS?.bracelet, crop:{ x:0, y:0, w:1024, h:1024 }, fit:{ s:.6, dx:3, dy:10 }, depth:18,
+    geo:{ pinky:{ x:388, y:362, rot:-2, w:26 }, ring:{ x:453, y:300, rot:1, w:29 }, middle:{ x:515, y:300, rot:0, w:29 }, index:{ x:577, y:328, rot:-2, w:30 }, thumb:{ x:652, y:428, rot:30, w:31 } },
+    wrist:{ x:498, y:744, rot:0, w:89 },   // narrowest point of the arm: where a bracelet sits (w = half width, photo px)
+    tips:{ pinky:[384, 248], ring:[456, 158], middle:[514, 118], index:[572, 152], thumb:[684, 372] },
+    base:{ pinky:8, ring:10, middle:12, index:7, thumb:19 },
+    profile:{
+    pinky:[50,50,50,50,50,50,51,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,52,52,52,52,52,52,52,52,52,52,52,52,52,52,50,50,50,50,50,50,48,48,48,48,48,48,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,46,47,46,46,46,46,46,46,46,46,44,44,45,44],
+    ring:[56,56,56,56,56,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,56,56,56,56,56,54,54,54,54,54,54,54,52,52,52,52,52,52,52,52,52,52,50,50,50,50,50,50,50,50,50,50,50,48,48,48,48,48,48,48,48,50,50,50,50,50,50,50,50,50,50,48,48,48,48,48,50,50,50,49,48,48,48,48,48,48],
+    middle:[55,55,56,56,56,56,56,56,56,56,57,57,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,60,60,60,60,60,60,60,60,60,60,60,60,60,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,60,60,60,60,60,60,58,58,58,58,58,58,56,56,56,56,56,56,56,56,56,56,56,56,54,54,54,54,54,54,54,54,54,54,54,54,54,54,54,54,54,54,54,54,54,54,54,54,54,54,54,54,54,54,54,54,54,54,54,54,54,54,54,54,54,52,52],
+    index:[62,62,62,60,60,61,60,60,60,60,60,60,60,60,60,60,62,62,62,62,62,62,62,62,62,62,62,63,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,60,60,60,60,58,58,58,58,58,56,56,56,56,54,54,54,54,54,52,52,52,52,52,52,52,52,52,52,52,52,52,52,52,52,52,52,54,52,52,52,52,52,52,52,54,54,54,54,52,52,52,52,52,54,52,52,52,52,52,52,52],
+    thumb:[64,63,63,62,61,62,61,60,60,60,60,60,60,59,60,60,62,61,60,62,60,60,62,62,60,60,60,60,60,60,62,62,62,63,63,63,62,62,62,62,62,62,62,61,60,60,60,58,58,58,57,56,56,54,54,54,54,52,51] },
+    centre:{
+    pinky:[4,4,4,4,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,3,3,3,3,2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1],
+    ring:[-2,-2,-2,-2,-2,-2,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-4,-4,-3,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-5,-5,-5,-5,-4,-4,-4,-4,-4,-5,-5,-4,-4,-4,-4,-5,-5,-5,-5,-5,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3],
+    middle:[-4,-4,-3,-3,-3,-3,-3,-3,-3,-3,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0],
+    index:[-1,-1,-1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,2,2,1,2,1,1,2,3,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,5,5,5,5,5,6,6,6,6,6,6,6,6,6,6,6,7,7,7,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,4,4,4,4,4,3,4,4],
+    thumb:[14,13,12,12,11,11,11,10,10,10,9,8,8,7,7,6,6,5,5,4,4,3,2,2,1,0,1,0,0,-1,-2,-2,-3,-4,-5,-5,-5,-6,-6,-7,-7,-7,-8,-9,-9,-10,-11,-11,-11,-11,-12,-13,-14,-14,-14,-14,-15,-15,-16] } },
 };
 const H_ = () => HANDS[state.orient];
 const FINGERS = ['thumb', 'index', 'middle', 'ring', 'pinky'];
@@ -559,10 +758,14 @@ const $ = id => document.getElementById(id);
    so all the fit and price code works on it unchanged. Other rings on the hand wait in `worn`
    (finger → { pid, cfg, slide, spin }); touching one makes it the active ring.
    ===================================================================== */
-const state = { worn:{}, hands:{ left:null, right:null }, float:null, tab:'hand', pid:(PRODUCTS.find(p => p.key === EMBED?.current) || PRODUCTS[0]).id, cfg:null, finger:'ring', slide:0, side:'right', orient:'back', panel:'ring', tone:20,
+/* Bracelets: one per wrist, in state.wrist ({ pid, cfg, slide }) — each hand keeps its own (see handSet).
+   state.drawer = which list the drawer shows / the options edit: 'ring' or 'bracelet'.
+   state.noRing = the store has no rings at all (bracelet-only): the active-ring fields are then not drawn. */
+const state = { worn:{}, wrist:null, drawer:'ring', noRing:!PRODUCTS.length, hands:{ left:null, right:null }, float:null, tab:'hand',
+  pid:(PRODUCTS.find(p => p.key === EMBED?.current) || PRODUCTS[0] || ALL[0]).id, cfg:null, finger:'ring', slide:0, side:'right', orient:CUR_BRACELET || !PRODUCTS.length ? 'bracelet' : 'ring', panel:'ring', tone:20,
   yaw:0, pitch:0, zoom:1, panX:0, panY:0, open:false, cart:[] };
 const product = () => byId[state.pid];
-const freshCfg = p => ({ metal:p.metal, stone:p.stone, shape:p.shape, carat:1, band:1, size:4, stoneK:1 });
+const freshCfg = p => ({ metal:p.metal, stone:p.stone, shape:p.shape, carat:1, band:1, size:4, stoneK:1, length:p.lengths?.[0] ?? null });
 state.cfg = freshCfg(product());
 const geo = id => { const h = HANDS[state.orient], g = h.geo[id], f = h.fit; return { x:g.x * f.s + f.dx, y:g.y * f.s + f.dy, rot:g.rot, w:g.w * f.s }; };
 const caratFee = () => hasCenter(product()) ? Math.round((Math.pow(state.cfg.carat, 1.7) - 1) * 1400 / 10) * 10 : 0;
@@ -571,9 +774,13 @@ const spec = () => ({ style:product().style, ...state.cfg });
 const snap = () => ({ pid:state.pid, cfg:state.cfg, slide:state.slide, spin:state.spin || 0 });
 /* Each hand has its own rings. The hand on screen lives in the active-ring fields + worn; the other hand's set
    waits in state.hands[side] (null = no rings yet). */
-const handSet = () => ({ pid:state.pid, cfg:state.cfg, finger:state.finger, slide:state.slide, spin:state.spin || 0, worn:{ ...state.worn } });
-const loadSet = s => Object.assign(state, { pid:s.pid, cfg:s.cfg, finger:s.finger, slide:s.slide, spin:s.spin || 0, worn:{ ...s.worn }, float:null });
-const ringsIn = s => s ? [[s.finger, s.pid, s.cfg], ...Object.entries(s.worn).map(([f, r]) => [f, r.pid, r.cfg])] : [];
+const handSet = () => ({ pid:state.pid, cfg:state.cfg, finger:state.finger, slide:state.slide, spin:state.spin || 0, worn:{ ...state.worn },
+  wrist:state.wrist ? { ...state.wrist } : null, noRing:state.noRing });
+const loadSet = s => Object.assign(state, { pid:s.pid, cfg:s.cfg, finger:s.finger, slide:s.slide, spin:s.spin || 0, worn:{ ...s.worn },
+  wrist:s.wrist ? { ...s.wrist } : null, noRing:!!s.noRing, float:null });
+// Every piece on a hand as [where, pid, cfg]: fingers first, then 'wrist' for the bracelet.
+const ringsIn = s => s ? [...(s.noRing ? [] : [[s.finger, s.pid, s.cfg]]), ...Object.entries(s.worn).map(([f, r]) => [f, r.pid, r.cfg]),
+  ...(s.wrist ? [['wrist', s.wrist.pid, s.wrist.cfg]] : [])] : [];
 // Run fn as if ring r on `finger` were the active one (fit / size / drawing code all read the active ring).
 function withRing(r, finger, fn) {
   const keep = { pid:state.pid, cfg:state.cfg, slide:state.slide, spin:state.spin, finger:state.finger, float:state.float };
@@ -879,6 +1086,10 @@ const bandMM = (sp = spec()) => 1.8 * (sp.band || 1) * (sp.style === 'band' ? 1.
 const wideAdj = sp => { const w = bandMM(sp); return w > 6 ? .4 : w > 4 ? .2 : 0; };
 const ringMM = (S = usOf()) => dia(S) - wideAdj();                      // effective inner diameter
 function stopOf(id) {                                                   // lowest slide the ring can reach on this finger
+  // "Stuck" rule switched off for now (feedback 2026-11-26): every size slides all the way down to the base.
+  // To turn it back on, delete the next line.
+  return rangeOf(id)[0];
+  // eslint-disable-next-line no-unreachable
   const [lo, mx] = rangeOf(id), E = ringMM() + COMP, top = Math.min(Math.floor(mx), topOf(id));
   if (needAt(id, top) > E) return mx;                                   // won't even start over the fingertip
   let t = top;
@@ -952,7 +1163,7 @@ function stoneLens(mat, aspect, uniform) {
   };
   return mat;
 }
-function imageRing(R) {
+function imageRing(R, bracelet = false) {
   const p = product(), g = new THREE.Group(), u = stoneU(state.cfg);
   const build = tex => {
     if (!tex) return;                                   // (if the ring was rebuilt meanwhile, g is simply no longer in the scene)
@@ -960,6 +1171,14 @@ function imageRing(R) {
     // Wrap the image around the front of the finger (cylinder along the finger axis = local Y),
     // so the band's ends curve away round the sides like a real ring instead of a flat sticker.
     // (only for top-view images; a side-angle product photo would look twisted, so it stays a flat card)
+    // Bracelets: the AI image already shows the front half in perspective (curve, rim, depth), so wrapping it
+    // round a cylinder again squeezes the sides twice and smears the pattern → draw it flat, as made.
+    if (bracelet) {
+      const bw = R * 2 * 1.1 * p.tryonScale, bh = bw * a;           // a little wider than the wrist (a bangle hangs loose)
+      const bm = new THREE.Mesh(new THREE.PlaneGeometry(bw, bh), new THREE.MeshBasicMaterial({ map:tex, transparent:true, depthWrite:false, toneMapped:false }));
+      bm.position.set(0, p.tryonOffsetY * bw, R * 1.02); bm.renderOrder = 5;
+      g.add(bm); return;
+    }
     const r = R * 1.04, theta = Math.min(Math.PI * 0.92, w / r), top = p.tryonView === 'top';
     const h = w * a * (top ? STONE_PAD : 1);
     const geo = top ? new THREE.CylinderGeometry(r, r, h, 48, 1, true, -theta / 2, theta) : new THREE.PlaneGeometry(w, h);
@@ -976,7 +1195,45 @@ function rebuildRing() {
   ringRoot.clear();
   occluders.children.forEach(c => { c.scale.x = c.scale.z = 1; c.position.copy(c.userData.p0); c.rotation.z = c.userData.rot0; });
   ringRoot.userData.parked = Object.entries(state.worn).map(([f, r]) => ({ finger:f, ring:withRing(r, f, () => placeRing(false)) }));
-  ringRoot.userData.ring = placeRing(true);
+  ringRoot.userData.ring = state.noRing ? null : placeRing(true);
+  ringRoot.userData.wrist = state.wrist && H_().wrist ? placeWrist(state.wrist) : null;
+  if ((state.noRing || editingBracelet()) && $('hint'))
+    $('hint').textContent = state.wrist ? 'Drag the bracelet up or down the wrist · tap it to change it' : state.noRing ? 'Pick a ring or a bracelet from the list' : 'Tap a bracelet to try it on';
+}
+
+/* ---------- Bracelet on the wrist ----------
+   The wrist was measured on the bracelet photo (HANDS.bracelet.wrist: narrowest point of the arm, its half width and angle).
+   The close-up ring photo has no wrist, so the bracelet only shows in the Bracelets view.
+   The bracelet's try-on image is wrapped round the wrist exactly like a ring image round a finger; the arm is seen
+   straight from above, so there is no tilt. slide = canvas px down (+) / up (−) the arm from the measured spot. */
+const WRIST_SLIDE = [-18, 40];
+function wristSpot(slide = 0) {
+  const hd = H_(), f = hd.fit, w = hd.wrist, r = rad(w.rot);
+  const x = w.x * f.s + f.dx, y = w.y * f.s + f.dy;
+  return { x:x - Math.sin(r) * slide, y:y + Math.cos(r) * slide, rot:w.rot, R:w.w * f.s };
+}
+// A longer bracelet sits a little looser: +3 % of the wrist per Length step above the shortest
+const looseness = it => { const L = byId[it.pid]?.lengths; const i = L ? Math.max(0, L.indexOf(it.cfg.length)) : 0; return 1 + i * .03; };
+function placeWrist(it) {
+  const g = wristSpot(it.slide || 0), R = g.R * 1.02 * looseness(it);
+  const d = new THREE.Vector3(Math.sin(rad(g.rot)), Math.cos(rad(g.rot)), 0), front = new THREE.Vector3(0, 0, 1);
+  const q = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3().crossVectors(d, front), d, front));
+  const surf = surfaceAt(g.x, g.y), pos = P2L(g.x, g.y); pos.z = surf * .45;
+  const p = byId[it.pid];
+  // the image code reads the "active" piece, so draw it as if it were (no try-on image yet → a plain thin band)
+  const obj = withRing({ pid:it.pid, cfg:it.cfg, slide:0, spin:0 }, 'ring', () => p?.tryonImage ? imageRing(R, true)
+    : buildRing({ style:'band', metal:it.cfg.metal, stone:'diamond', shape:'round', band:.55, carat:1 }, R, VPX()));
+  obj.position.copy(pos); obj.quaternion.copy(q); ringRoot.add(obj);
+  const sh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), shadowMat);
+  sh.scale.set(R * 2.4, R * .5, 1); sh.position.copy(pos).addScaledVector(d, -R * .22); sh.position.z = surf + .6; sh.rotation.z = -rad(g.rot);
+  ringRoot.add(sh);
+  return obj;
+}
+// Is a canvas point on the wrist (where a bracelet can be grabbed / dropped)?
+function onWrist(pt, extra = 1) {
+  if (!pt || !H_().wrist) return false;
+  const g = wristSpot(state.wrist?.slide || 0);
+  return Math.abs(pt.x - g.x) < g.R * 1.15 * extra && Math.abs(pt.y - g.y) < g.R * .55 * extra + 8;
 }
 function placeRing(active) {
   const g = { ...geo(state.finger) }, k = g.w / 19, fs = HANDS[state.orient].fit.s;
@@ -1019,14 +1276,16 @@ function placeRing(active) {
 /* ---------- several rings: switch, add, remove ---------- */
 function afterRingsChanged() { refreshViewer(); renderOptions(); renderShop(); rebuildRing(); }
 function activate(f) {                                  // make the ring on finger f the active one
-  const r = state.worn[f]; if (!r || f === state.finger) return;
-  delete state.worn[f]; state.worn[state.finger] = snap();
+  const r = state.worn[f]; if (!r || (f === state.finger && !state.noRing)) return;
+  delete state.worn[f]; if (!state.noRing) state.worn[state.finger] = snap();   // no visible active ring → nothing to park
+  state.noRing = false;
   Object.assign(state, { pid:r.pid, cfg:r.cfg, slide:r.slide, spin:r.spin, finger:f, float:null });
   afterRingsChanged();
 }
 function placeNew(pid, f) {                             // a ring from the drawer dropped on finger f (replaces what was there)
   const size = state.cfg.size;
-  if (f !== state.finger) { delete state.worn[f]; state.worn[state.finger] = snap(); state.finger = f; state.spin = 0; }
+  if (state.noRing) { delete state.worn[f]; state.finger = f; state.spin = 0; state.noRing = false; }   // first ring on this hand
+  else if (f !== state.finger) { delete state.worn[f]; state.worn[state.finger] = snap(); state.finger = f; state.spin = 0; }
   state.pid = pid; state.cfg = freshCfg(byId[pid]); state.cfg.size = size; state.float = null;
   state.slide = seat(f, 0);
   afterRingsChanged();
@@ -1034,13 +1293,17 @@ function placeNew(pid, f) {                             // a ring from the drawe
 }
 function removeRing(f) {
   if (f !== state.finger) delete state.worn[f];
-  else { const next = Object.keys(state.worn)[0]; if (!next) return; activate(next); delete state.worn[f]; }
+  else {
+    const next = Object.keys(state.worn)[0];
+    if (!next) state.noRing = true;                       // last ring off → only the bracelet (or nothing) is left
+    else { activate(next); delete state.worn[f]; }
+  }
   afterRingsChanged();
 }
 function renderWorn() {
   renderSelections();                                   // keep "My selections" + its count in sync
   const box = $('wornList'); if (!box) return;
-  const all = [[state.finger, state.pid], ...Object.entries(state.worn).map(([f, r]) => [f, r.pid])]
+  const all = [...(state.noRing ? [] : [[state.finger, state.pid]]), ...Object.entries(state.worn).map(([f, r]) => [f, r.pid])]
     .sort((a, b) => FINGERS.indexOf(a[0]) - FINGERS.indexOf(b[0]));
   box.hidden = all.length < 2;
   box.innerHTML = all.map(([f, pid]) => `<span class="wornchip ${f === state.finger ? 'on' : ''}" data-f="${f}" role="button" tabindex="0" title="Edit this ring">
@@ -1079,7 +1342,7 @@ function animateTo(target, ms = 400) {
   })(t0);
 }
 function focusRing() {
-  const r = ringRoot.userData.ring; if (!r) return;
+  const r = (editingBracelet() && ringRoot.userData.wrist) || ringRoot.userData.ring || ringRoot.userData.wrist; if (!r) return;
   const wp = r.getWorldPosition(new THREE.Vector3());
   animateTo({ zoom:3.6, panX:wp.x, panY:wp.y });
 }
@@ -1111,10 +1374,23 @@ let guide = null;
 function drawOverlay() {
   octx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
   octx.clearRect(0, 0, view.clientWidth, view.clientHeight);
+  // Bracelet product page with the bracelet taken off: the wrist stays marked as a drop zone (tap it to put it back on)
+  if (!guide && SINGLE && CUR_BRACELET && !state.wrist && H_().wrist) return drawWristZone({ label:'Tap to put the bracelet on' });
   if (!guide) return;
+  if (guide.kind === 'bracelet' && guide.band && H_().wrist) return drawWristZone({ band:true, on:true, label:'Slide along the wrist' });
   octx.strokeStyle = octx.fillStyle = '#6b4eff';
   if (guide.type === 'slide') {
     // sliding along the finger: no guide or labels, the ring itself moves
+  } else if (guide.kind === 'bracelet' && H_().wrist) {
+    // Bracelet drop zone: the wrist. Pink when a bracelet is already there (dropping replaces it).
+    const g = wristSpot(state.wrist?.slide || 0), c = toScreen(P2L(g.x, g.y)), e = toScreen(P2L(g.x + g.R, g.y));
+    const r = Math.abs(e.x - c.x), on = guide.hit === 'wrist', rgb = state.wrist ? '228,106,163' : '107,78,255';
+    octx.strokeStyle = `rgb(${rgb})`;
+    octx.beginPath(); octx.ellipse(c.x, c.y, r * 1.12, r * .42, rad(g.rot), 0, Math.PI * 2);
+    octx.setLineDash(on ? [] : [5, 4]); octx.lineWidth = on ? 2.5 : 1.5;
+    octx.fillStyle = `rgba(${rgb},${on ? .28 : .1})`; octx.fill(); octx.stroke(); octx.setLineDash([]);
+    octx.font = '600 12px Inter,system-ui,sans-serif'; octx.textAlign = 'center'; octx.fillStyle = `rgb(${rgb})`;
+    octx.fillText(state.wrist ? 'Drop to replace bracelet' : 'Drop on the wrist', c.x, c.y - r * .42 - 8);
   } else {
     // Drop zones: every finger is outlined, the one under the pointer fills in.
     // Fingers that already wear a ring are pink: dropping there replaces (new ring) or swaps (moved ring).
@@ -1134,11 +1410,33 @@ function drawOverlay() {
   }
 }
 
+/* The wrist drop zone. band: the whole stretch the bracelet can slide along (while dragging it). */
+function drawWristZone({ band = false, on = false, label = '' } = {}) {
+  const rgb = '107,78,255', spot = sl => { const g = wristSpot(sl), c = toScreen(P2L(g.x, g.y)), e = toScreen(P2L(g.x + g.R, g.y)); return { c, r:Math.abs(e.x - c.x), rot:rad(g.rot) }; };
+  const parts = band ? [spot(WRIST_SLIDE[0]), spot(WRIST_SLIDE[1])] : [spot(0)];
+  octx.strokeStyle = `rgb(${rgb})`; octx.fillStyle = `rgba(${rgb},${on ? .2 : .1})`;
+  octx.setLineDash(on ? [] : [5, 4]); octx.lineWidth = on ? 2 : 1.5;
+  if (band) {                                   // a soft band from the top to the bottom of the slide range
+    const [a, b] = parts, w = Math.max(a.r, b.r) * 1.12;
+    octx.beginPath(); octx.moveTo(a.c.x - w, a.c.y); octx.lineTo(a.c.x + w, a.c.y); octx.lineTo(b.c.x + w, b.c.y); octx.lineTo(b.c.x - w, b.c.y); octx.closePath();
+    octx.fillStyle = `rgba(${rgb},.08)`; octx.fill();
+    octx.fillStyle = `rgba(${rgb},${on ? .2 : .1})`;
+  }
+  parts.forEach(p => { octx.beginPath(); octx.ellipse(p.c.x, p.c.y, p.r * 1.12, p.r * .42, p.rot, 0, Math.PI * 2); octx.fill(); octx.stroke(); });
+  octx.setLineDash([]);
+  if (label) { const t = parts[0]; octx.font = '600 12px Inter,system-ui,sans-serif'; octx.textAlign = 'center'; octx.fillStyle = `rgb(${rgb})`; octx.fillText(label, t.c.x, t.c.y - t.r * .42 - 8); }
+}
+
 /* ---------- interaction ---------- */
 let drag = null;
 canvas.addEventListener('pointerdown', e => {
   canvas.setPointerCapture(e.pointerId); stopShowcase();
-  let onRing = state.tab === 'hand' && ringHit(e);
+  const pt0 = photoAt(e);
+  if (state.wrist && onWrist(pt0) && !ringHit(e)) {   // the bracelet: drag it up / down the wrist, tap to edit it
+    drag = { wrist:true, y0:pt0.y, slide0:state.wrist.slide || 0, x:e.clientX, y:e.clientY, moved:false };
+    return;
+  }
+  let onRing = state.tab === 'hand' && !state.noRing && ringHit(e);
   if (!onRing && state.tab === 'hand') { const f = parkedHit(e); if (f) { activate(f); onRing = true; } }   // grab another ring on the hand
   drag = { ring:onRing, finger0:state.finger, x:e.clientX, y:e.clientY, moved:false, yaw:state.yaw, pitch:state.pitch, panX:state.panX, panY:state.panY, slide0:state.slide };
 });
@@ -1147,6 +1445,11 @@ canvas.addEventListener('pointermove', e => {
   const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
   if (Math.hypot(dx, dy) > 4) drag.moved = true;
   if (!drag.moved) return;
+  if (drag.wrist) {
+    const pt = photoAt(e); if (!pt) return;
+    state.wrist.slide = clamp(drag.slide0 + (pt.y - drag.y0), ...WRIST_SLIDE);
+    guide = { type:'drop', kind:'bracelet', band:true }; rebuildRing(); return;
+  }
   if (drag.ring) {
     // The ring follows the pointer: it sits on whichever finger is under it, at that point along the finger.
     const pt = photoAt(e), f = fingerUnder(pt);
@@ -1161,7 +1464,10 @@ canvas.addEventListener('pointermove', e => {
 });
 canvas.addEventListener('pointerup', e => {
   const d = drag; drag = null; guide = null; if (!d) return;
-  if (!d.moved && !d.ring) {                       // tap a finger → ring goes there, at the tapped spot
+  if (d.wrist) { if (!d.moved) setDrawer('bracelet'); return; }   // tap the bracelet → edit it
+  if (!d.moved && !d.ring) {
+    if (SINGLE && CUR_BRACELET && !state.wrist && H_().wrist && onWrist(photoAt(e), 2.2)) return placeBracelet(CUR_BRACELET.id);
+    if (state.noRing) return;                    // no rings in this store                       // tap a finger → ring goes there, at the tapped spot
     const f = fingerUnder(photoAt(e));
     if (f && state.worn[f.id]) { activate(f.id); return; }                 // tap a finger that wears a ring → edit that ring
     if (f) { state.finger = f.id; state.slide = seat(f.id, Math.round(f.slide)); rebuildRing(); renderWorn(); if (fitStatus().tight) toast(fitStatus().msg); }
@@ -1197,7 +1503,7 @@ function fingerUnder(pt, maxDist = 1.15) {
   return bd < maxDist ? best : null;              // farther than this → the ring is off the finger
 }
 canvas.addEventListener('dblclick', e => { if (ringHit(e)) focusRing(); });
-canvas.addEventListener('pointermove', e => { if (!drag) canvas.style.cursor = ringHit(e) || parkedHit(e) ? 'grab' : 'default'; });
+canvas.addEventListener('pointermove', e => { if (!drag) canvas.style.cursor = ringHit(e) || parkedHit(e) || (state.wrist && onWrist(photoAt(e))) ? 'grab' : 'default'; });
 
 /* ---------- Left / right hand: the photo is a right hand, the left is its mirror.
    Each hand keeps its own rings; switching back shows them exactly as they were left. A hand with no rings yet
@@ -1205,13 +1511,15 @@ canvas.addEventListener('pointermove', e => { if (!drag) canvas.style.cursor = r
 const updateSideButtons = () => document.querySelectorAll('[data-side]').forEach(x => x.classList.toggle('on', x.dataset.side === state.side));
 function switchSide(side) {
   if (side === state.side) return;
+  // Single-product mode: the same piece moves to the other hand (the photo is just mirrored), nothing is removed
+  if (SINGLE) { state.side = side; updateSideButtons(); applyHand(); afterRingsChanged(); return; }
   state.hands[state.side] = handSet();
   const next = state.hands[side]; state.hands[side] = null; state.side = side;
   if (next) loadSet(next);
   else {
     const cfg = { ...state.cfg }; delete cfg.stoneU;               // own copy: the hands don't share a ring
-    Object.assign(state, { cfg, worn:{}, float:null });
-    toast(`${side === 'left' ? 'Left' : 'Right'} hand: try different rings on each hand`);
+    Object.assign(state, { cfg, worn:{}, wrist:null, float:null });
+    toast(`${side === 'left' ? 'Left' : 'Right'} hand: try different rings and bracelets on each hand`);
   }
   updateSideButtons(); applyHand(); afterRingsChanged();
 }
@@ -1227,6 +1535,12 @@ function withSide(side, fn) {                     // draw `side` for a moment wi
   try { return fn(); } finally { state.side = curSide; loadSet(cur); ringRoot.visible = true; applyHand(); }
 }
 function snapshot(side = state.side, type = 'image/png', q) {
+  // A bracelet anywhere in the look → picture it on the photo with the wrist, so the bracelet is in the image
+  const want = allRings().some(r => r[0] === 'wrist') ? 'bracelet' : state.orient;
+  if (want !== state.orient && textures[want]) {
+    const o = state.orient; state.orient = want; applyHand();
+    try { return snapshot(side, type, q); } finally { state.orient = o; applyHand(); }
+  }
   if (!textures[state.orient]) return null;                       // hand photo still loading
   return withSide(side, () => {
     const keep = { zoom:state.zoom, panX:state.panX, panY:state.panY, yaw:state.yaw, pitch:state.pitch };
@@ -1243,8 +1557,10 @@ function snapshot(side = state.side, type = 'image/png', q) {
 const allRings = () => [...ringsIn(handSet()), ...ringsIn(state.hands.left), ...ringsIn(state.hands.right)];
 const ready = () => Promise.all(allRings().map(([, pid]) => byId[pid]?.tryonImage && loadTryonTexture(byId[pid].tryonImage)));
 const loadImg = src => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
-const fingerName = f => f === 'thumb' ? 'Thumb' : LABEL[f] + ' finger';
-const ringLine = (f, pid, cfg) => `${fingerName(f)}: ${byId[pid].name} · US ${RING_SIZES[cfg.size][0]}${byId[pid].metalPrices ? ' · ' + METALS[cfg.metal].name : ''}`;
+const fingerName = f => f === 'wrist' ? 'Wrist' : f === 'thumb' ? 'Thumb' : LABEL[f] + ' finger';
+// "Ring finger: Lara · US 6 · 18 ct Yellow Gold" / "Wrist: Tennis bracelet · 17 cm · …"
+const pieceSpec = (f, pid, cfg) => f === 'wrist' ? (cfg.length ? String(cfg.length) : '') : `US ${RING_SIZES[cfg.size][0]}`;
+const ringLine = (f, pid, cfg) => `${fingerName(f)}: ${byId[pid].name}${pieceSpec(f, pid, cfg) ? ' · ' + pieceSpec(f, pid, cfg) : ''}${byId[pid].metalPrices ? ' · ' + METALS[cfg.metal].name : ''}`;
 
 // Rotate the ring around the finger: mouse wheel over the ring, or the ⟳ button.
 const spinBy = a => { state.spin = ((state.spin || 0) + a) % (Math.PI * 2); rebuildRing(); };
@@ -1287,27 +1603,62 @@ function bindOptions(box) {
   box.querySelectorAll('[data-stonek]').forEach(b => b.onclick = () => setStoneK(state.cfg.stoneK + .1 * b.dataset.stonek));
   box.querySelector('[data-size]').onchange = e => { state.cfg.size = +e.target.value; state.slide = seat(state.finger, 0); rebuildRing(); toast(fitStatus().msg); };
 }
+/* Bracelet options (drawer = Bracelets): metal + Length, both from the product's variants. */
+function braceletOptionsHTML() {
+  const it = state.wrist;
+  if (!it) return `<div class="nocentre">Tap a bracelet to try it on, or drag it onto the wrist.</div>`;
+  const p = byId[it.pid], c = it.cfg;
+  return `
+    ${p.metalPrices ? `<div class="optgrp"><div class="optlbl">Metal Type</div><div class="metaltiles">${metalsOf(p).map(k => `<button class="mtile ${c.metal === k ? 'on' : ''}" data-bmetal="${k}"><img src="products/metal-${k}.png" alt="">${METALS[k].name}</button>`).join('')}</div></div>` : ''}
+    ${p.lengths ? `<div class="optgrp"><div class="optlbl">Length</div><div class="pills">${p.lengths.map(l => `<button class="pillopt ${c.length === l ? 'on' : ''}" data-blen="${esc(l)}">${esc(l)}</button>`).join('')}</div></div>` : ''}
+    ${SINGLE ? '' : '<div class="optgrp"><button class="linkbtn" data-bremove>Remove bracelet</button></div>'}`;
+}
+function bindBraceletOptions(box) {
+  const it = state.wrist; if (!it) return;
+  box.querySelectorAll('[data-bmetal]').forEach(b => b.onclick = () => { it.cfg.metal = b.dataset.bmetal; rebuildRing(); renderOptions(); renderSelections(); });
+  box.querySelectorAll('[data-blen]').forEach(b => b.onclick = () => { it.cfg.length = b.dataset.blen; rebuildRing(); renderOptions(); renderSelections(); });
+  box.querySelector('[data-bremove]')?.addEventListener('click', () => { state.wrist = null; afterRingsChanged(); });
+}
+const editingBracelet = () => state.drawer === 'bracelet';
+const editing = () => editingBracelet() ? (state.wrist ? byId[state.wrist.pid] : null) : product();
 function renderOptions() {
-  [$('pdpOptions'), $('shopOptions')].filter(Boolean).forEach(box => { box.innerHTML = optionsHTML(); bindOptions(box); });
+  [$('pdpOptions'), $('shopOptions')].filter(Boolean).forEach(box => {
+    if (editingBracelet() && box.id === 'shopOptions') { box.innerHTML = braceletOptionsHTML(); bindBraceletOptions(box); }
+    else if (state.noRing && box.id === 'shopOptions') box.innerHTML = `<div class="nocentre">Tap a ring to try it on, or drag it onto any finger.</div>`;
+    else {
+      box.innerHTML = optionsHTML() + (box.id === 'shopOptions' && EMBED && !SINGLE ? `<div class="optgrp"><button class="linkbtn" data-rremove>Remove ring</button></div>` : '');
+      bindOptions(box);
+      box.querySelector('[data-rremove]')?.addEventListener('click', () => removeRing(state.finger));
+    }
+  });
+  if ($('shopName')) $('shopName').textContent = (!editingBracelet() && state.noRing) ? '' : editing()?.name || '';
   updatePrices();
 }
 function updatePrices() {
   $('pPrice').textContent = money(price()); if ($('tPrice')) $('tPrice').textContent = money(price());
-  const sc = $('shopCart');
-  if (sc) { const out = EMBED && !product().available; sc.disabled = out; sc.textContent = out ? 'Sold out' : 'Add to cart · ' + money(price()); }
+  const sc = $('shopCart'); if (!sc) return;
+  if (editingBracelet()) {
+    const p = editing();
+    sc.hidden = !p;
+    if (p) { const out = EMBED && p.available === false; sc.disabled = out; sc.textContent = out ? 'Sold out' : 'Add bracelet to cart · ' + money(ringPrice(p.id, state.wrist.cfg)); }
+    return;
+  }
+  sc.hidden = state.noRing;
+  const out = EMBED && !product().available; sc.disabled = out; sc.textContent = out ? 'Sold out' : 'Add to cart · ' + money(price());
 }
 /* Shopify: the ring list inside the try-on. Shows PAGE rings at a time; scrolling to the end of the grid shows the
    next page. Once all rings the page passed in are shown, more are fetched from the store's collection
    (the theme script calls the app's /apps/ring-tryon/products) until there are none left. */
 const PAGE = 12;
 let shown = PAGE, moreObs = null;
-let moreDone = !EMBED?.hasMore, moreBusy = false, moreError = false;
+let moreDone = SINGLE || !EMBED?.hasMore, moreBusy = false, moreError = false;
 function requestMore() {
   if (moreDone || moreBusy) return;
   moreBusy = true; moreError = false; toParent({ type:'more' });
 }
 function addMore(list) {                                   // rings that arrived from the store
-  list.map(fromEmbed).forEach(p => { if (!byId[p.id]) { PRODUCTS.push(p); byId[p.id] = p; } });
+  list.map(fromEmbed).forEach(p => { if (!byId[p.id]) { (p.kind === 'bracelet' ? BRACELETS : PRODUCTS).push(p); byId[p.id] = p; } });
+  $('kindTabs').hidden = BRACELET_ONLY || !(PRODUCTS.length && BRACELETS.length);
 }
 /* Search + filters. They work on the rings loaded so far; while a search / filter is on, the rest of the
    collection keeps loading in the background so nothing is missed. */
@@ -1316,7 +1667,7 @@ const filtering = () => !!(filt.q || filt.stock || filt.metals.size || filt.sort
 const minPrice = p => p.metalPrices ? Math.min(...Object.values(p.metalPrices)) : p.price;
 function visibleProducts() {
   const words = filt.q.toLowerCase().split(/\s+/).filter(Boolean);
-  let list = PRODUCTS.filter(p => {
+  let list = (editingBracelet() ? BRACELETS : PRODUCTS).filter(p => {
     if (filt.stock && p.available === false) return false;
     if (filt.metals.size && ![...filt.metals].some(k => (p.metalPrices ? k in p.metalPrices : p.metal === k))) return false;
     const hay = `${p.name} ${p.type || ''} ${p.desc || ''}`.toLowerCase();
@@ -1328,7 +1679,7 @@ function visibleProducts() {
 }
 function renderChips() {
   const box = $('findChips'); if (!box) return;
-  const metals = Object.keys(METALS).filter(k => PRODUCTS.some(p => p.metalPrices ? k in p.metalPrices : false));
+  const metals = Object.keys(METALS).filter(k => (editingBracelet() ? BRACELETS : PRODUCTS).some(p => p.metalPrices ? k in p.metalPrices : false));
   box.innerHTML = `<button class="chip ${filt.stock ? 'on' : ''}" data-stock aria-pressed="${filt.stock}">In stock</button>`
     + metals.map(k => `<button class="chip ${filt.metals.has(k) ? 'on' : ''}" data-metalf="${k}" aria-pressed="${filt.metals.has(k)}">${METALS[k].name.replace('18 ct ', '')}</button>`).join('')
     + `<select class="chip" data-sort aria-label="Sort"><option value="">Featured</option><option value="low" ${filt.sort === 'low' ? 'selected' : ''}>Price: low to high</option><option value="high" ${filt.sort === 'high' ? 'selected' : ''}>Price: high to low</option></select>`
@@ -1345,21 +1696,23 @@ $('findQ')?.addEventListener('input', e => { clearTimeout(findT); findT = setTim
 
 function renderShop() {
   const box = $('shopList'); if (!box) return;
-  const list = visibleProducts();
-  const idx = list.findIndex(p => p.id === state.pid);
+  const list = visibleProducts(), br = editingBracelet(), noun = br ? 'bracelets' : 'rings';
+  const idx = list.findIndex(p => p.id === (br ? state.wrist?.pid : state.pid));
   if (idx >= shown) shown = Math.ceil((idx + 1) / PAGE) * PAGE;      // the active ring is always in the loaded part
   if (filtering() && !moreDone) requestMore();                     // search the whole collection, not just what's loaded
-  const worn = new Set([state.pid, ...Object.values(state.worn).map(r => r.pid)]);
-  box.innerHTML = (!list.length && (moreDone || moreError) ? `<div class="nomatch">No rings match.<br><button class="linkbtn" id="noMatchClear">Clear search and filters</button></div>` : '')
+  const worn = new Set(br ? [state.wrist?.pid] : [state.noRing ? null : state.pid, ...Object.values(state.worn).map(r => r.pid)]);
+  box.innerHTML = (!list.length && (moreDone || moreError) ? `<div class="nomatch">No ${noun} match.<br><button class="linkbtn" id="noMatchClear">Clear search and filters</button></div>` : '')
     + list.slice(0, shown).map(p => `<button class="ringcard ${worn.has(p.id) ? 'on' : ''}" data-id="${p.id}">
       ${p.img ? `<img src="${esc(p.img)}" alt="" loading="lazy" draggable="false">` : '<span class="noimg">◯</span>'}
       <span class="rn">${esc(p.name)}</span><span class="rp">${p.available === false ? 'Sold out' : money(p.metalPrices ? Math.min(...Object.values(p.metalPrices)) : p.price)}</span></button>`).join('')
     + (shown < list.length || !moreDone
-      ? `<div class="more muted" id="shopMore">${moreError ? 'Couldn’t load more rings. <button class="linkbtn" id="moreRetry">Try again</button>' : filtering() && !moreDone ? 'Searching all rings…' : 'Loading more rings…'}</div>` : '');
+      ? `<div class="more muted" id="shopMore">${moreError ? `Couldn’t load more ${noun}. <button class="linkbtn" id="moreRetry">Try again</button>` : filtering() && !moreDone ? `Searching all ${noun}…` : `Loading more ${noun}…`}</div>` : '');
   $('noMatchClear')?.addEventListener('click', clearFilters);
   box.querySelectorAll('.ringcard').forEach(b => {
     b.onclick = () => {
-      if (cardDrag.suppress || b.dataset.id === state.pid) return;
+      if (cardDrag.suppress) return;
+      if (byId[b.dataset.id].kind === 'bracelet') return placeBracelet(b.dataset.id);
+      if (b.dataset.id === state.pid && !state.noRing) return;
       openProduct(b.dataset.id); renderPopupControls(); renderShop();
     };
     b.addEventListener('pointerdown', e => startCardDrag(e, b.dataset.id));
@@ -1372,8 +1725,63 @@ function renderShop() {
     moreObs = new IntersectionObserver(es => { if (es.some(x => x.isIntersecting)) next(); }, { root:box, rootMargin:'120px' });
     moreObs.observe(more);
   } else if (more && !moreError) { shown = list.length; requestMore(); }
-  $('shopName').textContent = product().name;
+  $('shopName').textContent = editing()?.name || '';
+  $('drawTip').textContent = br ? 'Tap a bracelet to try it on, or drag it onto the wrist' : 'Tap a ring to try it, or drag it onto any finger';
+  $('shopTitle').textContent = SINGLE ? 'Try it on' : br ? 'Choose a bracelet' : 'Choose a ring';
+  $('findQ').placeholder = br ? 'Search bracelets' : 'Search rings'; $('findQ').setAttribute('aria-label', $('findQ').placeholder);
   renderWorn();
+  carUpdate();
+  // keep the piece being worn in view
+  const on = box.querySelector('.ringcard.on'); if (on && (on.offsetLeft < box.scrollLeft || on.offsetLeft > box.scrollLeft + box.clientWidth - 10)) box.scrollTo({ left:on.offsetLeft - 14, behavior:'auto' });
+}
+/* Carousel arrows: one step = 2 cards. "1–2 of 14" under it. */
+function carUpdate() {
+  const box = $('shopList'); if (!box || !$('carPrev')) return;
+  const cards = box.querySelectorAll('.ringcard'), n = cards.length, w = cards[0]?.offsetWidth || 1;
+  const first = Math.round(box.scrollLeft / (w + 12));
+  $('carPrev').disabled = box.scrollLeft < 4;
+  $('carNext').disabled = box.scrollLeft + box.clientWidth >= box.scrollWidth - 4;
+  const br = editingBracelet(), total = Math.max(n, (br ? BRACELETS : PRODUCTS).length);
+  $('carCount').textContent = n > 2 ? `${Math.min(first + 1, n)}–${Math.min(first + 2, n)} of ${total}${moreDone ? '' : '+'}` : '';
+}
+$('carPrev')?.addEventListener('click', () => { const b = $('shopList'); b.scrollBy({ left:-b.clientWidth, behavior:'smooth' }); });
+$('carNext')?.addEventListener('click', () => { const b = $('shopList'); b.scrollBy({ left:b.clientWidth, behavior:'smooth' }); });
+$('shopList')?.addEventListener('scroll', () => requestAnimationFrame(carUpdate), { passive:true });
+addEventListener('resize', () => carUpdate());
+
+/* Two hand photos: a close-up for rings (HANDS.ring) and one with the wrist for bracelets (HANDS.bracelet).
+   The photo follows the Rings / Bracelets switch. Rings stay on their fingers and are re-fitted to the new photo
+   (its fingers have other widths / lengths); the bracelet only shows on the photo with a wrist. */
+function setHand(k) {
+  if (!HANDS[k] || k === state.orient) return;
+  const keep = (r, f) => withRing(r, f, () => seat(f, clamp(r.slide, ...rangeOf(f))));
+  state.orient = k;
+  if (!state.noRing) state.slide = seat(state.finger, clamp(state.slide, ...rangeOf(state.finger)));
+  Object.entries(state.worn).forEach(([f, r]) => r.slide = keep(r, f));
+  Object.values(state.hands).filter(Boolean).forEach(h => {
+    if (!h.noRing) h.slide = keep(h, h.finger);
+    Object.entries(h.worn).forEach(([f, r]) => r.slide = keep(r, f));
+  });
+  applyHand();
+  animateTo({ zoom:1, panX:0, panY:0, yaw:0, pitch:0 });
+}
+/* Rings / Bracelets switch at the top of the drawer (shown when the store has both) */
+function setDrawer(k) {
+  if (k === 'ring' && (!PRODUCTS.length || BRACELET_ONLY)) k = 'bracelet';
+  setHand(k);
+  state.drawer = k; shown = PAGE;
+  document.querySelectorAll('[data-drawer]').forEach(b => { b.classList.toggle('on', b.dataset.drawer === k); b.setAttribute('aria-pressed', String(b.dataset.drawer === k)); });
+  if (EMBED && state.panel !== 'shop') setTab('shop');
+  renderChips(); renderShop(); renderOptions(); rebuildRing();
+}
+document.querySelectorAll('[data-drawer]').forEach(b => b.onclick = () => setDrawer(b.dataset.drawer));
+function placeBracelet(pid) {                    // a bracelet from the drawer goes on the wrist (replaces the one there)
+  const p = byId[pid];
+  state.wrist = { pid, cfg:freshCfg(p), slide:0 };
+  if (state.drawer !== 'bracelet') { state.drawer = 'bracelet'; document.querySelectorAll('[data-drawer]').forEach(b => b.classList.toggle('on', b.dataset.drawer === 'bracelet')); }
+  setHand('bracelet');                           // the photo with the wrist
+  afterRingsChanged();
+  toast(`${p.name} on your ${state.side} wrist`);
 }
 
 /* Drag a ring from the drawer onto a finger. Mouse: just drag. Touch: press and hold briefly, then drag
@@ -1390,6 +1798,10 @@ function startCardDrag(e, id) {
     if (byId[id].img) ghost.src = byId[id].img;
     ghost.style.left = x0 + 'px'; ghost.style.top = y0 + 'px';
     document.body.appendChild(ghost); if (touch && navigator.vibrate) navigator.vibrate(15);
+    if (byId[id].kind === 'bracelet') {                  // show the wrist drop zone straight away (on the photo with the wrist)
+      setHand('bracelet'); rebuildRing();
+      guide = { type:'drop', kind:'bracelet', hit:null };
+    }
   };
   const timer = touch ? setTimeout(begin, 280) : null;
   const move = ev => {
@@ -1401,6 +1813,11 @@ function startCardDrag(e, id) {
     ghost.style.left = ev.clientX + 'px'; ghost.style.top = ev.clientY + 'px';
     const r = canvas.getBoundingClientRect();
     const inside = ev.clientX >= r.left && ev.clientX <= r.right && ev.clientY >= r.top && ev.clientY <= r.bottom;
+    if (byId[id].kind === 'bracelet') {                  // bracelets: anywhere on the hand / arm → the wrist
+      over = inside ? { id:'wrist' } : null;
+      guide = { type:'drop', kind:'bracelet', hit:inside ? 'wrist' : null };   // stays visible; fills in over the photo
+      return;
+    }
     over = inside ? fingerUnder(photoAt(ev), 3.5) : null;
     guide = inside ? { type:'drop', hit:over?.id || null } : null;
   };
@@ -1408,7 +1825,7 @@ function startCardDrag(e, id) {
     const was = cardDrag.active; end();
     if (!was) return;
     cardDrag.suppress = true; setTimeout(() => cardDrag.suppress = false, 0);   // don't also treat it as a tap
-    if (over) placeNew(id, over.id);
+    if (over) over.id === 'wrist' ? placeBracelet(id) : placeNew(id, over.id);
   };
   function end() {
     clearTimeout(timer); ghost?.remove(); ghost = null; cardDrag.active = false; guide = null;
@@ -1455,6 +1872,7 @@ function renderTryPanel() {}
 function openProduct(id) {
   const size = state.cfg?.size;                          // keep the shopper's ring size when switching rings
   state.pid = id; state.cfg = freshCfg(product()); if (size != null) state.cfg.size = size;
+  if (state.noRing && byId[id]?.kind !== 'bracelet' && state.open) { state.noRing = false; state.finger = 'ring'; state.slide = seat('ring', 0); }
   $('pName').textContent = product().name;
   $('productPick').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.id === id));
   refreshViewer(); renderOptions(); rebuildRing();
@@ -1473,13 +1891,26 @@ function popup(title, html, buttons, wide) {
 
 /* ---------- My selections + Buy this look: every ring on both hands, in sync with the canvas ---------- */
 const ringPrice = (pid, cfg) => { const p = byId[pid]; return EMBED ? (p.metalPrices?.[cfg.metal] ?? p.price) : p.price + METALS[cfg.metal].add; };
-const handRings = side => ringsIn(side === state.side ? handSet() : state.hands[side]).sort((a, b) => FINGERS.indexOf(a[0]) - FINGERS.indexOf(b[0]));
+const order = f => f === 'wrist' ? 99 : FINGERS.indexOf(f);
+const handRings = side => ringsIn(side === state.side ? handSet() : state.hands[side]).sort((a, b) => order(a[0]) - order(b[0]));
 function cartLine(side, [f, pid, cfg]) {
-  const p = byId[pid], props = { 'Ring size':`US ${RING_SIZES[cfg.size][0]}`, 'Worn on':`${side === 'left' ? 'Left' : 'Right'} hand, ${fingerName(f).toLowerCase()}` };
+  const p = byId[pid], hand = side === 'left' ? 'Left' : 'Right';
+  if (f === 'wrist') {                                  // bracelet: matched on metal + Length
+    const props = { 'Worn on':`${hand} wrist` };
+    if (p.metalPrices) props.Metal = METALS[cfg.metal].name;
+    if (cfg.length) props.Length = String(cfg.length);
+    return { productKey:p.key, metal:cfg.metal, length:cfg.length, properties:{ ...props, _source:'Virtual try-on look' } };
+  }
+  const props = { 'Ring size':`US ${RING_SIZES[cfg.size][0]}`, 'Worn on':`${hand} hand, ${fingerName(f).toLowerCase()}` };
   if (p.metalPrices) props.Metal = METALS[cfg.metal].name;
   return { productKey:p.key, metal:cfg.metal, sizeUS:RING_SIZES[cfg.size][0], sizeAU:RING_SIZES[cfg.size][1], properties:{ ...props, _source:'Virtual try-on look' } };
 }
 function removeFrom(side, f) {
+  if (f === 'wrist') {                                  // take the bracelet off that hand
+    if (side === state.side) { state.wrist = null; return afterRingsChanged(); }
+    if (state.hands[side]) state.hands[side].wrist = null;
+    return renderSelections();
+  }
   if (side === state.side) return removeRing(f);
   const s = state.hands[side]; if (!s) return;
   if (f !== s.finger) delete s.worn[f];
@@ -1493,25 +1924,30 @@ function renderSelections() {
   const box = $('selList'); if (!box || $('panelSel').hidden) return;
   let total = 0, out = 0;
   box.innerHTML = all.filter(([, r]) => r.length).map(([side, rings]) => `
-    <div><div class="selhand"><span>${side === 'left' ? 'Left' : 'Right'} hand · ${rings.length} ring${rings.length === 1 ? '' : 's'}</span>
+    <div><div class="selhand"><span>${side === 'left' ? 'Left' : 'Right'} hand · ${rings.length} piece${rings.length === 1 ? '' : 's'}</span>
       ${side !== state.side ? `<button class="linkbtn" data-show="${side}">Show</button>` : ''}</div>
     ${rings.map(r => {
       const [f, pid, cfg] = r, p = byId[pid], sold = p.available === false, pr = ringPrice(pid, cfg);
       if (sold) out++; else total += pr;
-      return `<div class="selitem ${side === state.side && f === state.finger ? 'on' : ''}">
+      const on = side === state.side && (f === 'wrist' ? editingBracelet() : !editingBracelet() && f === state.finger);
+      return `<div class="selitem ${on ? 'on' : ''}">
         ${p.img ? `<img src="${esc(p.img)}" alt="">` : '<span class="noimg"></span>'}
-        <div style="min-width:0"><b>${esc(p.name)}</b><small>${fingerName(f)} · US ${RING_SIZES[cfg.size][0]}${p.metalPrices ? ' · ' + METALS[cfg.metal].name.replace('18 ct ', '') : ''}</small>
+        <div style="min-width:0"><b>${esc(p.name)}</b><small>${fingerName(f)}${pieceSpec(f, pid, cfg) ? ' · ' + esc(pieceSpec(f, pid, cfg)) : ''}${p.metalPrices ? ' · ' + METALS[cfg.metal].name.replace('18 ct ', '') : ''}</small>
           <small class="${sold ? 'out' : ''}">${sold ? 'Sold out' : money(pr)}</small></div>
         <div class="side"><button data-edit="${side}:${f}">Edit</button>${sold ? '' : `<button data-add1="${side}:${f}">Add</button>`}
-          ${n > 1 ? `<button data-rm="${side}:${f}" aria-label="Remove ${esc(p.name)}">✕</button>` : ''}</div></div>`;
+          ${n > 1 || f === 'wrist' ? `<button data-rm="${side}:${f}" aria-label="Remove ${esc(p.name)}">✕</button>` : ''}</div></div>`;
     }).join('')}</div>`).join('');
   $('selTotal').textContent = money(total);
   const avail = n - out;
   $('buyLook').disabled = !avail;
-  $('buyLook').textContent = avail ? `Buy this look · ${avail} ring${avail === 1 ? '' : 's'}${out ? ` (${out} sold out)` : ''}` : 'Sold out';
+  $('buyLook').textContent = avail ? `Buy this look · ${avail} piece${avail === 1 ? '' : 's'}${out ? ` (${out} sold out)` : ''}` : 'Sold out';
   const at = v => { const [side, f] = v.split(':'); return { side, f }; };
   box.querySelectorAll('[data-show]').forEach(b => b.onclick = () => switchSide(b.dataset.show));
-  box.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => { const { side, f } = at(b.dataset.edit); if (side !== state.side) switchSide(side); activate(f); setTab(EMBED ? 'shop' : state.panel); });
+  box.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => {
+    const { side, f } = at(b.dataset.edit); if (side !== state.side) switchSide(side);
+    if (f === 'wrist') return setDrawer('bracelet');
+    activate(f); if (state.drawer !== 'ring') setDrawer('ring'); else setTab(EMBED ? 'shop' : state.panel);
+  });
   box.querySelectorAll('[data-rm]').forEach(b => b.onclick = () => { const { side, f } = at(b.dataset.rm); removeFrom(side, f); });
   box.querySelectorAll('[data-add1]').forEach(b => b.onclick = () => { const { side, f } = at(b.dataset.add1); buyRings([[side, handRings(side).find(r => r[0] === f)]]); });
 }
@@ -1521,7 +1957,7 @@ function buyRings(list) {
   if (!lines.length) return toast('Sold out');
   if (!EMBED) {
     lines.forEach(l => state.cart.push({ name:byId['s' + l.productKey]?.name || l.productKey }));
-    return modal('Added to cart', `${lines.length} ring${lines.length === 1 ? '' : 's'} (demo only)<pre>${esc(JSON.stringify(lines, null, 2))}</pre>`, [['Close', null, true]]);
+    return modal('Added to cart', `${lines.length} piece${lines.length === 1 ? '' : 's'} (demo only)<pre>${esc(JSON.stringify(lines, null, 2))}</pre>`, [['Close', null, true]]);
   }
   $('buyLook').disabled = true; $('buyLook').textContent = 'Adding…'; $('lookAdded').hidden = true;
   toParent({ type:'addMany', items:lines });
@@ -1557,7 +1993,8 @@ function setSheet(px, snap) {
 function showDetails(p = product()) {
   const imgs = p.images?.length ? p.images : [p.img].filter(Boolean);
   const metals = p.metalPrices ? Object.keys(p.metalPrices).map(k => METALS[k].name).join(', ') : '';
-  const sizes = `US ${RING_SIZES[0][0]}–${RING_SIZES.at(-1)[0]}`;
+  // rings: US size range · bracelets: their Length values (if the product has a Length option)
+  const sizes = p.kind === 'bracelet' ? (p.lengths ? p.lengths.join(', ') : '') : `US ${RING_SIZES[0][0]}–${RING_SIZES.at(-1)[0]}`;
   const m = popup(esc(p.name), `<div class="pd-grid">
       <div>${imgs.length ? `<img class="pd-main" id="pdMain" src="${esc(imgs[0])}" alt="${esc(p.name)}">
         ${imgs.length > 1 ? `<div class="pd-thumbs">${imgs.map((u, i) => `<button class="${i ? '' : 'on'}" data-img="${esc(u)}" aria-label="Photo ${i + 1}"><img src="${esc(u)}" alt="" loading="lazy"></button>`).join('')}</div>` : ''}` : ''}</div>
@@ -1566,27 +2003,32 @@ function showDetails(p = product()) {
         <dl class="pd-facts">
           ${p.type ? `<dt>Type</dt><dd>${esc(p.type)}</dd>` : ''}
           ${metals ? `<dt>Metal</dt><dd>${esc(metals)}</dd>` : ''}
-          <dt>Sizes</dt><dd>${sizes}</dd>
+          ${sizes ? `<dt>${p.kind === 'bracelet' ? 'Lengths' : 'Sizes'}</dt><dd>${esc(sizes)}</dd>` : ''}
           <dt>Availability</dt><dd>${p.available === false ? 'Sold out' : 'In stock'}</dd>
         </dl>
         ${p.desc ? `<div class="pd-desc">${esc(p.desc)}</div>` : ''}
       </div></div>`,
     [...(p.url && EMBED ? [['View full product page', () => toParent({ type:'goto', to:'product', url:p.url })]] : []),
-     ...(p.id !== state.pid ? [['Try it on', () => { openProduct(p.id); renderShop(); }]] : []), ['Close', null, true]], true);
+     ...(p.kind === 'bracelet'
+        ? (state.wrist?.pid !== p.id ? [['Try it on', () => placeBracelet(p.id)]] : [])
+        : (p.id !== state.pid || state.noRing ? [['Try it on', () => { openProduct(p.id); renderShop(); }]] : [])),
+     ['Close', null, true]], true);
   m.querySelectorAll('[data-img]').forEach(b => b.onclick = () => {
     m.querySelector('#pdMain').src = b.dataset.img; m.querySelectorAll('[data-img]').forEach(x => x.classList.toggle('on', x === b));
   });
 }
-$('pdBtn').onclick = () => showDetails();
+$('pdBtn').onclick = () => { const p = editing(); if (p) showDetails(p); };
 
 /* ---------- Menu drawer ---------- */
 const TONES = [[0, '#fbeee6'], [20, '#f6dcc8'], [40, '#ecc8ad'], [60, '#d9a37e'], [80, '#b97f58'], [100, '#5e3a26']];
 function setTone(v) {
   state.tone = +v; $('tone').value = v; $('tone2').value = v;
-  $('swatches').querySelectorAll('.swatch').forEach(s => s.classList.toggle('on', Math.abs(+s.dataset.tone - v) < 10));
+  document.querySelectorAll('#swatches .swatch, #skinbar .swatch').forEach(s => s.classList.toggle('on', Math.abs(+s.dataset.tone - v) < 10));
 }
 $('swatches').innerHTML = TONES.map(([v, c]) => `<button class="swatch" data-tone="${v}" style="background:${c}" aria-label="Skin tone ${v / 20 + 1} of 6"></button>`).join('');
-$('swatches').querySelectorAll('.swatch').forEach(s => s.onclick = () => setTone(s.dataset.tone));
+$('skinbar').innerHTML = $('swatches').innerHTML;
+document.querySelectorAll('#swatches .swatch, #skinbar .swatch').forEach(s => s.onclick = () => setTone(s.dataset.tone));
+setTone(state.tone);
 $('tone2').oninput = e => setTone(e.target.value);
 function openMenu(open = true) {
   $('drawer').classList.toggle('open', open); $('drawer').setAttribute('aria-hidden', String(!open));
@@ -1603,7 +2045,7 @@ document.querySelectorAll('[data-act]').forEach(b => b.onclick = () => { openMen
 function lookData() {
   const sets = { ...state.hands, [state.side]: handSet() }, hands = {};
   for (const [side, s] of Object.entries(sets)) if (s) hands[side] = ringsIn(s).map(([f, pid, cfg]) =>
-    ({ k:byId[pid].key || pid, f, s:cfg.size, m:cfg.metal, z:+(cfg.stoneK || 1).toFixed(2) }));
+    ({ k:byId[pid].key || pid, f, s:cfg.size, m:cfg.metal, z:+(cfg.stoneK || 1).toFixed(2), ...(f === 'wrist' && cfg.length ? { l:cfg.length } : {}) }));
   return { v:1, side:state.side, hands };
 }
 const encodeLook = d => btoa(unescape(encodeURIComponent(JSON.stringify(d)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -1615,20 +2057,30 @@ const pidOf = k => byId['s' + k] ? 's' + k : byId[k] ? k : null;
 function applyLookData(d) {
   let placed = 0, skipped = 0; const sets = {};
   for (const side of ['right', 'left']) {
-    const worn = {};
+    const worn = {}; let wrist = null;
     for (const x of d?.hands?.[side] || []) {
       const pid = pidOf(x.k);
-      if (!pid || byId[pid].available === false || !FINGERS.includes(x.f)) { skipped++; continue; }
+      if (!pid || !(FINGERS.includes(x.f) || x.f === 'wrist')) { skipped++; continue; }
       const p = byId[pid], cfg = freshCfg(p);
+      if (x.f === 'wrist') {                              // the bracelet
+        if (p.kind !== 'bracelet') { skipped++; continue; }
+        if (x.m && metalsOf(p).includes(x.m)) cfg.metal = x.m;
+        if (x.l && p.lengths?.includes(x.l)) cfg.length = x.l;
+        wrist = { pid, cfg, slide:0 }; placed++; continue;
+      }
       if (Number.isInteger(x.s)) cfg.size = clamp(x.s, 0, RING_SIZES.length - 1);
       if (x.m && metalsOf(p).includes(x.m)) cfg.metal = x.m;
       if (x.z) cfg.stoneK = clamp(+x.z, STONE_MIN, STONE_MAX);
       worn[x.f] = { pid, cfg, slide:0, spin:0 }; placed++;
     }
-    const fs = Object.keys(worn); if (!fs.length) continue;
+    const fs = Object.keys(worn);
+    if (!fs.length) {                                     // only a bracelet on this hand: no ring drawn
+      if (wrist) sets[side] = { pid:state.pid, cfg:{ ...state.cfg }, finger:'ring', slide:0, spin:0, worn:{}, wrist, noRing:true };
+      continue;
+    }
     fs.forEach(f => worn[f].slide = withRing(worn[f], f, () => seat(f, 0)));
     const a = worn[fs[0]]; delete worn[fs[0]];
-    sets[side] = { pid:a.pid, cfg:a.cfg, finger:fs[0], slide:a.slide, spin:0, worn };
+    sets[side] = { pid:a.pid, cfg:a.cfg, finger:fs[0], slide:a.slide, spin:0, worn, wrist };
   }
   if (!placed) return { placed, skipped };
   const side = sets[d.side] ? d.side : Object.keys(sets)[0];
@@ -1638,7 +2090,7 @@ function applyLookData(d) {
   updateSideButtons(); applyHand(); afterRingsChanged();
   return { placed, skipped };
 }
-const lookSummary = () => { const n = allRings().length; return `${n} ring${n === 1 ? '' : 's'}`; };
+const lookSummary = () => { const n = allRings().length; return `${n} piece${n === 1 ? '' : 's'}`; };
 function shareUrl(code) {
   const base = EMBED?.shareUrl || location.href.split('#')[0];
   return EMBED ? `${base}?tryon=1&look=${code}` : `${base}#look=${code}`;
@@ -1769,12 +2221,15 @@ async function renderMine() {
   box.innerHTML = signedInBar() + looks.map((l, i) => {
     const rings = Object.values(l.data?.hands || {}).flat(), n = rings.length;
     // Rings that can't be put on now: sold out, or not in this store's ring list (e.g. removed from the collection)
-    const gone = rings.filter(x => { const pid = pidOf(x.k); return !pid || byId[pid].available === false; }).length;
-    const note = !gone ? '' : gone === n ? '<small class="out">These rings are sold out or no longer available</small>'
-      : `<small class="out">${gone} of ${n} ring${n === 1 ? '' : 's'} sold out or unavailable</small>`;
+    // Missing = not in this store's list (can't be shown). Sold out = still shown on the hand, just can't be bought.
+    const gone = rings.filter(x => !pidOf(x.k)).length;
+    const sold = rings.filter(x => { const pid = pidOf(x.k); return pid && byId[pid].available === false; }).length;
+    const note = gone === n ? '<small class="out">These pieces are no longer available</small>'
+      : gone ? `<small class="out">${gone} of ${n} piece${n === 1 ? '' : 's'} no longer available</small>`
+      : sold ? `<small class="out">${sold === n ? 'Sold out' : `${sold} of ${n} sold out`} · you can still try ${n === 1 ? 'it' : 'them'} on</small>` : '';
     return `<div class="minecard">${l.thumbnail ? `<img src="${esc(l.thumbnail)}" alt="">` : '<span class="noimg"></span>'}
-      <div class="meta"><b>${esc(l.name)}</b><small>${n} ring${n === 1 ? '' : 's'} · ${new Date(l.createdAt).toLocaleDateString(EMBED?.locale || undefined)}</small>${note}
-        <div class="acts"><button data-open="${i}" ${gone === n ? 'disabled title="Sold out or no longer available"' : ''}>Open</button><button class="ghost" data-share="${i}">Share</button><button class="ghost" data-del="${i}" aria-label="Delete ${esc(l.name)}">Delete</button></div></div></div>`;
+      <div class="meta"><b>${esc(l.name)}</b><small>${n} piece${n === 1 ? '' : 's'} · ${new Date(l.createdAt).toLocaleDateString(EMBED?.locale || undefined)}</small>${note}
+        <div class="acts"><button data-open="${i}" ${gone === n ? 'disabled title="No longer available"' : ''}>Open</button><button class="ghost" data-share="${i}">Share</button><button class="ghost" data-del="${i}" aria-label="Delete ${esc(l.name)}">Delete</button></div></div></div>`;
   }).join('');
   box.querySelectorAll('[data-open]').forEach(b => b.onclick = () => openLook(looks[+b.dataset.open]));
   box.querySelectorAll('[data-share]').forEach(b => b.onclick = async () => {
@@ -1791,9 +2246,11 @@ async function renderMine() {
 // Sold-out rings are left out and counted in the message.
 function openLook(l) {
   const r = applyLookData(l.data);
-  if (!r.placed) return toast('These rings are no longer available');
-  setTab(EMBED ? 'shop' : state.panel);
-  toast(`${l.name}: ${r.placed} ring${r.placed === 1 ? '' : 's'}${r.skipped ? ` (${r.skipped} unavailable)` : ''}`);
+  if (!r.placed) return toast('These pieces are no longer available');
+  // Show the photo that fits the look: with a bracelet → the hand + wrist photo (else the bracelet isn't drawn)
+  const k = state.wrist ? 'bracelet' : 'ring';
+  if (EMBED) { state.panel = 'shop'; setDrawer(k); setTab('shop'); } else { setHand(k); rebuildRing(); }
+  toast(`${l.name}: ${r.placed} piece${r.placed === 1 ? '' : 's'}${r.skipped ? ` (${r.skipped} unavailable)` : ''}`);
 }
 
 /* ---------- View both hands ---------- */
@@ -1911,7 +2368,11 @@ $('tabHand').onclick = () => { setTab('you'); makeQR(); };
    ===================================================================== */
 function openTryOn() {
   state.open = true; $('tryon').hidden = false; document.body.style.overflow = 'hidden';
-  Object.assign(state, { worn:{}, hands:{ left:null, right:null }, side:'right', finger:'ring', slide:0, yaw:0, pitch:0, zoom:1, panX:0, panY:0 });
+  Object.assign(state, { worn:{}, hands:{ left:null, right:null }, side:'right', finger:'ring', slide:0, yaw:0, pitch:0, zoom:1, panX:0, panY:0,
+    noRing:!PRODUCTS.length || !!CUR_BRACELET, wrist:CUR_BRACELET ? { pid:CUR_BRACELET.id, cfg:freshCfg(CUR_BRACELET), slide:0 } : null,
+    drawer:CUR_BRACELET || !PRODUCTS.length ? 'bracelet' : 'ring', orient:CUR_BRACELET || !PRODUCTS.length ? 'bracelet' : 'ring' });
+  $('kindTabs').hidden = BRACELET_ONLY || !(PRODUCTS.length && BRACELETS.length);
+  document.querySelectorAll('[data-drawer]').forEach(b => b.classList.toggle('on', b.dataset.drawer === state.drawer));
   camera.zoom = 1; camera.updateProjectionMatrix();
   renderPopupControls(); setTab(EMBED ? 'shop' : 'ring'); makeQR();
   requestAnimationFrame(() => { resize(); applyHand(); });
@@ -1926,6 +2387,11 @@ let showStart = 0; const stopShowcase = () => showStart = 0;
 
 /* ---------- cart ---------- */
 function addToCart() {
+  if (editingBracelet()) {                              // the bracelet on the wrist
+    if (!state.wrist) return;
+    const btn = $('shopCart'); if (EMBED) { btn.disabled = true; btn.textContent = 'Adding…'; $('addedSheet').hidden = true; }
+    return buyRings([[state.side, ['wrist', state.wrist.pid, state.wrist.cfg]]]);
+  }
   const p = product(), c = state.cfg;
   const props = { Metal:METALS[c.metal].name, 'Ring size':`US ${RING_SIZES[c.size][0]}` };
   if (c.stone) props['Stone colour'] = STONES[c.stone].name;
@@ -1979,7 +2445,7 @@ window.addEventListener('resize', () => { sizeViewer(); if (state.open) resize()
 
 $('productPick').innerHTML = PRODUCTS.map(p => `<button data-id="${p.id}">${p.name}</button>`).join('');
 $('productPick').querySelectorAll('button').forEach(b => b.onclick = () => openProduct(b.dataset.id));
-sizeViewer(); openProduct(PRODUCTS[0].id);
+sizeViewer(); openProduct((PRODUCTS[0] || ALL[0]).id);
 if (EMBED) {
   document.body.classList.add('embed');
   if (EMBED.preview) document.body.classList.add('preview');
@@ -2001,13 +2467,18 @@ if (EMBED) {
       renderChips(); renderShop();
       return;
     }
-    if (e.data.type === 'addedMany') {
-      renderSelections();
+    if (e.data.type === 'addedMany') {                 // Buy this look, a single piece from Selected, or the bracelet
+      renderSelections(); updatePrices();
       if (!e.data.ok) return toast(e.data.error || 'Could not add to cart');
-      $('lookAddedTitle').textContent = `${e.data.added} ring${e.data.added === 1 ? '' : 's'} added to your bag`;
-      $('lookAddedText').textContent = (e.data.skipped?.length ? `Not added (sold out): ${e.data.skipped.join(', ')}. ` : '')
-        + (e.data.count ? `${e.data.count} item${e.data.count > 1 ? 's' : ''} in your bag` : '');
-      if (!$('panelSel').hidden) $('lookAdded').hidden = false; else toast($('lookAddedTitle').textContent);
+      const title = `${e.data.added} piece${e.data.added === 1 ? '' : 's'} added to your bag`;
+      const count = e.data.count ? `${e.data.count} item${e.data.count > 1 ? 's' : ''} in your bag` : '';
+      $('lookAddedTitle').textContent = title;
+      $('lookAddedText').textContent = (e.data.skipped?.length ? `Not added (sold out): ${e.data.skipped.join(', ')}. ` : '') + count;
+      if (!$('panelSel').hidden) $('lookAdded').hidden = false;
+      else if (!$('panelShop').hidden && editingBracelet() && state.wrist) {
+        $('addedText').textContent = `${byId[state.wrist.pid].name}${state.wrist.cfg.length ? ' · ' + state.wrist.cfg.length : ''}`;
+        $('addedCount').textContent = count; $('addedSheet').hidden = false;
+      } else toast(title);
       return;
     }
     if (e.data.type === 'added') {

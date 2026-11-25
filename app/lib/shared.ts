@@ -1,7 +1,26 @@
 // Shared by server and admin UI (no secrets here). Uses the database enums as the source of truth.
-import type { AssetStatus, AssetView } from "@prisma/client";
+import type { AssetStatus, AssetView, JewelleryKind } from "@prisma/client";
 
-export type { AssetStatus, AssetView };
+export type { AssetStatus, AssetView, JewelleryKind };
+
+/* ---------- Ring or bracelet? Detected from what the store already has, no merchant work:
+   Shopify category → product type → tags → title, first match wins. Earrings / necklaces = "other" (shop-only).
+   Nothing found → ring (what the app always did). The merchant can override it on the product page. */
+const KIND_WORDS: [JewelleryKind, RegExp][] = [
+  ["other", /\b(earrings?|studs?|hoops?|necklaces?|pendants?|chokers?|anklets?|brooch(es)?)\b/i],
+  ["bracelet", /\b(bracelets?|bangles?|cuffs?|wristbands?|tennis bracelet)\b/i],
+  ["ring", /\b(rings?|solitaires?|engagement|wedding bands?|eternity bands?|signets?)\b/i],
+];
+export interface KindSource { category?: string | null; productType?: string | null; tags?: string[] | null; title?: string | null }
+export function detectKind(p: KindSource): JewelleryKind {
+  for (const text of [p.category, p.productType, (p.tags || []).join(" "), p.title]) {
+    if (!text) continue;
+    const hit = KIND_WORDS.find(([, re]) => re.test(text));
+    if (hit) return hit[0];
+  }
+  return "ring";
+}
+export const KIND_LABEL: Record<JewelleryKind, string> = { ring: "Ring", bracelet: "Bracelet", other: "Not ring / bracelet" };
 
 export const METAFIELD = { namespace: "tryon", key: "asset" } as const;
 
@@ -20,6 +39,7 @@ export const isReady = (s: AssetStatus) => s === "ready" || s === "manual";
 
 /** What the storefront metafield `tryon.asset` holds (read by the theme block → viewer). */
 export interface TryOnMetafield {
+  kind: "ring" | "bracelet";   // where the viewer puts it: a finger or the wrist
   enabled: boolean;
   view: AssetView;
   image: string | null;

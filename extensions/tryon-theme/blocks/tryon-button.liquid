@@ -34,6 +34,7 @@
         "settings": {
           "metalOption": {{ block.settings.metal_option | json }},
           "sizeOption": {{ block.settings.size_option | json }},
+          "lengthOption": {{ block.settings.length_option | json }},
           "afterAdd": {{ block.settings.after_add | json }},
           "looks": {{ block.settings.looks | json }}
         },
@@ -41,6 +42,17 @@
           {%- render 'tryon-product', p: product -%}
           {%- if block.settings.collection -%}
             {%- for p in block.settings.collection.products limit: block.settings.max_products -%}
+              {%- assign pt = p.metafields.tryon.asset.value -%}
+              {%- if p.id != product.id and pt and pt.image and pt.enabled != false -%}
+                ,{%- render 'tryon-product', p: p -%}
+              {%- endif -%}
+            {%- endfor -%}
+          {%- endif -%}
+          {%- comment -%} Bracelets: a second collection, by handle (app blocks allow only one collection picker) {%- endcomment -%}
+          {%- assign bc = nil -%}
+          {%- if block.settings.bracelet_collection_handle != blank -%}{%- assign bc = collections[block.settings.bracelet_collection_handle] -%}{%- endif -%}
+          {%- if bc and bc.id != block.settings.collection.id -%}
+            {%- for p in bc.products limit: block.settings.max_products -%}
               {%- assign pt = p.metafields.tryon.asset.value -%}
               {%- if p.id != product.id and pt and pt.image and pt.enabled != false -%}
                 ,{%- render 'tryon-product', p: p -%}
@@ -73,11 +85,13 @@
   "settings": [
     { "type": "text", "id": "label", "label": "Button label", "default": "Try it on" },
     { "type": "header", "content": "Rings to switch between" },
-    { "type": "collection", "id": "collection", "label": "Collection", "info": "Shoppers can try other rings from this collection without leaving the try-on. Only rings with a try-on image are shown." },
+    { "type": "collection", "id": "collection", "label": "Rings collection", "info": "Shoppers can try other rings from this collection without leaving the try-on. Only products with a try-on image are shown." },
+    { "type": "text", "id": "bracelet_collection_handle", "label": "Bracelets collection (handle)", "default": "bracelets", "info": "The handle of the collection with your bracelets (Products → Collections → the collection → its URL ends in /collections/<handle>). Leave empty if the collection above has the bracelets too." },
     { "type": "range", "id": "max_products", "label": "Max rings", "min": 4, "max": 48, "step": 4, "default": 24 },
     { "type": "header", "content": "Variant matching" },
     { "type": "text", "id": "metal_option", "label": "Metal option name", "default": "Metal" },
     { "type": "text", "id": "size_option", "label": "Ring size option name", "default": "Size" },
+    { "type": "text", "id": "length_option", "label": "Bracelet length option name", "default": "Length" },
     { "type": "select", "id": "after_add", "label": "After add to cart", "default": "stay",
       "options": [ { "value": "stay", "label": "Stay in try-on" }, { "value": "cart", "label": "Go to cart" }, { "value": "close", "label": "Close try-on" } ] },
     { "type": "header", "content": "Button style" },

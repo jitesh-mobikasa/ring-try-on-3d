@@ -23,6 +23,8 @@
     const options = (p.options || []).map(norm);
     p._metalIdx = options.indexOf(norm(s.metalOption || 'Metal'));
     p._sizeIdx = options.indexOf(norm(s.sizeOption || 'Size'));
+    p._lengthIdx = options.indexOf(norm(s.lengthOption || 'Length'));        // bracelets
+    const lengths = p._lengthIdx >= 0 ? [...new Set(p.variants.map(v => v.options[p._lengthIdx]))] : null;
     const metalPrices = {}, metalImages = {};
     if (p._metalIdx >= 0) {
       for (const v of p.variants) {
@@ -39,6 +41,7 @@
       metal: (p._metalIdx >= 0 && metalOf(first?.options[p._metalIdx])) || 'Y',
       metalPrices: Object.keys(metalPrices).length ? metalPrices : null,
       metalImages: Object.keys(metalImages).length ? metalImages : null,
+      kind: p.tryon?.kind === 'bracelet' ? 'bracelet' : 'ring', lengths,
     };
   }
 
@@ -49,11 +52,13 @@
       return val === norm(msg.sizeUS) || val === norm(msg.sizeAU) || val.split(/[\s/]+/).includes(norm(msg.sizeUS));
     };
     const metalMatch = v => p._metalIdx < 0 || metalOf(v.options[p._metalIdx]) === msg.metal;
-    const all = p.variants;
-    return all.find(v => v.available && metalMatch(v) && sizeMatch(v))
-        || all.find(v => metalMatch(v) && sizeMatch(v))
-        || all.find(v => v.available && metalMatch(v))
-        || (p._metalIdx < 0 && p._sizeIdx < 0 ? all[0] : null);
+    // bracelets: the shopper's Length (rings send none)
+    const lengthMatch = v => p._lengthIdx < 0 || msg.length == null || norm(v.options[p._lengthIdx]) === norm(msg.length);
+    const all = p.variants, ok = v => metalMatch(v) && sizeMatch(v) && lengthMatch(v);
+    return all.find(v => v.available && ok(v))
+        || all.find(ok)
+        || all.find(v => v.available && metalMatch(v) && lengthMatch(v))
+        || (p._metalIdx < 0 && p._sizeIdx < 0 ? all.find(v => v.available && lengthMatch(v)) || all[0] : null);
   }
 
   /* Curated looks from the block setting, one per line: "Name: handle@finger, handle@finger".

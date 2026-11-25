@@ -8,3 +8,5 @@ prisma/*.sqlite*
 
 # browser test screenshots
 tests/e2e/output/
+tools/hand-measure/.venv/
+tools/hand-measure/out/

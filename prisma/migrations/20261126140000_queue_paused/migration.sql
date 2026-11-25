@@ -1,0 +1,1 @@
+ALTER TABLE "shops" ADD COLUMN "queue_paused" BOOLEAN NOT NULL DEFAULT false;

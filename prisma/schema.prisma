@@ -27,6 +27,8 @@ model Session {
   locale        String?
   collaborator  Boolean?  @default(false)
   emailVerified Boolean?  @default(false) @map("email_verified")
+  refreshToken        String?   @map("refresh_token")          // expiring offline tokens (shopify-app-remix 4+)
+  refreshTokenExpires DateTime? @map("refresh_token_expires")
 
   @@index([shop])
   @@map("sessions")
@@ -60,6 +62,15 @@ enum AssetView {
   @@map("asset_view")
 }
 
+/// What a product is, for the try-on: rings go on fingers, bracelets on the wrist, the rest is shop-only
+enum JewelleryKind {
+  ring
+  bracelet
+  other
+
+  @@map("jewellery_kind")
+}
+
 // One row per installed store: plan + usage for the current 30-day period
 model Shop {
   shop           String    @id
@@ -68,8 +79,38 @@ model Shop {
   periodStart    DateTime  @default(now()) @map("period_start")
   installedAt    DateTime  @default(now()) @map("installed_at")
   uninstalledAt  DateTime? @map("uninstalled_at")
+  productsSyncedAt DateTime? @map("products_synced_at") // last finished "Sync products"
+  syncStartedAt    DateTime? @map("sync_started_at")    // set while a sync is running (cleared when it ends)
+  syncError        String?   @map("sync_error")
+  queuePaused      Boolean   @default(false) @map("queue_paused") // "Pause": queued try-on images wait until "Resume"
 
   @@map("shops")
+}
+
+// The store's products: basic info only, copied from Shopify by "Sync products" and kept up to date by
+// the products/* webhooks. Prices, variants and stock are NOT copied — they're always read live.
+model Product {
+  id           String        @id @default(cuid())
+  shop         String
+  productId    String        @map("product_id")      // gid://shopify/Product/123
+  title        String
+  handle       String        @default("")
+  description  String        @default("")             // plain text, shortened
+  productType  String        @default("") @map("product_type")
+  tags         String[]      @default([])
+  category     String?                                // Shopify category full name
+  status       String        @default("ACTIVE")       // ACTIVE / DRAFT / ARCHIVED
+  thumbUrl     String?       @map("thumb_url")
+  mediaId      String?       @map("media_id")         // main photo (gid://shopify/MediaImage/…)
+  mediaUrl     String?       @map("media_url")
+  detectedKind JewelleryKind @default(ring) @map("detected_kind")
+  shopifyUpdatedAt DateTime? @map("shopify_updated_at")
+  syncedAt     DateTime      @default(now()) @map("synced_at")
+
+  @@unique([shop, productId])
+  @@index([shop, detectedKind])
+  @@index([shop, shopifyUpdatedAt])
+  @@map("products")
 }
 
 // One row per product that has (or had) a try-on image
@@ -89,6 +130,8 @@ model TryOnAsset {
   offsetY       Float       @default(0) @map("offset_y")
   enabled       Boolean     @default(true)
   view          AssetView   @default(photo)
+  kind          JewelleryKind @default(ring)                 // ring / bracelet: decides the AI prompt and where it is worn
+  kindManual    Boolean     @default(false) @map("kind_manual") // true = the merchant chose it; false = detected from Shopify
   createdAt     DateTime    @default(now()) @map("created_at")
   updatedAt     DateTime    @updatedAt @map("updated_at")
 

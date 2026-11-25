@@ -1,0 +1,9 @@
+{ "image": "../../hand_for_bracelet.png", "name": "bracelet", "label": "Hand with wrist (bracelets)",
+  "fit": "{ s:.6, dx:3, dy:10 }",
+  "fingers": {
+    "pinky":  { "R": [388, 362], "T": [384, 248] },
+    "ring":   { "R": [453, 300], "T": [456, 158] },
+    "middle": { "R": [515, 300], "T": [514, 118], "clip": 31, "base_max": 12 },
+    "index":  { "R": [577, 328], "T": [572, 152] },
+    "thumb":  { "R": [652, 428], "T": [684, 372] } },
+  "wrist": { "x": 500, "from": 600, "to": 780 } }

@@ -13,9 +13,10 @@ interface CompareModalProps {
   photo: string | null;
   tryon: string | null;
   view: AssetView;
+  kind?: "ring" | "bracelet" | "other";   // bracelets: front view on the wrist (not wrapped round a finger)
 }
 
-export function CompareModal({ open, onClose, title, photo, tryon, view }: CompareModalProps) {
+export function CompareModal({ open, onClose, title, photo, tryon, view, kind = "ring" }: CompareModalProps) {
   return (
     <Modal open={open} onClose={onClose} title={title} size="large">
       <Modal.Section>
@@ -28,7 +29,9 @@ export function CompareModal({ open, onClose, title, photo, tryon, view }: Compa
             checker
             badge={tryon && (
               <Badge tone={view === "top" ? "success" : "info"}>
-                {view === "top" ? "Top view · wraps the finger" : "Photo angle · flat"}
+                {kind === "bracelet"
+                  ? (view === "top" ? "Front view · on the wrist" : "Photo angle · on the wrist")
+                  : (view === "top" ? "Top view · wraps the finger" : "Photo angle · flat")}
               </Badge>
             )}
           />

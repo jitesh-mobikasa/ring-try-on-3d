@@ -36,7 +36,7 @@
         "names": {
           "metal": {{ block.settings.metal_option | json }}, "stone": {{ block.settings.stone_option | json }},
           "shape": {{ block.settings.shape_option | json }}, "carat": {{ block.settings.carat_option | json }},
-          "size": {{ block.settings.size_option | json }}
+          "size": {{ block.settings.size_option | json }}, "length": {{ block.settings.length_option | json }}
         },
         "afterAdd": {{ block.settings.after_add | json }},
         "options": [
@@ -60,19 +60,20 @@
 
 {% schema %}
 {
-  "name": "Ring configurator",
+  "name": "Jewellery configurator",
   "target": "section",
   "enabled_on": { "templates": ["product"] },
   "stylesheet": "configurator.css",
   "javascript": "configurator.js",
   "settings": [
-    { "type": "paragraph", "content": "Shows the product's options as a jewellery configurator with live price. Price and stock come from the product's variants. Use it on your customisable product template and hide the theme's own variant picker and buy buttons there." },
+    { "type": "paragraph", "content": "Shows a ring's or bracelet's options (metal, stone, shape, carat, ring size, bracelet length, engraving) with live price. Price and stock come from the product's variants. Use it on your customisable product template and hide the theme's own variant picker and buy buttons there." },
     { "type": "header", "content": "Option names (as in your products)" },
     { "type": "text", "id": "metal_option", "label": "Metal", "default": "Metal" },
     { "type": "text", "id": "stone_option", "label": "Stone colour", "default": "Stone" },
     { "type": "text", "id": "shape_option", "label": "Shape", "default": "Shape" },
     { "type": "text", "id": "carat_option", "label": "Carat", "default": "Carat" },
     { "type": "text", "id": "size_option", "label": "Ring size", "default": "Size" },
+    { "type": "text", "id": "length_option", "label": "Bracelet length", "default": "Length" },
     { "type": "header", "content": "Engraving" },
     { "type": "checkbox", "id": "engraving", "label": "Offer engraving", "default": true },
     { "type": "text", "id": "engraving_label", "label": "Label", "default": "Engraving" },

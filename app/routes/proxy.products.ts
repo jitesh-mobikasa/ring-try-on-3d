@@ -38,12 +38,7 @@ interface ProductNode {
 }
 interface Page { nodes: ProductNode[]; pageInfo: { hasNextPage: boolean; endCursor: string | null } }
 
-const productsQuery = (withCountry: boolean) => `#graphql
-  query TryOnProducts($handle: String!, $first: Int!, $after: String${withCountry ? ", $country: CountryCode!" : ""}) {
-    collectionByIdentifier(identifier: { handle: $handle }) {
-      products(first: $first, after: $after, sortKey: COLLECTION_DEFAULT) {
-        pageInfo { hasNextPage endCursor }
-        nodes {
+const nodeFields = (withCountry: boolean) => `
           legacyResourceId title handle onlineStoreUrl description(truncateAt: 600) productType
           featuredImage { url(transform: { maxWidth: 600 }) }
           images(first: 6) { nodes { url(transform: { maxWidth: 800 }) } }
@@ -56,8 +51,14 @@ const productsQuery = (withCountry: boolean) => `#graphql
               image { url(transform: { maxWidth: 600 }) }
               ${withCountry ? "contextualPricing(context: { country: $country }) { price { amount } }" : ""}
             }
-          }
-        }
+          }`;
+
+const productsQuery = (withCountry: boolean) => `#graphql
+  query TryOnProducts($handle: String!, $first: Int!, $after: String${withCountry ? ", $country: CountryCode!" : ""}) {
+    collectionByIdentifier(identifier: { handle: $handle }) {
+      products(first: $first, after: $after, sortKey: COLLECTION_DEFAULT) {
+        pageInfo { hasNextPage endCursor }
+        nodes { ${nodeFields(withCountry)} }
       }
     }
   }`;
@@ -81,7 +82,7 @@ function toViewer(p: ProductNode) {
     type: p.productType,
     images: p.images.nodes.map((i) => i.url),
     options: p.options.map((o) => o.name),
-    tryon: { image: t.image, scale: t.scale ?? 1, offsetY: t.offsetY ?? 0, view: t.view ?? "photo" },
+    tryon: { kind: t.kind ?? "ring", image: t.image, scale: t.scale ?? 1, offsetY: t.offsetY ?? 0, view: t.view ?? "photo" },
     variants: p.variants.nodes.map((v) => ({
       id: Number(v.legacyResourceId),
       price: Number(v.contextualPricing?.price.amount ?? v.price),
@@ -102,10 +103,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   if (!admin) return json({ error: "App is not installed on this store" }, 401);
 
   const url = new URL(request.url);
-  const handle = url.searchParams.get("collection")?.trim();
-  if (!handle) return json({ error: "collection is required" }, 400);
   const country = url.searchParams.get("country")?.toUpperCase();
   const withCountry = !!country && /^[A-Z]{2}$/.test(country);
+
+  const handle = url.searchParams.get("collection")?.trim();
+  if (!handle) return json({ error: "collection is required" }, 400);
   let after = url.searchParams.get("after") || null;
   const offset = Math.min(250, Math.max(0, Number(url.searchParams.get("offset")) || 0));
 
