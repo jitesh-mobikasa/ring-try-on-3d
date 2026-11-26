@@ -1,6 +1,6 @@
 # Ring Try-On — Task Tracker
 
-Source: *Try-On Studio & Customisable PDP — Feature List* (5 Nov 2026, House of Amara).
+Source: *Try-On Studio & Customisable PDP — Feature List* (5 Nov 2026, House of Hamara).
 **Scope: rings only.** Bracelets, wrist snap point and wrist views are out of scope for now.
 
 Legend: `[x]` done · `[ ]` to do · `[~]` partly done · `[-]` built but switched off
@@ -60,7 +60,7 @@ Last updated: 2026-11-24
 
 ### Look & feel
 
-- [x] **Professional UI pass** (2026-11-25): "Powered by AMARA" removed; neutral stone / ink palette (no pink); one type scale; left-aligned headings; quiet icon rail with a thin active bar; Rings / Bracelets switch at the top of the drawer; cleaner cards, chips and inputs; black primary buttons; icon buttons on the canvas (Left / Right top-left, menu + close top-right, zoom + rotate bottom-right); skin-tone slider moved off the canvas (☰ menu → Complexion); messages placed below the toolbar. Desktop + mobile checked by screenshot, no JS errors
+- [x] **Professional UI pass** (2026-11-25): "Powered by HAMARA" removed; neutral stone / ink palette (no pink); one type scale; left-aligned headings; quiet icon rail with a thin active bar; Rings / Bracelets switch at the top of the drawer; cleaner cards, chips and inputs; black primary buttons; icon buttons on the canvas (Left / Right top-left, menu + close top-right, zoom + rotate bottom-right); skin-tone slider moved off the canvas (☰ menu → Complexion); messages placed below the toolbar. Desktop + mobile checked by screenshot, no JS errors
 
 ## 2. Studio screens and pop-ups
 
@@ -107,9 +107,9 @@ Last updated: 2026-11-24
 - [x] Storefront scripts under Shopify's 10 KB limit: readable source in `theme-src/`, minified into the extension by `npm run build:theme` (`npm run deploy` runs it first)
 
 - [x] **Update Shopify API version** → 2026-10 (`@shopify/shopify-app-remix` 6, `shopify-api` 15, Prisma 6.19); `collectionByHandle` → `collectionByIdentifier`. Build + typecheck pass. *Restart `npm run dev` after pulling.*
-- [x] **Decided: custom app, House of Amara only** (2026-11-25) — no App Store listing / review / de-branding needed
+- [x] **Decided: custom app, House of Hamara only** (2026-11-25) — no App Store listing / review / de-branding needed
 - [x] Code: stays `distribution: AppDistribution.AppStore` — correct for Partner-dashboard custom apps too (OAuth). *(`ShopifyAdmin` is for admin-created apps with a fixed token; tried it 2026-11-25, it crashed dev — reverted.)* Custom vs public is chosen only in the Partner Dashboard.
-- [ ] Partner Dashboard → app → **Distribution → Custom distribution** → enter House of Amara's `xxx.myshopify.com` → copy the install link (can't be undone)
+- [ ] Partner Dashboard → app → **Distribution → Custom distribution** → enter House of Hamara's `xxx.myshopify.com` → copy the install link (can't be undone)
 - [x] **Plans, billing and the usage section removed** (2026-11-25). Optional OpenAI cost cap: `AI_MONTHLY_LIMIT` env (off by default)
 - [ ] Production hosting + PostgreSQL with backups; `prisma migrate deploy` on release
 - [ ] OpenAI spending limit (OpenAI dashboard) and/or `AI_MONTHLY_LIMIT` on the server
@@ -154,6 +154,29 @@ Last updated: 2026-11-24
 - [x] Kada / bangle fit: rigid bands (thick in the image) are 12 % wider than the wrist and keep their sides just outside the arm (small gap), stronger shadow; chains still hug the wrist (cut to the arm)
 - [x] Bracelet **size (length)**: option found by name (Length / Size / Bracelet size / Wrist size, or values like "18 cm", '7"') and never used as a ring size; fit from real cm vs the model's 15.5 cm wrist (17 cm = comfortable; longer → wider + lower); "Size (length)" pills + fit note (snug / comfortable / loose)
 - [x] "How it works" has ring and bracelet versions (bracelet page → bracelet steps), updated for single-product mode, skin slider and no ☰ menu
+- [x] Admin dashboard polish for the demo: title "Virtual Try-On", 4 stat cards (Products / Rings / Bracelets / Try-on ready with progress bar; ring + bracelet cards filter the list), table = Product (photo + name + short description) · Type (Ring / Bracelet + Auto-detected / Set by you) · Try-on image (thumb + status) · Store status · Generate / Regenerate; no horizontal scroll
+- [x] New bracelet photo: lifestyle portrait (`Minimalist Beauty Portrait with Gentle Touch.png`, 1024 px in hands.js): grey background + face kept (`keepBg`), wrist at (520, 593) rot 25° half width 103, bracelet rotated across the arm, chains clipped to the arm by skin colour, Skin slider hidden on this photo, no rings drawn on it
+- [x] "On you" tab and the QR code card hidden (CSS only, code kept)
+- [x] New ring photo: `Minimalist Hand Product Portrait.png` (1254 → 1024 px, in hands.js); measured with tools/hand-measure (ring-hand.json → out/ring-check.png): ring spots just above each web, slide ranges, finger widths / centre lines → HANDS.ring
+- [x] Wrist drop zone hidden (`SHOW_WRIST_ZONE = false` in the viewer; dragging / tapping the bracelet still works)
+- [x] Skin slider: recolours only the skin pixels (nails / background untouched), keeps highlights; no more tint on the whole hand. Real per-tone photos still to come (waiting for the generated tone images)
+- [x] Skin slider keeps the **nails** natural: the nail area is found from the measured fingers (from where the nail starts to the fingertip), not by colour; `hands.js?v=` bumped so browsers load the new photos
+- [x] **Real skin-tone photos** for the ring hand: 3 versions (medium, brown, deep) made from our photo with gpt-image-2 (same pose), aligned to the original (IoU 0.95–0.97), in hands.js `HAND_SRCS.ringTones`; the Skin slider shows the nearest real photo (stops 15 / 45 / 72 / 100), recolouring only as a fallback
+- [x] **Centre stone by carat** (like Brilliant Earth), replacing the "Stone size %" slider: the ring's Carat variant option (block setting "Centre stone carat option name", or values like "1 ct" / "1 1/2 carat") → "Centre Stone" pills with real price per metal × carat, sold-out marked, "≈ 6.5 mm across" note; the stone on the hand is drawn at real size (width ∝ ∛carat from the carat in the photo); carat goes to the cart (variant match) and into saved / shared looks. Admin product page: "Carat of the centre stone in the product photo" (`shown_carat`, migration `20261126160000_shown_carat`, metafield `shownCarat`). % slider kept behind `STONE_PERCENT` (off)
+- [x] Store (test): **Carat** option added to the 4 rings by `tools/add-carat.mjs` (0.5 / 1 / 1.5 / 2 ct, price × 0.7 / 1 / 1.6 / 2.4, "continue selling" on, photo carat = 1). Reusable on any store with the app installed: `npm run add-carat -- --shop <store>.myshopify.com` (dry run) then `--apply`; options `--values`, `--multipliers`, `--base`, `--photo-carat`, `--products`, `--option-name`, `--keep-stock-policy` (see the top of `tools/add-carat.mjs`)
+- [x] Fix: try-on crashed on start (showed the built-in demo page) once a ring had Carat variants — stone size limits were used before they were defined; moved up. Checked in headless Chrome: try-on opens, carat pills, $7.00 at 1 ct, no errors
+- [x] Demo catalogue on the test store (`tools/demo-catalog.mjs`, `npm run demo-catalog -- --shop … [--apply]`): jeweller names, descriptions with stone / metal details, product types, vendor House of Hamara, tags, SEO, **Metal** option (18ct Yellow / White / Rose Gold, Platinum), bracelet **Length** 16/17/18 cm, realistic prices for every variant (base × metal × carat × length × shape), continue selling on. Aria ring keeps "Ring size" (linked to Shopify category data, can't be renamed)
+- [x] Left hand for bracelets: its own portrait (`Left Hand (2).png` → 1024 px, `HAND_SRCS.braceletLeft`), not mirrored; wrist (648, 735), arm tilt −30°, half width 105; the bracelet is re-fitted when switching hands. Checked in headless Chrome (Left shows the new photo, no errors)
+- [x] Right hand for bracelets: `Right Hand (1).png` (matching the left-hand photo) → `HAND_SRCS.bracelet`; wrist (586, 735), arm tilt 27°, half width 106
+- [x] Bracelet alignment on the new portraits: wrist spots moved to the narrowest part of the wrist (right 547,800 · left 702,810), kada 7 % wider than the wrist (was 12 %). Checked by rendering the kangan on both photos in headless Chrome
+- [x] Bracelet curve per hand photo (`wrist.curve`): the portraits' forearm comes towards the camera, so the bracelet is drawn as an oval front (30 % curve, was a flat 10 %) — now wraps round the wrist. Checked by rendering the kangan on both hands
+- [x] Bracelet position D (chosen from a rendered comparison): right (556, 785) 13°, left (694, 795) −15°
+- [x] **Bangle sizes** by inner diameter (Indian 2.2–2.10 = 54–67 mm, or "60 mm"), not cm: try-on reads them (`bangleMM`), "Bangle size" label, fit note (snug / comfortable / loose, mm inside), looser drawing for bigger sizes; kangan on the test store → "Bangle size: 2.4 (57 mm) / 2.6 (60 mm) / 2.8 (64 mm)"; chain bracelets stay Length in cm
+- [x] Bangles / cuffs: back half of the loop drawn (darker, hidden behind the wrist), ends fade and darken as they turn away instead of a hard cut. Checked with the "gold bangles" cuff and the kangan
+- [x] White diamonds no longer cut out: on a pure white AI backdrop the cut-out only removes near-perfect white (tolerance 6, was 28) → tennis bracelet stones stay solid (tested: 35 % → 53 % of the band kept, all stones). gpt-image-2 can't return a transparent background (tried; falls back automatically). Bracelet prompt: clasp must not appear. Rigid bangle = by name / type (bangle, kada, kangan, cuff), not image shape
+- [x] **Wrist measured live on the photo** (`measureWrist`): real arm edges → centre + width, arm angle from two cross-sections, settles in 4 passes; the bracelet is fitted edge to edge. Works for any model photo from a rough wrist point (tested: a 0°, off-centre start lands on the same fit). README in tools/hand-measure
+- [x] Bracelets: default spot lower on the wrist (where the shopper placed it); **default size = best fit for the model's wrist** (bangle ≈ 60 mm → 2.6, chain ≈ 17 cm), the shopper can change it; **metal choice recolours the bracelet** (rose / white gold / platinum tones, stones kept); soft highlight along the band + darker lower edge. Constants moved up so the start-up can't crash. Checked: yellow vs rose render, default 2.6 selected
+- [ ] Regenerate **Lumière** and **Celestine** to get solid stones (strict cut-out is bracelets only; rings unchanged)
 - [ ] Regenerate kangan + bracelets and compare; then decide on contact shadow / lighting / size tweaks in the viewer
 
 ## Product sync (2026-11-26)

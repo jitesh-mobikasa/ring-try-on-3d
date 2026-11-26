@@ -35,6 +35,7 @@
           "metalOption": {{ block.settings.metal_option | json }},
           "sizeOption": {{ block.settings.size_option | json }},
           "lengthOption": {{ block.settings.length_option | json }},
+          "caratOption": {{ block.settings.carat_option | json }},
           "afterAdd": {{ block.settings.after_add | json }},
           "looks": {{ block.settings.looks | json }}
         },
@@ -92,6 +93,7 @@
     { "type": "text", "id": "metal_option", "label": "Metal option name", "default": "Metal" },
     { "type": "text", "id": "size_option", "label": "Ring size option name", "default": "Size" },
     { "type": "text", "id": "length_option", "label": "Bracelet length option name", "default": "Length" },
+    { "type": "text", "id": "carat_option", "label": "Centre stone carat option name", "default": "Carat" },
     { "type": "select", "id": "after_add", "label": "After add to cart", "default": "stay",
       "options": [ { "value": "stay", "label": "Stay in try-on" }, { "value": "cart", "label": "Go to cart" }, { "value": "close", "label": "Close try-on" } ] },
     { "type": "header", "content": "Button style" },

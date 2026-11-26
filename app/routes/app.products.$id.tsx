@@ -1,7 +1,7 @@
 /* One product: source photo vs try-on image, live preview on the hand, fine-tuning, own upload, regenerate. */
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { useFetcher, useLoaderData, useRevalidator } from "@remix-run/react";
-import { Badge, Banner, BlockStack, Box, Button, Card, Checkbox, DropZone, InlineGrid, InlineStack, Layout, Page, RangeSlider, Select, Text } from "@shopify/polaris";
+import { Badge, Banner, BlockStack, Box, Button, Card, Checkbox, DropZone, InlineGrid, InlineStack, Layout, Page, RangeSlider, Select, Text, TextField } from "@shopify/polaris";
 import { useAppBridge } from "@shopify/app-bridge-react";
 import type { AssetStatus, JewelleryKind } from "@prisma/client";
 import { useEffect, useMemo, useState } from "react";
@@ -42,6 +42,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       scale: asset.scale,
       offsetY: asset.offsetY,
       enabled: asset.enabled,
+      shownCarat: asset.shownCarat,
       stale: asset.status === "ready" && !!asset.sourceMediaId && !!product.mediaId && asset.sourceMediaId !== product.mediaId,
     },
     canGenerate: canGenerate(),
@@ -116,6 +117,7 @@ export const action = async ({ request, params }: ActionFunctionArgs): Promise<A
           scale: clamp(Number(form.get("scale")), 0.5, 2, 1),
           offsetY: clamp(Number(form.get("offsetY")), -0.5, 0.5, 0),
           enabled: form.get("enabled") === "true",
+          shownCarat: Number(form.get("shownCarat")) > 0 ? Math.min(20, Number(form.get("shownCarat"))) : null,
         },
       });
       if (row.resultUrl) await writeAssetMetafield(admin, row);
@@ -151,11 +153,13 @@ export default function ProductPage() {
 
   const [scale, setScale] = useState(asset?.scale ?? 1);
   const [offsetY, setOffsetY] = useState(asset?.offsetY ?? 0);
+  const [shownCarat, setShownCarat] = useState(asset?.shownCarat ? String(asset.shownCarat) : "");
   const [enabled, setEnabled] = useState(asset?.enabled ?? true);
   const [compareOpen, setCompareOpen] = useState(false);
   useEffect(() => {
     setScale(asset?.scale ?? 1);
     setOffsetY(asset?.offsetY ?? 0);
+    setShownCarat(asset?.shownCarat ? String(asset.shownCarat) : "");
     setEnabled(asset?.enabled ?? true);
   }, [asset?.scale, asset?.offsetY, asset?.enabled]);
 
@@ -179,9 +183,9 @@ export default function ProductPage() {
       origin: typeof window !== "undefined" ? window.location.origin : "",
       current: "p",
       preview: true,
-      products: [{ key: "p", title: product.title, image: product.mediaUrl, price: product.price, tryon: { kind: isBracelet ? "bracelet" : "ring", image: asset.image, scale, offsetY, view: asset.view } }],
+      products: [{ key: "p", title: product.title, image: product.mediaUrl, price: product.price, tryon: { kind: isBracelet ? "bracelet" : "ring", image: asset.image, scale, offsetY, view: asset.view, shownCarat: Number(shownCarat) || null } }],
     });
-  }, [asset?.image, asset?.view, scale, offsetY, product.title, product.mediaUrl, product.price, isBracelet]);
+  }, [asset?.image, asset?.view, scale, offsetY, shownCarat, product.title, product.mediaUrl, product.price, isBracelet]);
 
   const busy = isBusy(status);
   const submitting = (intent: string) => fetcher.state !== "idle" && fetcher.formData?.get("intent") === intent;
@@ -272,9 +276,14 @@ export default function ProductPage() {
                   <Text as="h3" variant="headingSm">{isBracelet ? "Fit on the wrist" : "Fit on the finger"}</Text>
                   <RangeSlider label="Size" min={0.5} max={2} step={0.05} value={scale} onChange={(v) => setScale(Number(v))} output />
                   <RangeSlider label="Move up / down" min={-0.5} max={0.5} step={0.01} value={offsetY} onChange={(v) => setOffsetY(Number(v))} output />
+                  {!isBracelet && (
+                    <TextField label="Carat of the centre stone in the product photo" type="number" min={0} step={0.05} suffix="ct" autoComplete="off"
+                      value={shownCarat} onChange={setShownCarat}
+                      helpText="E.g. 1 if the photo shows a 1 ct stone. Shoppers choosing another carat then see the stone at its real size. Leave empty to use the first carat option." />
+                  )}
                   <Checkbox label="Show try-on for this product" checked={enabled} onChange={setEnabled} />
                   <Button variant="primary" loading={submitting("save")}
-                    onClick={() => submit({ intent: "save", scale: String(scale), offsetY: String(offsetY), enabled: String(enabled) })}>
+                    onClick={() => submit({ intent: "save", scale: String(scale), offsetY: String(offsetY), enabled: String(enabled), shownCarat })}>
                     Save
                   </Button>
                 </BlockStack>

@@ -1,8 +1,9 @@
-{ "image": "../../Gemini_Generated_Image_rp1ifgrp1ifgrp1i (6).png", "name": "ring", "label": "Close-up hand (rings)",
+{ "image": "out/ring-hand-v2.png", "name": "ring", "label": "Close-up hand (rings)",
+  "note": "2026-11-26: ../../Minimalist Hand Product Portrait.png scaled 1254 → 1024 px into out/ring-hand-v2.png (re-create it before measuring again)",
   "fit": "{ s:.6, dx:3, dy:10 }",
   "fingers": {
-    "pinky":  { "R": [355, 445], "T": [350, 300] },
-    "ring":   { "R": [434, 398], "T": [440, 192] },
-    "middle": { "R": [513, 400], "T": [513, 140] },
-    "index":  { "R": [598, 395], "T": [590, 188] },
-    "thumb":  { "R": [705, 540], "T": [733, 468] } } }
+    "pinky":  { "R": [274, 490], "T": [229, 261] },
+    "ring":   { "R": [404, 421], "T": [396, 131] },
+    "middle": { "R": [535, 412], "T": [531, 82] },
+    "index":  { "R": [666, 421], "T": [682, 127] },
+    "thumb":  { "R": [853, 596], "T": [923, 482] } } }

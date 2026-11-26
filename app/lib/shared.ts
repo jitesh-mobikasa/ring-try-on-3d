@@ -46,6 +46,7 @@ export interface TryOnMetafield {
   scale: number;
   offsetY: number;
   source: string | null;
+  shownCarat?: number | null;  // rings: carat of the stone in the try-on image (other carats are drawn bigger / smaller from it)
 }
 
 /** Encode an object for the viewer's URL hash (#c=…), base64url of UTF-8 JSON. */

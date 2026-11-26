@@ -33,6 +33,7 @@ export function assetValue(asset: TryOnAsset): TryOnMetafield {
     scale: asset.scale,
     offsetY: asset.offsetY,
     source: asset.sourceMediaId,
+    shownCarat: asset.shownCarat ?? null,
   };
 }
 

@@ -1,4 +1,4 @@
-{ "image": "../../hand_for_bracelet.png", "name": "bracelet", "label": "Hand with wrist (bracelets)",
+{ "image": "../../Minimalist Beauty Portrait with Gentle Touch.png", "note": "2026-11-26: portrait photo; wrist measured by hand (x 520, y 593, rot 25, half width 103 on 1024 px) — finger values below are from the old photo and unused", "name": "bracelet", "label": "Hand with wrist (bracelets)",
   "fit": "{ s:.6, dx:3, dy:10 }",
   "fingers": {
     "pinky":  { "R": [388, 362], "T": [384, 248] },

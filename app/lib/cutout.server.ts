@@ -4,7 +4,7 @@
 import sharp from "sharp";
 import { NonRetryable } from "./errors";
 
-export async function cutOutRing(input: Buffer, { tolerance = 28 }: { tolerance?: number } = {}): Promise<Buffer> {
+export async function cutOutRing(input: Buffer, { tolerance = 28, strictWhite = false }: { tolerance?: number; strictWhite?: boolean } = {}): Promise<Buffer> {
   const { data, info } = await sharp(input)
     .resize(1200, 1200, { fit: "inside", withoutEnlargement: true })
     .ensureAlpha().raw().toBuffer({ resolveWithObject: true });
@@ -17,6 +17,9 @@ export async function cutOutRing(input: Buffer, { tolerance = 28 }: { tolerance?
   const med = (c: number) => border.map((i) => data[i * 4 + c]).sort((a, b) => a - b)[border.length >> 1];
   const bg = [med(0), med(1), med(2)];
   if (Math.min(...bg) < 170) throw new NonRetryable("Photo background is not plain/light — upload your own PNG or use AI mode");
+  // Bracelets on a pure white backdrop (AI images are #FFFFFF) → be strict: only near-perfect white is background. White diamonds
+  // (≈245–250) are then kept instead of being cut out with it (they looked see-through on tennis bracelets).
+  if (strictWhite && Math.min(...bg) >= 250) tolerance = Math.min(tolerance, 6);   // bracelets only (rings keep 28)
 
   const dist = (i: number) => Math.max(Math.abs(data[i * 4] - bg[0]), Math.abs(data[i * 4 + 1] - bg[1]), Math.abs(data[i * 4 + 2] - bg[2]));
   const isBg = new Uint8Array(N), stack: number[] = [];

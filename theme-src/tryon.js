@@ -24,6 +24,10 @@
     p._metalIdx = options.indexOf(norm(s.metalOption || 'Metal'));
     p._sizeIdx = options.indexOf(norm(s.sizeOption || 'Size'));
     p._lengthIdx = options.indexOf(norm(s.lengthOption || 'Length'));        // bracelets
+    // Rings: centre stone by carat (like the big jewellers) — the "Carat" option, else one whose values read "1 ct" / "1.5 carat"
+    p._caratIdx = options.indexOf(norm(s.caratOption || 'Carat'));
+    if (p._caratIdx < 0 && p.tryon?.kind !== 'bracelet')
+      p._caratIdx = options.findIndex((o, i) => /carat|\bct\b|stone size/.test(o) || p.variants.some(v => /\d\s*(ct|cts|carat)s?\b/i.test(String(v.options[i] || ''))));
     if (p.tryon?.kind === 'bracelet') {
       // Bracelet sizes are lengths, but stores name the option differently ("Length", "Size", "Bracelet size",
       // "Wrist size") → else take an option whose values look like lengths (18 cm, 7", 6.5 in).
@@ -32,6 +36,9 @@
       p._sizeIdx = -1;                                                        // never a ring size
     }
     const lengths = p._lengthIdx >= 0 ? [...new Set(p.variants.map(v => v.options[p._lengthIdx]))] : null;
+    const carats = p._caratIdx >= 0 ? [...new Set(p.variants.map(v => v.options[p._caratIdx]))] : null;
+    // price + stock of each metal × carat (the try-on shows the real price of the chosen stone)
+    const combos = carats ? p.variants.map(v => ({ m: p._metalIdx >= 0 ? metalOf(v.options[p._metalIdx]) : null, c: v.options[p._caratIdx], price: v.price, a: v.available })) : null;
     const metalPrices = {}, metalImages = {};
     if (p._metalIdx >= 0) {
       for (const v of p.variants) {
@@ -48,7 +55,8 @@
       metal: (p._metalIdx >= 0 && metalOf(first?.options[p._metalIdx])) || 'Y',
       metalPrices: Object.keys(metalPrices).length ? metalPrices : null,
       metalImages: Object.keys(metalImages).length ? metalImages : null,
-      kind: p.tryon?.kind === 'bracelet' ? 'bracelet' : 'ring', lengths,
+      kind: p.tryon?.kind === 'bracelet' ? 'bracelet' : 'ring', lengths, carats, combos,
+      firstCarat: carats && first ? first.options[p._caratIdx] : null,
     };
   }
 
@@ -61,10 +69,11 @@
     const metalMatch = v => p._metalIdx < 0 || metalOf(v.options[p._metalIdx]) === msg.metal;
     // bracelets: the shopper's Length (rings send none)
     const lengthMatch = v => p._lengthIdx < 0 || msg.length == null || norm(v.options[p._lengthIdx]) === norm(msg.length);
-    const all = p.variants, ok = v => metalMatch(v) && sizeMatch(v) && lengthMatch(v);
+    const caratMatch = v => p._caratIdx < 0 || msg.carat == null || norm(v.options[p._caratIdx]) === norm(msg.carat);
+    const all = p.variants, ok = v => metalMatch(v) && sizeMatch(v) && lengthMatch(v) && caratMatch(v);
     return all.find(v => v.available && ok(v))
         || all.find(ok)
-        || all.find(v => v.available && metalMatch(v) && lengthMatch(v))
+        || all.find(v => v.available && metalMatch(v) && lengthMatch(v) && caratMatch(v))
         || (p._metalIdx < 0 && p._sizeIdx < 0 ? all.find(v => v.available && lengthMatch(v)) || all[0] : null);
   }
 

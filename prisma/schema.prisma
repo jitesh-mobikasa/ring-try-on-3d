@@ -129,6 +129,7 @@ model TryOnAsset {
   attempts      Int         @default(0)
   scale         Float       @default(1)             // merchant fine-tuning on the finger
   offsetY       Float       @default(0) @map("offset_y")
+  shownCarat    Float?      @map("shown_carat")      // rings: carat of the centre stone in the product photo (the try-on image) → real stone sizes per carat
   enabled       Boolean     @default(true)
   view          AssetView   @default(photo)
   kind          JewelleryKind @default(ring)                 // ring / bracelet: decides the AI prompt and where it is worn

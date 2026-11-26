@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Ring Try-On 3D</title>
-<script src="hands.js?v=20261124"></script>
+<script src="hands.js?v=20261126f"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script type="importmap">
 { "imports": {
@@ -443,6 +443,8 @@
   .finder { display:none !important; }
   /* ☰ menu hidden: its actions are in the panel (Save / Share / Download / How it works / Help) and on the view (hand, skin tone) */
   #menuBtn { display:none !important; }
+  /* "On you" (camera / phone hand-off) and the QR code card are hidden for now (code kept) */
+  #tabHand, #qrCard { display:none !important; }
   .helpbar { display:flex; gap:8px; margin-top:8px; }
   .helpbar button { flex:1; display:flex; align-items:center; justify-content:center; gap:6px; min-height:40px; border:1px solid var(--line); border-radius:var(--r-sm, 6px); background:transparent; color:var(--ink-2, #44403c); font-size:13px; cursor:pointer; }
   .helpbar button:hover { border-color:var(--ink, #1c1917); color:var(--ink, #1c1917); }
@@ -476,7 +478,7 @@
 <body>
 <div class="topbar"><span>☎ Showroom appointments: Melbourne · Sydney · Brisbane · Perth</span><span>Australia (AUD $)</span></div>
 <header class="nav">
-  <div class="logo">HOUSE OF AMARA</div>
+  <div class="logo">HOUSE OF HAMARA</div>
   <nav class="menu"><a href="#">ENGAGEMENT RINGS</a><a href="#">SAPPHIRE RINGS</a><a href="#">WOMEN'S RINGS</a><a href="#">MEN'S RINGS</a><a href="#">JEWELLERY</a><a href="#">EXPLORE</a></nav>
   <div class="icons"><button aria-label="Search">⌕</button><button aria-label="Account">👤</button><button id="cartBtn" aria-label="Cart">👜<span class="badge" id="cartCount">0</span></button></div>
   <button class="appt">Book An Appointment</button>
@@ -638,7 +640,7 @@ const METALS = { Y:{ name:'18 ct Yellow Gold', c:'#e8c766', add:0 }, W:{ name:'1
 const STONES = { diamond:{ name:'Diamond', c:'#ffffff' }, champagne:{ name:'Champagne', c:'#f3cf8a' }, pink:{ name:'Pink', c:'#ff9db8' },
   sapphire:{ name:'Sapphire', c:'#2f55e0' }, emerald:{ name:'Emerald', c:'#19b46a' }, ruby:{ name:'Ruby', c:'#d8203a' } };
 const SHAPES = ['round', 'oval', 'princess', 'emerald'];
-// Product photos: PLACEHOLDERS cropped for internal testing only. Replace with House of Amara's own images
+// Product photos: PLACEHOLDERS cropped for internal testing only. Replace with House of Hamara's own images
 // (in production these come from the store's existing Shopify product images).
 /* Shopify embed: the theme block opens this page in an iframe with the product in the URL hash
    (#c=<base64url JSON>, see extensions/tryon-theme/assets/tryon.js). Without it, the demo catalogue below runs. */
@@ -665,6 +667,9 @@ const fromEmbed = x => ({
   desc:x.description || '', type:x.type || '', images:(x.images && x.images.length ? x.images : [x.image]).filter(Boolean),
   kind:x.tryon?.kind === 'bracelet' || x.kind === 'bracelet' ? 'bracelet' : 'ring',   // ring → a finger, bracelet → the wrist
   lengths:Array.isArray(x.lengths) && x.lengths.length ? x.lengths : null,             // bracelet Length option values (from the variants)
+  carats:Array.isArray(x.carats) && x.carats.length ? x.carats : null,                // ring centre stone: Carat option values (from the variants)
+  combos:x.combos || null, firstCarat:x.firstCarat ?? null,
+  shownCarat:+x.tryon?.shownCarat || null,                                             // carat of the stone in the try-on image
 });
 // Rings (PRODUCTS) go on the fingers, bracelets (BRACELETS) on the wrist. Both grow when more are loaded from the store.
 const ALL = EMBED ? [...new Map((EMBED.products || []).map(x => [String(x.key), x])).values()].map(fromEmbed) : DEMO_PRODUCTS;   // no duplicates (a product can be in both collections)
@@ -705,24 +710,26 @@ const W = 620, H = 635;          // try-on canvas box; each photo is fitted into
    (tests/hand-measure: where a ring sits, finger width / centre line every slide step, where the nail starts). */
 const HANDS = {
   ring:{ name:'Close-up hand (rings)', src:window.HAND_SRCS?.ring, crop:{ x:0, y:0, w:1024, h:1024 }, fit:{ s:.6, dx:3, dy:10 }, depth:18,
-    geo:{ pinky:{ x:355, y:445, rot:-2, w:32 }, ring:{ x:434, y:398, rot:2, w:36 }, middle:{ x:513, y:400, rot:0, w:37 }, index:{ x:598, y:395, rot:-2, w:39 }, thumb:{ x:705, y:540, rot:21, w:38 } },
-    tips:{ pinky:[350, 300], ring:[440, 192], middle:[513, 140], index:[590, 188], thumb:[733, 468] },
-    base:{ pinky:18, ring:13, middle:13, index:17, thumb:25 },
+    geo:{ pinky:{ x:274, y:490, rot:-11, w:50 }, ring:{ x:404, y:421, rot:-2, w:54 }, middle:{ x:535, y:412, rot:-1, w:56 }, index:{ x:666, y:421, rot:3, w:57 }, thumb:{ x:853, y:596, rot:32, w:57 } },
+    tips:{ pinky:[229, 261], ring:[396, 131], middle:[531, 82], index:[682, 127], thumb:[923, 482] },
+    base:{ pinky:24, ring:16, middle:12, index:10, thumb:32 },
     profile:{
-    pinky:[64,64,64,64,64,64,64,64,62,62,62,62,64,64,64,64,64,64,62,64,64,64,64,64,64,64,64,64,64,64,66,66,66,66,66,66,64,64,66,66,64,64,64,64,64,64,62,62,62,62,60,60,60,60,60,60,60,60,58,58,58,58,58,58,58,59,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,58,59,58,58,58,58,58,58,58,58,58,58,58,58,56,56,56,56,57,56,56,54,54,54],
-    ring:[70,70,70,70,70,72,72,72,72,72,72,72,72,72,72,72,72,72,74,74,74,74,74,74,74,74,74,74,74,74,74,74,74,74,74,75,74,74,76,76,76,76,76,76,75,74,74,74,74,72,72,72,72,71,70,70,68,68,68,68,68,68,67,66,66,66,66,66,66,64,64,65,64,64,64,64,64,64,64,64,64,64,64,64,62,62,62,62,62,63,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,62,60,60,60],
-    middle:[76,74,74,76,76,76,76,76,74,74,74,74,74,74,74,74,74,74,74,74,76,76,76,76,76,76,76,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,80,78,78,78,78,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,80,78,78,78,78,76,76,76,76,74,74,74,74,72,72,72,72,72,72,72,70,70,70,70,70,70,70,70,70,70,70,70,70,70,70,68,68,68,68,68,68,68,68,68,68,68,68,68,68,68,68,68,68,70,70,70,70,70,70,68,68,68,68,68,68,68,68,68,66,66,68,68,66],
-    index:[82,78,78,76,76,76,76,77,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,79,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,78,77,76,76,74,74,72,72,72,72,70,70,70,70,69,68,68,68,68,68,68,68,66,66,66,66,66,66,66,66,66,66,66,67,66,66,66,66,66,67,68,68,68,66,66,68,68,68,68,68,68,68,68,68,66,68,68,66,67,66,66,66],
-    thumb:[78,78,76,77,76,76,76,76,74,76,74,75,74,74,74,74,74,74,74,74,74,74,74,74,74,76,74,76,76,76,76,76,74,74,74,76,76,77,78,78,78,78,76,77,76,77,76,76,74,74,72,72,70,70,70,68,68,67,66,67,66,64,64,62] },
+    pinky:[104,101,102,101,101,102,102,102,102,102,102,102,102,102,102,102,102,102,102,100,102,100,100,100,100,100,100,100,100,100,98,98,98,98,98,98,96,97,98,96,96,96,96,95,96,94,96,96,94,94,94,94,94,92,92,91,91,91,90,89,89,89,88,88,88,87,86,87,86,85,85,85,85,84,83,84,83,83,84,83,82,82,82,82,82,82,82,82,84,82,82,82,82,82,82,82,82,81,81,81,80,80,80,80,79,79,79,79,78,78,78,76,76],
+    ring:[106,106,106,106,106,106,106,106,106,106,106,106,107,106,106,108,108,108,108,108,108,106,106,108,108,108,108,108,108,108,108,108,108,108,108,108,108,108,108,108,108,110,110,110,110,110,110,110,110,110,108,108,108,108,108,108,108,107,106,106,106,106,106,105,104,104,104,102,102,102,102,102,102,100,100,100,100,100,98,98,98,98,96,96,96,96,96,96,96,96,94,94,94,94,94,94,94,94,92,92,92,92,92,92,92,92,92,92,90,90,90,88,88,88,88,86,86,86,86],
+    middle:[112,112,112,112,112,110,112,112,112,112,112,112,112,112,112,112,112,112,112,112,112,112,112,112,112,112,112,112,112,112,112,112,112,114,114,114,114,114,114,114,112,112,112,112,112,114,114,114,114,114,114,114,114,114,114,114,114,114,114,114,114,114,112,112,112,112,112,110,110,110,110,108,108,108,108,106,106,106,106,104,104,104,102,102,102,100,100,100,100,98,98,98,98,98,98,98,98,98,98,96,96,96,96,96,96,96,96,96,96,96,96,96,96,94,94,94,94,94,92,92,92,90,90,90],
+    index:[121,117,114,114,112,114,114,112,114,113,114,114,114,114,114,114,114,114,114,114,114,114,114,114,114,114,114,114,114,114,112,114,112,112,113,112,112,113,112,112,113,112,112,111,110,111,111,110,110,111,110,110,109,108,108,108,108,106,106,106,106,106,104,104,102,103,102,100,101,100,100,100,98,98,98,98,98,98,96,96,96,96,96,96,96,96,95,94,94,94,94,94,94,94,94,93,92,92,93,92,90,90,90,88,88,88,86,86,86],
+    thumb:[132,130,129,126,126,126,126,126,124,124,123,122,122,122,122,120,120,120,118,118,116,118,116,116,114,114,114,114,114,114,114,114,113,114,112,113,114,111,110,112,114,114,114,114,114,114,116,115,114,114,114,114,113,112,110,110,108,107,105,104,102,100,98,98,96,94,92,92,91,88,88,86,84,84,80,80,80] },
     centre:{
-    pinky:[1,1,1,1,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,0,0,0,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,-1,0,-1,-1,-1,-1,-1,-1,-2,-2,-2,-2,-2,-2,-2,-2,-3,-3,-3,-2,-3,-3,-3,-3,-3,-3,-3,-2,-2,-3,-3,-3,-3,-3,-3,-3,-2,-2,-3,-3,-3,-3,-3,-3,-3,-2,-2,-2,-2,-2,-2,-2,-2,-2,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0],
-    ring:[1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-3,-3,-3,-2,-2,-3,-3,-3,-2,-3,-3,-3,-3,-3,-3,-3,-3,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-3,-3,-3,-3,-3,-3,-3,-3,-3],
-    middle:[-5,-4,-4,-4,-4,-4,-4,-4,-3,-3,-3,-3,-3,-3,-3,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,3,3,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4,3,3,3,3,3,3,3,3,3,3,3,3,2,2,2,2,2,1,1,1],
-    index:[-7,-4,-4,-3,-3,-3,-3,-3,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-1,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0,1,1,1,1,1,1,2,2,2,2,2,2,3,4,4,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,5,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,5,5,6,6,6,6,6,6,6,6,6,6,5,5,5,5,5,5,5,4,4,5,5,4,4,4,3,4,4,3,3],
-    thumb:[0,-1,-1,-2,-1,-2,-2,-2,-2,-3,-3,-3,-3,-3,-4,-4,-4,-5,-5,-5,-5,-6,-7,-6,-7,-7,-8,-8,-9,-8,-9,-9,-9,-9,-10,-10,-11,-12,-12,-12,-13,-14,-14,-15,-14,-15,-15,-16,-16,-16,-17,-17,-17,-18,-18,-19,-18,-19,-19,-19,-19,-19,-19,-20] } },
-  bracelet:{ name:'Hand with wrist (bracelets)', src:window.HAND_SRCS?.bracelet, crop:{ x:0, y:0, w:1024, h:1024 }, fit:{ s:.6, dx:3, dy:10 }, depth:18,
+    pinky:[-1,-3,-3,-3,-4,-4,-4,-4,-4,-4,-4,-5,-5,-5,-5,-5,-5,-5,-6,-6,-6,-6,-6,-6,-6,-7,-7,-7,-7,-7,-7,-8,-8,-8,-8,-8,-8,-8,-9,-9,-9,-10,-10,-10,-11,-11,-11,-11,-11,-12,-11,-12,-12,-11,-12,-12,-12,-12,-12,-12,-12,-12,-12,-12,-12,-12,-12,-12,-12,-12,-11,-12,-11,-11,-11,-11,-11,-11,-11,-11,-11,-10,-11,-10,-10,-10,-10,-9,-9,-9,-8,-8,-7,-8,-7,-7,-6,-6,-6,-5,-5,-5,-4,-4,-4,-3,-3,-2,-2,-2,-1,-1,0],
+    ring:[-1,-2,-2,-2,-2,-2,-1,-2,-2,-2,-2,-2,-1,-1,-1,-2,-2,-2,-2,-1,-1,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-2,-3,-3,-3,-2,-2,-2,-3,-3,-3,-2,-2,-2,-2,-2,-2,-3,-2,-2,-2,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-2,-2,-3,-3,-3,-2,-2,-2,-3,-3,-3,-3,-2,-2,-3,-3,-3,-3,-2,-2,-2,-3,-3,-3,-3,-2,-2,-3,-3],
+    middle:[-6,-7,-7,-7,-7,-6,-6,-5,-5,-5,-5,-5,-5,-5,-5,-5,-5,-5,-5,-5,-5,-5,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-4,-3,-3,-3,-3,-3,-3,-3,-3,-3,-3,-2,-2,-2,-2,-2,-2,-2,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,0,0,0,0,0,0,0,0,1,0,0,1,1,0,1,1,1,1,1,1,2,2,1,2,2,2,2,2,2,2,2,3,3,3,3,3,3,2,3,3,3,3,3,3,3,3,3,3,3,3,3,4,4,3,3,3,3,3,3,3,3,3],
+    index:[-6,-5,-3,-2,-2,-2,-2,-2,-1,-1,-1,-1,-1,0,0,1,1,0,1,1,1,2,2,2,2,2,3,3,4,3,4,4,4,4,5,5,5,6,5,6,6,6,6,7,6,7,7,7,7,8,8,8,8,8,8,8,8,8,8,9,8,8,8,8,8,8,8,8,8,7,7,8,7,7,7,7,7,7,6,6,6,6,6,6,5,5,5,5,5,5,4,4,4,4,4,3,3,3,3,2,2,2,1,1,1,1,0,0,-1],
+    thumb:[25,24,24,24,23,22,20,19,19,18,17,16,15,14,14,12,12,12,10,10,10,8,8,7,6,5,5,3,2,1,1,0,-1,-2,-3,-4,-5,-6,-6,-8,-9,-10,-12,-12,-13,-14,-15,-16,-17,-18,-18,-18,-19,-20,-21,-21,-22,-23,-24,-24,-25,-26,-26,-27,-28,-28,-28,-29,-29,-30,-30,-30,-31,-31,-31,-31,-31] } },
+  // Lifestyle portrait (grey background, face and top kept): keepBg = no white removal, no skin tint, the arm found by
+  // its skin colour; the forearm runs diagonally (rot 25°). Rings are not worn on this photo (fingers rest on the face).
+  bracelet:{ name:'Portrait with wrist (bracelets)', src:window.HAND_SRCS?.bracelet, crop:{ x:0, y:0, w:1024, h:1024 }, fit:{ s:.6, dx:3, dy:10 }, depth:4, keepBg:true,
     geo:{ pinky:{ x:388, y:362, rot:-2, w:26 }, ring:{ x:453, y:300, rot:1, w:29 }, middle:{ x:515, y:300, rot:0, w:29 }, index:{ x:577, y:328, rot:-2, w:30 }, thumb:{ x:652, y:428, rot:30, w:31 } },
-    wrist:{ x:498, y:744, rot:0, w:89 },   // narrowest point of the arm: where a bracelet sits (w = half width, photo px)
+    wrist:{ x:545, y:808, rot:28, w:102, curve:.3 },   // curve: the arm comes towards the camera → the bracelet reads as an oval   // Right Hand (1).png at 1024 px: narrowest part of the wrist below the hand, across the forearm (w = half width, photo px; rot = arm tilt)
     tips:{ pinky:[384, 248], ring:[456, 158], middle:[514, 118], index:[572, 152], thumb:[684, 372] },
     base:{ pinky:8, ring:10, middle:12, index:7, thumb:19 },
     profile:{
@@ -738,13 +745,23 @@ const HANDS = {
     index:[-1,-1,-1,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,2,2,1,2,1,1,2,3,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4,5,5,5,5,5,5,5,5,5,5,5,6,6,6,6,6,6,6,6,6,6,6,7,7,7,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,4,4,4,4,4,3,4,4],
     thumb:[14,13,12,12,11,11,11,10,10,10,9,8,8,7,7,6,6,5,5,4,4,3,2,2,1,0,1,0,0,-1,-2,-2,-3,-4,-5,-5,-5,-6,-6,-7,-7,-7,-8,-9,-9,-10,-11,-11,-11,-11,-12,-13,-14,-14,-14,-14,-15,-15,-16] } },
 };
-const H_ = () => HANDS[state.orient];
+// Left hand for bracelets: its own portrait (not a mirror of the right one) when hands.js has it
+if (window.HAND_SRCS?.braceletLeft) HANDS.braceletLeft = { ...HANDS.bracelet, name:'Portrait, left wrist (bracelets)', src:window.HAND_SRCS.braceletLeft,
+  wrist:{ x:705, y:818, rot:-30, w:100, curve:.3 },   // Left Hand (2).png at 1024 px: narrowest part of the wrist below the hand, forearm running down to the right
+  noMirror:true };
+// Which photo is on screen: the orientation (ring / bracelet), and for bracelets on the left hand its own photo
+const hk = () => state.orient === 'bracelet' && state.side === 'left' && HANDS.braceletLeft ? 'braceletLeft' : state.orient;
+const H_ = () => HANDS[hk()];
 const FINGERS = ['thumb', 'index', 'middle', 'ring', 'pinky'];
 const LABEL = { index:'Index', middle:'Middle', ring:'Ring', pinky:'Pinky', thumb:'Thumb' };
 function rangeOf(id) {
   const hd = H_(), f = hd.fit, g = geo(id), k = g.w / 19, tp = hd.tips[id];
   return [-(hd.base[id] - 2), Math.max(30, Math.hypot(tp[0] * f.s + f.dx - g.x, tp[1] * f.s + f.dy - g.y) / k)];
 }
+// Model wrist (bracelet fit) — used when products are first read (default size), so defined early
+const MODEL_WRIST_CM = 15.5, COMFORT_CM = 17, MODEL_BANGLE_MM = 60;
+// Stone size limits (used by the carat → real size maths when products are first read, so defined early)
+const STONE_MIN = .6, STONE_MAX = 1.6, STONE_PAD = STONE_MAX;
 const SKIN = [[1.06,1.04,1.05],[1,1,1],[.94,.82,.72],[.8,.64,.52],[.6,.44,.34],[.42,.29,.22]];
 const rad = d => d * Math.PI / 180, clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 const money = n => EMBED?.currency
@@ -765,11 +782,32 @@ const state = { worn:{}, wrist:null, drawer:'ring', noRing:!PRODUCTS.length, han
   pid:(PRODUCTS.find(p => p.key === EMBED?.current) || PRODUCTS[0] || ALL[0]).id, cfg:null, finger:'ring', slide:0, side:'right', orient:CUR_BRACELET || !PRODUCTS.length ? 'bracelet' : 'ring', panel:'ring', tone:20,
   yaw:0, pitch:0, zoom:1, panX:0, panY:0, open:false, cart:[] };
 const product = () => byId[state.pid];
-const freshCfg = p => ({ metal:p.metal, stone:p.stone, shape:p.shape, carat:1, band:1, size:4, stoneK:1, length:p.lengths?.[0] ?? null });
+/* Centre stone by CARAT (how jewellers sell it), not a percentage. The try-on image shows the stone at the carat
+   set in the app (shownCarat, else the product's first carat option); another carat is drawn at its real size:
+   a stone's width grows with the cube root of its weight (1 ct round ≈ 6.5 mm, 2 ct ≈ 8.2 mm). */
+function caratNum(v) {
+  const t = String(v ?? '').toLowerCase().replace(',', '.'), f = t.match(/(\d+)\s*\/\s*(\d+)/), w = t.match(/(\d+)\s+(\d+)\s*\/\s*(\d+)/);
+  if (w) return +w[1] + w[2] / w[3];
+  if (f) return f[1] / f[2];
+  const n = t.match(/\d+(?:\.\d+)?/); return n ? +n[0] : null;
+}
+const shownCaratOf = p => p.shownCarat || caratNum(p.firstCarat) || caratNum(p.carats?.[0]) || 1;
+const stoneKFor = (p, ct) => { const c = caratNum(ct); return c ? clamp(Math.cbrt(c / shownCaratOf(p)), STONE_MIN, STONE_MAX) : 1; };
+const stoneMM = ct => { const c = caratNum(ct); return c ? 6.5 * Math.cbrt(c) : null; };     // round-equivalent width
+const defaultCarat = p => !p.carats ? null : (p.carats.find(c => Math.abs((caratNum(c) || 0) - (p.shownCarat || -1)) < .01) || p.firstCarat || p.carats[0]);
+const freshCfg = p => { const ct = defaultCarat(p);
+  return { metal:p.metal, stone:p.stone, shape:p.shape, carat:1, band:1, size:4, ct, stoneK:ct ? stoneKFor(p, ct) : 1, length:bestLength(p) }; };
+// Bracelets open in the size that fits the model's wrist (bangle ≈ 60 mm inside, chain ≈ 17 cm); the shopper can change it.
+function bestLength(p) {
+  const L = p.lengths; if (!L?.length) return null;
+  const score = v => { const b = bangleMM(v); if (b) return Math.abs(b - MODEL_BANGLE_MM); const c = lengthCm(v); return c ? Math.abs(c - COMFORT_CM) * 10 : 99; };
+  return [...L].sort((a, b) => score(a) - score(b))[0];
+}
 state.cfg = freshCfg(product());
-const geo = id => { const h = HANDS[state.orient], g = h.geo[id], f = h.fit; return { x:g.x * f.s + f.dx, y:g.y * f.s + f.dy, rot:g.rot, w:g.w * f.s }; };
+const geo = id => { const h = HANDS[hk()], g = h.geo[id], f = h.fit; return { x:g.x * f.s + f.dx, y:g.y * f.s + f.dy, rot:g.rot, w:g.w * f.s }; };
 const caratFee = () => hasCenter(product()) ? Math.round((Math.pow(state.cfg.carat, 1.7) - 1) * 1400 / 10) * 10 : 0;
-const price = () => EMBED ? (product().metalPrices?.[state.cfg.metal] ?? product().price) : product().price + METALS[state.cfg.metal].add + caratFee();
+const comboPrice = (p, cfg) => { const c = p.combos?.find(x => (!x.m || x.m === cfg.metal) && String(x.c) === String(cfg.ct)); return c ? c.price : null; };
+const price = () => EMBED ? (comboPrice(product(), state.cfg) ?? product().metalPrices?.[state.cfg.metal] ?? product().price) : product().price + METALS[state.cfg.metal].add + caratFee();
 const spec = () => ({ style:product().style, ...state.cfg });
 const snap = () => ({ pid:state.pid, cfg:state.cfg, slide:state.slide, spin:state.spin || 0 });
 /* Each hand has its own rings. The hand on screen lives in the active-ring fields + worn; the other hand's set
@@ -993,7 +1031,7 @@ function buildRelief(tex, thickness) {
 }
 // Height of the hand surface at a photo point (used to seat the ring and its shadow)
 function surfaceAt(px, py) {
-  const r = reliefs[state.orient]; if (!r) return 0;
+  const r = reliefs[hk()]; if (!r) return 0;
   const cx = Math.round(px / W * SEG_X), cy = Math.round(py / H * SEG_Y);
   return r.heights[clamp(cy, 0, r.rows - 1) * r.cols + clamp(cx, 0, r.cols - 1)] || 0;
 }
@@ -1001,15 +1039,16 @@ function surfaceAt(px, py) {
 const _n = new THREE.Vector3(), _q = new THREE.Quaternion(), _ms = new THREE.Vector3();
 let lastLit = '';
 function relight() {
-  const r = reliefs[state.orient]; if (!r) return;
+  const r = reliefs[hk()]; if (!r) return;
   const keyStr = state.orient + state.side + state.yaw.toFixed(1) + state.pitch.toFixed(1) + state.tone;
   if (keyStr === lastLit) return; lastLit = keyStr;
   r.mesh.getWorldQuaternion(_q); r.mesh.getWorldScale(_ms);
   const nor = r.mesh.geometry.attributes.normal, col = r.mesh.geometry.attributes.color, tone = toneColor();
+  if (H_().keepBg) { for (let i = 0; i < col.count; i++) col.setXYZ(i, 1, 1, 1); col.needsUpdate = true; return; }   // a real photo: as shot
   for (let i = 0; i < nor.count; i++) {
     _n.set(nor.getX(i) * Math.sign(_ms.x), nor.getY(i), nor.getZ(i)).applyQuaternion(_q);
     const lit = .66 + .44 * Math.max(0, _n.dot(LIGHT)) + .06 * Math.max(0, _n.z);
-    col.setXYZ(i, tone.r * lit, tone.g * lit, tone.b * lit);
+    col.setXYZ(i, lit, lit, lit);   // skin tone is painted into the photo's skin pixels (recolorSkin), not tinted here
   }
   col.needsUpdate = true;
 }
@@ -1031,12 +1070,42 @@ const photoTexture = hand => new Promise(res => {
     const x = c.getContext('2d'), { crop, fit } = hand;
     x.drawImage(img, crop.x, crop.y, crop.w, crop.h, fit.dx * 2, fit.dy * 2, crop.w * fit.s * 2, crop.h * fit.s * 2);
     const d = x.getImageData(0, 0, c.width, c.height), p = d.data;
+    if (hand.keepBg) {                          // lifestyle photo: keep it whole; the arm (skin) becomes a mask for clipping
+      const m = document.createElement('canvas'); m.width = c.width; m.height = c.height;
+      const mx = m.getContext('2d'), md = mx.createImageData(c.width, c.height);
+      for (let i = 0; i < p.length; i += 4) if (p[i + 3] && p[i] - p[i + 2] > 22 && p[i] > 120) md.data[i + 3] = 255;
+      mx.putImageData(md, 0, 0);
+      const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; t.userData.mask = m; return res(t);
+    }
     for (let i = 0; i < p.length; i += 4) {   // remove the white studio background
       const mx = Math.max(p[i], p[i + 1], p[i + 2]), mn = Math.min(p[i], p[i + 1], p[i + 2]);
       if (mn > 200 && mx - mn < 22) p[i + 3] = mn > 238 ? 0 : Math.round(255 * (238 - mn) / 38);
     }
     x.putImageData(d, 0, 0);
-    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; res(t);
+    const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+    // for the Skin slider: the photo as shot + how much each pixel is skin (nails are pale and pink → ~0)
+    const w = new Float32Array(p.length / 4);
+    for (let i = 0, j = 0; i < p.length; i += 4, j++) w[j] = p[i + 3] ? clamp((p[i] - p[i + 2] - 38) / 25, 0, 1) : 0;
+    // Nails: colour alone can't tell a pink nail bed from skin, so use the measured fingers: everything past
+    // where the nail starts (tips) towards the fingertip, across the finger's width, is nail → never recoloured.
+    if (hand.geo && hand.tips) {
+      const S = fit.s * 2, OX = fit.dx * 2, OY = fit.dy * 2, CW = c.width, CH = c.height;
+      for (const id of Object.keys(hand.tips)) {
+        const g = hand.geo[id], t = hand.tips[id]; if (!g || !t) continue;
+        const rx = g.x * S + OX, ry = g.y * S + OY, tx = t[0] * S + OX, ty = t[1] * S + OY;
+        const L = Math.hypot(tx - rx, ty - ry) || 1, ux = (tx - rx) / L, uy = (ty - ry) / L, half = g.w * S * 1.15, F = 6 * 2;
+        const x0 = Math.max(0, Math.floor(Math.min(tx, tx + ux * L) - half - F)), x1 = Math.min(CW - 1, Math.ceil(Math.max(tx, tx + ux * L) + half + F));
+        const y0 = Math.max(0, Math.floor(Math.min(ty, ty + uy * L) - half - F)), y1 = Math.min(CH - 1, Math.ceil(Math.max(ty, ty + uy * L) + half + F));
+        for (let y = y0; y <= y1; y++) for (let xx = x0; xx <= x1; xx++) {
+          const dx = xx - rx, dy = y - ry, along = dx * ux + dy * uy, side = Math.abs(dx * -uy + dy * ux);
+          if (side > half + F) continue;
+          const keep = clamp((along - (L - F)) / F, 0, 1) * clamp((half + F - side) / F, 0, 1);   // 1 = nail
+          if (keep > 0) { const j = y * CW + xx; w[j] *= 1 - keep; }
+        }
+      }
+    }
+    t.userData.orig = new Uint8ClampedArray(p); t.userData.skin = w;
+    res(t);
   };
   img.src = hand.src;
 });
@@ -1047,10 +1116,11 @@ function toneColor() {
   return new THREE.Color(m[0], m[1], m[2]);
 }
 function applyHand() {
-  handMat.map = textures[state.orient]; handMat.needsUpdate = true;
-  Object.entries(reliefs).forEach(([k, r]) => r.mesh.visible = k === state.orient);
+  handMat.map = textures[hk()]; handMat.needsUpdate = true;
+  document.querySelector('.skinwrap')?.toggleAttribute('hidden', !!H_().keepBg);   // the portrait is shown as shot
+  Object.entries(reliefs).forEach(([k, r]) => r.mesh.visible = k === hk());
   lastLit = '';
-  mirror.scale.x = state.side === 'right' ? 1 : -1;
+  mirror.scale.x = state.side === 'right' || H_().noMirror ? 1 : -1;   // a photo made for the left hand is shown as is
   occluders.clear();
   const occ = new THREE.MeshBasicMaterial({ colorWrite:false });
   FINGERS.forEach(id => {
@@ -1069,7 +1139,7 @@ const TILT = rad(20);
 // PROFILE / CENTRE / BASE now live on each pose in HANDS (profile, centre, base).
 const offAt = (id, t) => { const a = H_().centre[id]; return a[clamp(Math.round(t) + H_().base[id], 0, a.length - 1)]; };
 // The finger's real direction at slide t: the geo angle plus the slope of its centre line there.
-const rotAt = (id, t) => { const k = HANDS[state.orient].geo[id].w / 19; return HANDS[state.orient].geo[id].rot + clamp(Math.atan2(offAt(id, t + 6) - offAt(id, t - 6), 12 * k) * 180 / Math.PI, -6, 6); };   // small correction only: the edge scan is noisy
+const rotAt = (id, t) => { const k = HANDS[hk()].geo[id].w / 19; return HANDS[hk()].geo[id].rot + clamp(Math.atan2(offAt(id, t + 6) - offAt(id, t - 6), 12 * k) * 180 / Math.PI, -6, 6); };   // small correction only: the edge scan is noisy
 const SHAPE = { thumb:1.05 };                   // the thumb is photographed side-on, so it looks narrower than it is
 const COMP = .35;                               // mm the skin squeezes when a snug ring is pushed on
 const usOf = () => state.cfg ? +RING_SIZES[state.cfg.size][0] : 6;
@@ -1144,7 +1214,7 @@ function loadTryonTexture(url) {
 /* Stone size: a top-view image has the centre stone in the middle, so a radial "lens" in the shader magnifies
    (or shrinks) just that area and fades back to 1× before the band. The card is made taller (STONE_PAD) so a
    bigger stone has room above and below the image; anything outside the image is transparent. */
-const STONE_MIN = .6, STONE_MAX = 1.6, STONE_PAD = STONE_MAX;
+const STONE_PERCENT = false;   // the old "Stone size %" slider (only for products without a Carat option); off: not something a shopper can buy
 // Each ring keeps its own stone size (cfg.stoneU is shared with its material, so the slider updates it live).
 const stoneU = cfg => cfg.stoneU ||= { value:cfg.stoneK || 1 };
 function stoneLens(mat, aspect, uniform) {
@@ -1194,8 +1264,9 @@ function imageRing(R, bracelet = false) {
 function rebuildRing() {
   ringRoot.clear();
   occluders.children.forEach(c => { c.scale.x = c.scale.z = 1; c.position.copy(c.userData.p0); c.rotation.z = c.userData.rot0; });
-  ringRoot.userData.parked = Object.entries(state.worn).map(([f, r]) => ({ finger:f, ring:withRing(r, f, () => placeRing(false)) }));
-  ringRoot.userData.ring = state.noRing ? null : placeRing(true);
+  const noFingers = !!H_().keepBg;   // the bracelet portrait: fingers rest on the face, rings are only shown on the ring photo
+  ringRoot.userData.parked = noFingers ? [] : Object.entries(state.worn).map(([f, r]) => ({ finger:f, ring:withRing(r, f, () => placeRing(false)) }));
+  ringRoot.userData.ring = state.noRing || noFingers ? null : placeRing(true);
   // a "worn" bracelet layer stays on the hand while it is still wanted (no flicker on every rebuild)
   const wantWorn = state.wrist && H_().wrist && byId[state.wrist.pid]?.tryonImage ? wristKey(state.wrist) : null;
   if (wornMesh && wornMesh.userData.url !== wantWorn) clearWorn();
@@ -1218,20 +1289,31 @@ function wristSpot(slide = 0) {
 /* Bracelet size = its length. Our model's wrist is about 15.5 cm round; a bracelet that fits comfortably is
    ~1.5 cm longer (17 cm). Longer → hangs looser and wider on the wrist, shorter → snug. Lengths are read from the
    variant value ("18 cm", "7 in", '6.5"', "180 mm"); if they can't be read, +3 % per step above the shortest. */
-const MODEL_WRIST_CM = 15.5, COMFORT_CM = 17;
 function lengthCm(v) {
   const m = String(v ?? '').toLowerCase().match(/(\d+(?:[.,]\d+)?)\s*(cm|mm|in|inch|inches|")?/); if (!m) return null;
   const n = parseFloat(m[1].replace(',', '.')), u = m[2] || (n < 12 ? 'in' : n > 100 ? 'mm' : 'cm');
   const cm = u === 'mm' ? n / 10 : u === 'cm' ? n : n * 2.54;
   return cm >= 10 && cm <= 30 ? cm : null;
 }
+/* Bangles / kadas are sized by INNER DIAMETER (they slide over the hand): Indian sizes 2.2 / 2.4 / 2.6 / 2.8 / 2.10
+   (= 2 + n/16 inch → 54 / 57 / 60 / 64 / 67 mm) or a value in mm ("60 mm", "2.6 (60 mm)"). Our model takes a 2.6 (60 mm). */
+function bangleMM(v) {
+  const t = String(v ?? '').toLowerCase(), mm = t.match(/(\d{2}(?:\.\d+)?)\s*mm/);
+  if (mm && +mm[1] >= 45 && +mm[1] <= 80) return +mm[1];
+  const ind = t.match(/^\s*2\s*[.\-/]\s*(\d{1,2})\b/);                    // 2.6, 2-6, 2/6
+  return ind && +ind[1] <= 14 ? (2 + ind[1] / 16) * 25.4 : null;
+}
 const looseness = it => {
-  const L = byId[it.pid]?.lengths, cm = lengthCm(it.cfg?.length);
+  const L = byId[it.pid]?.lengths, bm = bangleMM(it.cfg?.length);
+  if (bm) return clamp(bm / MODEL_BANGLE_MM, .9, 1.15);
+  const cm = lengthCm(it.cfg?.length);
   if (cm) return clamp(cm / COMFORT_CM, .9, 1.25);
   const i = L ? Math.max(0, L.indexOf(it.cfg?.length)) : 0; return 1 + i * .03;
 };
 // How a length fits our model's wrist, in words (shown under the Length / Size choice)
 function lengthFit(len) {
+  const bm = bangleMM(len);
+  if (bm) { const d = bm - MODEL_BANGLE_MM; return d < -1.5 ? `${len}: snug, for slimmer hands` : d < 2 ? `${len}: comfortable on an average hand (${Math.round(bm)} mm inside)` : `${len}: loose, for larger hands (${Math.round(bm)} mm inside)`; }
   const cm = lengthCm(len); if (!cm) return '';
   const gap = cm - MODEL_WRIST_CM;
   return gap < .8 ? `${len}: snug on a ${MODEL_WRIST_CM} cm wrist` : gap < 2.3 ? `${len}: comfortable fit on a ${MODEL_WRIST_CM} cm wrist`
@@ -1259,7 +1341,7 @@ function wornTexture(url) {
 function clearWorn() { if (wornMesh) { wornMesh.parent?.remove(wornMesh); if (!isWornTex(wornMesh.material.map)) wornMesh.material.map?.dispose(); wornMesh.material.dispose(); wornMesh = null; } }
 const isWornTex = t => !!t?.userData?.worn;   // worn textures are cached and shared; baked ones are per placement
 function placeWorn(it) {
-  const url = byId[it.pid].tryonImage, r = reliefs.bracelet;
+  const url = byId[it.pid].tryonImage, r = reliefs[hk()];
   if (!r || (wornMesh && wornMesh.userData.url === url)) return null;
   wornTexture(url).then(t => {
     if (!t || state.wrist?.pid !== it.pid || (wornMesh && wornMesh.userData.url === url)) return;
@@ -1279,45 +1361,134 @@ function placeWorn(it) {
    - a slight smile: the middle sits lower than the sides (camera a little above the wrist)
    - a soft contact shadow on the skin under it
    - everything outside the arm's outline is cut away (the ends go behind the wrist, never over the background) */
-const wristKey = it => { const p = byId[it.pid]; return isWorn(it.pid) ? p.tryonImage : `${p.tryonImage}|${Math.round(it.slide || 0)}|${it.cfg?.length ?? ''}|${p.tryonScale}`; };
+const wristKey = it => { const p = byId[it.pid]; return isWorn(it.pid) ? p.tryonImage : `${p.tryonImage}|${Math.round(it.slide || 0)}|${it.cfg?.length ?? ''}|${p.tryonScale}|${hk()}|${it.cfg?.metal ?? ''}`; };
+/* Measure the wrist in the photo itself (works for any model photo): from the rough spot in HANDS.*.wrist, walk across
+   the arm in the hand/skin mask to its real left and right edges (→ true centre + width), and do the same a little
+   up and down the arm (→ the arm's real angle). Repeated a few times so it settles. All in canvas px (mask = 2× box). */
+const maskPx = {};
+function maskOf(key) {
+  const t = textures[key], src = t?.userData.mask || t?.image; if (!src) return null;
+  if (maskPx[key]?.src === src) return maskPx[key];
+  const c = document.createElement('canvas'); c.width = src.width; c.height = src.height;
+  const g = c.getContext('2d'); g.drawImage(src, 0, 0);
+  return maskPx[key] = { src, w:c.width, h:c.height, a:g.getImageData(0, 0, c.width, c.height).data };
+}
+function measureWrist(key, x0, y0, rot0) {
+  const m = maskOf(key); if (!m) return null;
+  const on = (x, y) => { x = Math.round(x); y = Math.round(y); return x >= 0 && y >= 0 && x < m.w && y < m.h && m.a[(y * m.w + x) * 4 + 3] > 127; };
+  const across = (x, y, nx, ny) => {                 // distance to the arm's edge each way (3 px of background = edge)
+    const run = s => { let d = 0, off = 0; while (d < 900 && off < 3) { d++; off = on(x + nx * d * s, y + ny * d * s) ? 0 : off + 1; } return d - off; };
+    return on(x, y) ? [run(-1), run(1)] : null;
+  };
+  let x = x0, y = y0, r = rad(rot0), half = null;
+  for (let it = 0; it < 4; it++) {
+    const nx = Math.cos(r), ny = Math.sin(r), ax = -Math.sin(r), ay = Math.cos(r);   // n = across the arm, a = along it
+    const mid = (px, py) => { const e = across(px, py, nx, ny); return e && { x:px + nx * (e[1] - e[0]) / 2, y:py + ny * (e[1] - e[0]) / 2, half:(e[0] + e[1]) / 2 }; };
+    const c0 = mid(x, y); if (!c0) return null;
+    x = c0.x; y = c0.y; half = c0.half;
+    const step = Math.max(12, half * .35), up = mid(x - ax * step, y - ay * step), dn = mid(x + ax * step, y + ay * step);
+    if (up && dn) r = Math.atan2(-(dn.x - up.x), dn.y - up.y);                    // arm direction from the two centres
+  }
+  return half > 8 ? { x, y, rot:r * 180 / Math.PI, half } : null;
+}
+/* Metal colour: the try-on image shows the product in one metal (its default). Picking another metal recolours the
+   metal pixels (warm, saturated = gold) to that metal's tone, keeping their light and shade; stones (pale / grey) stay. */
+const METAL_TONE = { Y:null, R:[214, 142, 112], W:[205, 208, 214], P:[200, 203, 208] };
+const tintCache = {};
+function metalTinted(img, from, to) {
+  if (!from || !to || to === from || !METAL_TONE[to]) return img;   // only when another metal than the photo's is picked
+  const key = img.src + '|' + to; if (tintCache[key]) return tintCache[key];
+  const c = document.createElement('canvas'); c.width = img.naturalWidth || img.width; c.height = img.naturalHeight || img.height;
+  const x = c.getContext('2d'); x.drawImage(img, 0, 0);
+  const d = x.getImageData(0, 0, c.width, c.height), p = d.data, t = METAL_TONE[to], tl = (t[0] * .3 + t[1] * .59 + t[2] * .11);
+  for (let i = 0; i < p.length; i += 4) {
+    if (!p[i + 3]) continue;
+    const r = p[i], g = p[i + 1], b = p[i + 2], mx = Math.max(r, g, b), sat = mx ? (mx - Math.min(r, g, b)) / mx : 0;
+    if (sat < .18 || !(r >= g && g >= b)) continue;                      // not gold-coloured → a stone / highlight, keep
+    const L = (r * .3 + g * .59 + b * .11) / tl, k = clamp((sat - .18) / .15, 0, 1);
+    for (let ch = 0; ch < 3; ch++) p[i + ch] = p[i + ch] + (clamp(t[ch] * L, 0, 255) - p[i + ch]) * k;
+  }
+  x.putImageData(d, 0, 0); return tintCache[key] = c;
+}
 function bakeBracelet(it, img) {
-  const p = byId[it.pid], hand = textures.bracelet?.image; if (!hand) return null;
+  img = metalTinted(img, byId[it.pid]?.metal, it.cfg?.metal);
+  const p = byId[it.pid], ht = textures[hk()], hand = ht?.userData.mask || ht?.image; if (!hand) return null;
   const c = document.createElement('canvas'); c.width = W * 2; c.height = H * 2;
   const x = c.getContext('2d');
-  const g = wristSpot((it.slide || 0) + (looseness(it) - 1) * 40), cx = g.x * 2, cy = g.y * 2;   // looser → a little lower
+  const g0 = wristSpot((it.slide || 0) + (looseness(it) - 1) * 40);   // looser → a little lower
+  // measured on the photo: real centre, angle and width of the arm at that spot (falls back to the numbers in HANDS)
+  const mw = measureWrist(hk(), g0.x * 2, g0.y * 2, g0.rot);
+  const g = mw ? { ...g0, rot:mw.rot, R:mw.half / 2 } : g0, cx = mw ? mw.x : g0.x * 2, cy = mw ? mw.y : g0.y * 2;
   // Rigid bangle / kada (a thick band in the image) vs chain (thin): a bangle is bigger than the wrist, so it stands a
   // little OUTSIDE the arm at the sides with a small gap; a chain hugs the wrist and its ends go behind the arm.
-  const a = img.height / img.width, rigid = a > .12;
-  const Rw = g.R * 2 * (rigid ? 1.12 : 1.02) * looseness(it) * (p.tryonScale || 1);   // half the bracelet's visible width (canvas px)
+  const a = img.height / img.width, rigid = /bangle|kada|kangan|kara\b|cuff/i.test(`${p.type || ''} ${p.name || ''}`);   // rigid by what it is, not the image shape
+  const Rw = g.R * 2 * (rigid ? 1.04 : 1.02) * looseness(it) * (p.tryonScale || 1);   // half the bracelet's visible width (canvas px)
   const h = Rw * 2 * a;                                                      // band height, keeps the image's aspect
-  const TH = rad(85), N = 90, smile = Rw * .1;
+  const TH = rad(85), N = 90, smile = Rw * (H_().wrist.curve ?? .1);   // how much the front of the bracelet curves (oval seen at an angle)
+  // the band lies across the arm: turn the drawing by the arm's tilt around the wrist spot
+  const turn = ctx => { ctx.translate(cx, cy); ctx.rotate(rad(g.rot)); ctx.translate(-cx, -cy); };
   // contact shadow, on the skin only
   const sc = document.createElement('canvas'); sc.width = c.width; sc.height = c.height;
   const sx = sc.getContext('2d'), sy = cy + h * (rigid ? .45 : .35);
   const sg = sx.createRadialGradient(cx, sy, 0, cx, sy, Rw * 1.05);
   sg.addColorStop(0, `rgba(60,30,15,${rigid ? .34 : .28})`); sg.addColorStop(1, 'rgba(60,30,15,0)');
-  sx.save(); sx.translate(cx, sy); sx.scale(1, rigid ? .28 : .22); sx.translate(-cx, -sy);
+  sx.save(); turn(sx); sx.translate(cx, sy); sx.scale(1, rigid ? .28 : .22); sx.translate(-cx, -sy);
   sx.fillStyle = sg; sx.fillRect(cx - Rw * 1.1, sy - Rw * 1.1, Rw * 2.2, Rw * 2.2); sx.restore();
   sx.globalCompositeOperation = 'destination-in'; sx.drawImage(hand, 0, 0, sc.width, sc.height);
   x.drawImage(sc, 0, 0);
+  // Rigid bangle / kada: draw the BACK half of the loop first — the inside of the band, curving the other way, darker
+  // (in shadow) and hidden wherever the arm is in front of it. Where the bangle is wider than the arm it shows at the
+  // sides, so the front's ends join it into a closed loop instead of stopping in mid-air.
+  if (rigid) {
+    const bc = document.createElement('canvas'); bc.width = c.width; bc.height = c.height;
+    const bx = bc.getContext('2d'); bx.save(); turn(bx);
+    for (let i = 0; i < N; i++) {
+      const t0 = -TH + 2 * TH * i / N, t1 = -TH + 2 * TH * (i + 1) / N, tm = (t0 + t1) / 2;
+      const X0 = cx + Rw * Math.sin(t0), X1 = cx + Rw * Math.sin(t1);
+      bx.drawImage(img, img.width * (N - 1 - i) / N, 0, img.width / N + .6, img.height, X0, cy - h / 2 - smile * Math.cos(tm) - h * .08, Math.max(.6, X1 - X0) + .6, h * .92);
+    }
+    bx.globalCompositeOperation = 'source-atop'; bx.fillStyle = 'rgba(35,22,10,.5)'; bx.fillRect(0, 0, bc.width, bc.height);
+    bx.restore();
+    bx.globalCompositeOperation = 'destination-out'; bx.drawImage(hand, 0, 0, bc.width, bc.height);   // the wrist hides it
+    x.drawImage(bc, 0, 0);
+  }
+  x.save(); turn(x);
   // the band, in thin vertical slices round the front of the wrist
   for (let i = 0; i < N; i++) {
     const t0 = -TH + 2 * TH * i / N, t1 = -TH + 2 * TH * (i + 1) / N;
     const sx0 = img.width * i / N, sw = img.width / N;
     const X0 = cx + Rw * Math.sin(t0), X1 = cx + Rw * Math.sin(t1), tm = (t0 + t1) / 2;
     const dy = smile * Math.cos(tm);                                          // middle lower than the sides
-    x.globalAlpha = 1;
+    // the last bit of each end turns away round the arm: fade it out softly instead of a hard cut (bangles / kadas)
+    x.globalAlpha = rigid ? clamp((TH - Math.abs(tm)) / (TH * .14), 0, 1) ** .7 : 1;
     x.drawImage(img, sx0, 0, sw + .6, img.height, X0, cy - h / 2 + dy, Math.max(.6, X1 - X0) + .6, h);
-    const shade = (1 - Math.cos(tm)) * .55;                                   // the sides turn away from the light
+    x.globalAlpha = 1;
+    const shade = (1 - Math.cos(tm)) * (rigid ? .75 : .55);                   // the sides turn away from the light
     if (shade > .01) { x.save(); x.globalCompositeOperation = 'source-atop'; x.fillStyle = `rgba(20,12,6,${shade})`; x.fillRect(X0, cy - h, Math.max(.6, X1 - X0) + .6, h * 2); x.restore(); }
   }
+  // light: a soft highlight running along the upper part of the band, and a darker lower edge (it turns under)
+  x.globalCompositeOperation = 'source-atop';
+  const lg = x.createLinearGradient(0, cy - h / 2, 0, cy + h / 2 + smile);
+  lg.addColorStop(0, 'rgba(255,248,230,.0)'); lg.addColorStop(.28, 'rgba(255,248,230,.22)'); lg.addColorStop(.5, 'rgba(255,248,230,0)');
+  lg.addColorStop(.85, 'rgba(40,24,10,0)'); lg.addColorStop(1, 'rgba(40,24,10,.28)');
+  x.fillStyle = lg; x.fillRect(cx - Rw * 1.2, cy - h, Rw * 2.4, h * 2 + smile * 2);
+  x.globalCompositeOperation = 'source-over';
+  x.restore();
   // chains: cut away whatever lies outside the arm (their ends go behind the wrist). Bangles keep their sides,
   // which stand just outside the arm — the small gap a loose kada has.
   if (!rigid) { x.globalCompositeOperation = 'destination-in'; x.drawImage(hand, 0, 0, c.width, c.height); }
+  else {
+    // bangles: a hair outside the arm's outline at most (the small gap of a loose kada) — never sticking out over
+    // the background / clothes, which is what made it look pasted on. Outline grown by ~3 % of the wrist.
+    const m = document.createElement('canvas'); m.width = c.width; m.height = c.height;
+    const mx = m.getContext('2d'), d = Math.max(2, Rw * .035);
+    for (let k = 0; k < 12; k++) { const a = k / 12 * Math.PI * 2; mx.drawImage(hand, Math.cos(a) * d, Math.sin(a) * d, c.width, c.height); }
+    x.globalCompositeOperation = 'destination-in'; x.drawImage(m, 0, 0);
+  }
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; return t;
 }
 function placeBaked(it) {
-  const key = wristKey(it), r = reliefs.bracelet;
+  const key = wristKey(it), r = reliefs[hk()];
   if (!r || (wornMesh && wornMesh.userData.url === key)) return null;
   loadTryonTexture(byId[it.pid].tryonImage).then(src => {
     if (!src || !state.wrist || wristKey(state.wrist) !== key || (wornMesh && wornMesh.userData.url === key)) return;
@@ -1331,7 +1502,7 @@ function placeBaked(it) {
 }
 function placeWrist(it) {
   if (isWorn(it.pid)) return placeWorn(it);
-  if (byId[it.pid]?.tryonImage && reliefs.bracelet) return placeBaked(it);
+  if (byId[it.pid]?.tryonImage && reliefs[hk()]) return placeBaked(it);
   const g = wristSpot(it.slide || 0), R = g.R * 1.02 * looseness(it);
   const d = new THREE.Vector3(Math.sin(rad(g.rot)), Math.cos(rad(g.rot)), 0), front = new THREE.Vector3(0, 0, 1);
   const q = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3().crossVectors(d, front), d, front));
@@ -1353,7 +1524,7 @@ function onWrist(pt, extra = 1) {
   return Math.abs(pt.x - g.x) < g.R * 1.15 * extra && Math.abs(pt.y - g.y) < g.R * .55 * extra + 8;
 }
 function placeRing(active) {
-  const g = { ...geo(state.finger) }, k = g.w / 19, fs = HANDS[state.orient].fit.s;
+  const g = { ...geo(state.finger) }, k = g.w / 19, fs = HANDS[hk()].fit.s;
   if (!state.float) {                                   // shift onto the finger's measured centre line
     const o = offAt(state.finger, state.slide) * fs, r0 = rad(g.rot);
     g.x += Math.cos(r0) * o; g.y += Math.sin(r0) * o; g.rot = rotAt(state.finger, state.slide);
@@ -1364,7 +1535,7 @@ function placeRing(active) {
   const d = new THREE.Vector3(Math.sin(rad(g.rot)), Math.cos(rad(g.rot)), 0), Z = new THREE.Vector3(0, 0, 1);
   const axis = d.clone().multiplyScalar(Math.cos(TILT)).addScaledVector(Z, Math.sin(TILT));
   const front = d.clone().multiplyScalar(-Math.sin(TILT)).addScaledVector(Z, Math.cos(TILT));
-  if (HANDS[state.orient].palm) front.negate();               // stone sits on the far side of the finger
+  if (HANDS[hk()].palm) front.negate();               // stone sits on the far side of the finger
   const q = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3().crossVectors(axis, front), axis, front));
   const [, mx] = rangeOf(state.finger), fl = state.float;
   // Real size decides how far it slides (see stopOf); visually it hugs the finger evenly instead of hanging with a gap.
@@ -1495,8 +1666,10 @@ let guide = null;
 function drawOverlay() {
   octx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
   octx.clearRect(0, 0, view.clientWidth, view.clientHeight);
+  // Wrist drop zone switched off for now (feedback 2026-11-26): set SHOW_WRIST_ZONE = true to bring it back
+  if (!SHOW_WRIST_ZONE && guide?.kind === 'bracelet') return;
   // Bracelet product page with the bracelet taken off: the wrist stays marked as a drop zone (tap it to put it back on)
-  if (!guide && SINGLE && CUR_BRACELET && !state.wrist && H_().wrist) return drawWristZone({ label:'Tap to put the bracelet on' });
+  if (SHOW_WRIST_ZONE && !guide && SINGLE && CUR_BRACELET && !state.wrist && H_().wrist) return drawWristZone({ label:'Tap to put the bracelet on' });
   if (!guide) return;
   if (guide.kind === 'bracelet' && guide.band && H_().wrist) return drawWristZone({ band:true, on:true, label:'Slide along the wrist' });
   octx.strokeStyle = octx.fillStyle = '#6b4eff';
@@ -1531,6 +1704,7 @@ function drawOverlay() {
   }
 }
 
+const SHOW_WRIST_ZONE = false;
 /* The wrist drop zone. band: the whole stretch the bracelet can slide along (while dragging it). */
 function drawWristZone({ band = false, on = false, label = '' } = {}) {
   const rgb = '107,78,255', spot = sl => { const g = wristSpot(sl), c = toScreen(P2L(g.x, g.y)), e = toScreen(P2L(g.x + g.R, g.y)); return { c, r:Math.abs(e.x - c.x), rot:rad(g.rot) }; };
@@ -1664,7 +1838,7 @@ function snapshot(side = state.side, type = 'image/png', q) {
     const o = state.orient; state.orient = want; applyHand();
     try { return snapshot(side, type, q); } finally { state.orient = o; applyHand(); }
   }
-  if (!textures[state.orient]) return null;                       // hand photo still loading
+  if (!textures[hk()]) return null;                       // hand photo still loading
   return withSide(side, () => {
     const keep = { zoom:state.zoom, panX:state.panX, panY:state.panY, yaw:state.yaw, pitch:state.pitch };
     Object.assign(state, { zoom:1, panX:0, panY:0, yaw:0, pitch:0 });
@@ -1703,7 +1877,12 @@ function optionsHTML() {
     ${hasCenter(p) && !EMBED ? `
     <div class="optgrp"><div class="optlbl">Centre Stone Shape</div><div class="pills">${SHAPES.map(s => `<button class="pillopt ${c.shape === s ? 'on' : ''}" data-shape="${s}">${s[0].toUpperCase() + s.slice(1)}</button>`).join('')}</div></div>
     <div class="optgrp"><div class="optlbl">Carat</div><div class="caratrow"><input data-carat type="range" min="0.5" max="7" step="0.25" value="${c.carat}"><b data-caratv>${c.carat.toFixed(2)} ct</b></div></div>` : ''}
-    ${p.tryonImage && p.tryonView === 'top' ? `
+    ${p.carats ? `
+    <div class="optgrp"><div class="optlbl">Centre Stone</div><div class="pills">${p.carats.map(ct => {
+      const cp = comboPrice(p, { metal:c.metal, ct }), out = p.combos?.some(x => String(x.c) === String(ct) && (!x.m || x.m === c.metal)) && !p.combos.some(x => String(x.c) === String(ct) && (!x.m || x.m === c.metal) && x.a);
+      return `<button class="pillopt ${String(c.ct) === String(ct) ? 'on' : ''}" data-ct="${esc(ct)}" ${out ? 'title="Sold out"' : ''}>${esc(ct)}${out ? ' · sold out' : ''}</button>`; }).join('')}</div>
+      ${stoneMM(c.ct) ? `<div class="muted" style="font-size:12px;margin-top:6px">${esc(c.ct)} ≈ ${stoneMM(c.ct).toFixed(1)} mm across (round), shown at real size on the hand</div>` : ''}</div>` : ''}
+    ${STONE_PERCENT && !p.carats && p.tryonImage && p.tryonView === 'top' ? `
     <div class="optgrp"><div class="optlbl">Stone Size</div><div class="caratrow"><button class="pillopt" data-stonek="-1" aria-label="Smaller stone">−</button><input data-stonekr type="range" min="${STONE_MIN}" max="${STONE_MAX}" step="0.05" value="${c.stoneK}" aria-label="Stone size"><button class="pillopt" data-stonek="1" aria-label="Bigger stone">+</button><b data-stonekv>${Math.round(c.stoneK * 100)}%</b></div></div>` : ''}
     <div class="optgrp"><div class="optlbl">Ring Size (US)</div><div class="row"><select class="size" data-size aria-label="Ring size (US)">${RING_SIZES.map((s, i) => `<option value="${i}" ${c.size === i ? 'selected' : ''}>US ${s[0]}</option>`).join('')}</select></div></div>`;
 }
@@ -1722,6 +1901,9 @@ function bindOptions(box) {
     const r = box.querySelector('[data-stonekr]'); if (r) r.value = v;
     const t = box.querySelector('[data-stonekv]'); if (t) t.textContent = Math.round(v * 100) + '%';
   };
+  box.querySelectorAll('[data-ct]').forEach(b => b.onclick = () => {
+    state.cfg.ct = b.dataset.ct; setStoneK(stoneKFor(product(), b.dataset.ct)); updatePrices(); renderOptions(); renderSelections?.();
+  });
   box.querySelector('[data-stonekr]')?.addEventListener('input', e => setStoneK(+e.target.value));
   box.querySelectorAll('[data-stonek]').forEach(b => b.onclick = () => setStoneK(state.cfg.stoneK + .1 * b.dataset.stonek));
   box.querySelector('[data-size]').onchange = e => { state.cfg.size = +e.target.value; state.slide = seat(state.finger, 0); rebuildRing(); toast(fitStatus().msg); };
@@ -1733,7 +1915,7 @@ function braceletOptionsHTML() {
   const p = byId[it.pid], c = it.cfg;
   return `
     ${p.metalPrices ? `<div class="optgrp"><div class="optlbl">Metal Type</div><div class="metaltiles">${metalsOf(p).map(k => `<button class="mtile ${c.metal === k ? 'on' : ''}" data-bmetal="${k}"><img src="products/metal-${k}.png" alt="">${METALS[k].name}</button>`).join('')}</div></div>` : ''}
-    ${p.lengths ? `<div class="optgrp"><div class="optlbl">Size (length)</div><div class="pills">${p.lengths.map(l => `<button class="pillopt ${c.length === l ? 'on' : ''}" data-blen="${esc(l)}">${esc(l)}</button>`).join('')}</div>${lengthFit(c.length) ? `<div class="muted" style="font-size:12px;margin-top:6px">${esc(lengthFit(c.length))}</div>` : ''}</div>` : ''}
+    ${p.lengths ? `<div class="optgrp"><div class="optlbl">${p.lengths.some(bangleMM) ? 'Bangle size' : 'Size (length)'}</div><div class="pills">${p.lengths.map(l => `<button class="pillopt ${c.length === l ? 'on' : ''}" data-blen="${esc(l)}">${esc(l)}</button>`).join('')}</div>${lengthFit(c.length) ? `<div class="muted" style="font-size:12px;margin-top:6px">${esc(lengthFit(c.length))}</div>` : ''}</div>` : ''}
     ${SINGLE ? '' : '<div class="optgrp"><button class="linkbtn" data-bremove>Remove bracelet</button></div>'}`;
 }
 function bindBraceletOptions(box) {
@@ -2013,7 +2195,7 @@ function popup(title, html, buttons, wide) {
 }
 
 /* ---------- My selections + Buy this look: every ring on both hands, in sync with the canvas ---------- */
-const ringPrice = (pid, cfg) => { const p = byId[pid]; return EMBED ? (p.metalPrices?.[cfg.metal] ?? p.price) : p.price + METALS[cfg.metal].add; };
+const ringPrice = (pid, cfg) => { const p = byId[pid]; return EMBED ? (comboPrice(p, cfg) ?? p.metalPrices?.[cfg.metal] ?? p.price) : p.price + METALS[cfg.metal].add; };
 const order = f => f === 'wrist' ? 99 : FINGERS.indexOf(f);
 const handRings = side => ringsIn(side === state.side ? handSet() : state.hands[side]).sort((a, b) => order(a[0]) - order(b[0]));
 function cartLine(side, [f, pid, cfg]) {
@@ -2026,7 +2208,7 @@ function cartLine(side, [f, pid, cfg]) {
   }
   const props = { 'Ring size':`US ${RING_SIZES[cfg.size][0]}`, 'Worn on':`${hand} hand, ${fingerName(f).toLowerCase()}` };
   if (p.metalPrices) props.Metal = METALS[cfg.metal].name;
-  return { productKey:p.key, metal:cfg.metal, sizeUS:RING_SIZES[cfg.size][0], sizeAU:RING_SIZES[cfg.size][1], properties:{ ...props, _source:'Virtual try-on look' } };
+  return { productKey:p.key, metal:cfg.metal, carat:cfg.ct ?? null, sizeUS:RING_SIZES[cfg.size][0], sizeAU:RING_SIZES[cfg.size][1], properties:{ ...props, _source:'Virtual try-on look' } };
 }
 function removeFrom(side, f) {
   if (f === 'wrist') {                                  // take the bracelet off that hand
@@ -2144,8 +2326,42 @@ $('pdBtn').onclick = () => { const p = editing(); if (p) showDetails(p); };
 
 /* ---------- Menu drawer ---------- */
 const TONES = [[0, '#fbeee6'], [20, '#f6dcc8'], [40, '#ecc8ad'], [60, '#d9a37e'], [80, '#b97f58'], [100, '#5e3a26']];
+/* Skin tone: only the skin pixels change (nails, white and the ring are left alone). The photo's texture is
+   kept: each pixel is scaled by the tone, and bright highlights keep some of their original brightness so the
+   knuckles and skin still shine (a flat multiply made dark skin look like a painted cut-out). */
+let toneQueued = false;
+function recolorSkin(t) {
+  const o = t?.userData.orig, w = t?.userData.skin; if (!o || t.userData.tone === state.tone) return;
+  t.userData.tone = state.tone;
+  const c = t.image, x = c.getContext('2d'), d = x.createImageData(c.width, c.height), p = d.data, m = toneColor();
+  const k = [m.r, m.g, m.b];
+  for (let i = 0, j = 0; i < p.length; i += 4, j++) {
+    const a = w[j]; p[i + 3] = o[i + 3];
+    if (!a) { p[i] = o[i]; p[i + 1] = o[i + 1]; p[i + 2] = o[i + 2]; continue; }
+    const L = (o[i] * .3 + o[i + 1] * .59 + o[i + 2] * .11), spec = Math.max(0, L - 185) / 70 * .55;   // highlights
+    for (let ch = 0; ch < 3; ch++) {
+      const v = o[i + ch], tinted = v * k[ch] + (v - v * k[ch]) * spec;
+      p[i + ch] = v + (tinted - v) * a;
+    }
+  }
+  x.putImageData(d, 0, 0); t.needsUpdate = true;
+}
+/* Real skin-tone photos of the ring hand (hands.js → HAND_SRCS.ringTones: medium, brown, deep), same pose and
+   aligned to the original. The Skin slider shows the nearest real photo; no recolouring for the ring hand. */
+const TONE_STOPS = [15, 45, 72, 100];          // slider value of: original photo, medium, brown, deep
+let toneTextures = null;                       // [original, medium, brown, deep] once loaded
+function loadToneTextures() {
+  const srcs = window.HAND_SRCS?.ringTones; if (!srcs?.length || toneTextures) return;
+  Promise.all(srcs.map(src => photoTexture({ ...HANDS.ring, src }))).then(ts => { toneTextures = [textures.ring, ...ts]; setTone(state.tone); });
+}
 function setTone(v) {
   state.tone = +v; $('tone').value = v; $('tone2').value = v;
+  if (toneTextures) {
+    let i = 0; TONE_STOPS.forEach((st, k) => { if (Math.abs(st - state.tone) < Math.abs(TONE_STOPS[i] - state.tone)) i = k; });
+    const t = toneTextures[Math.min(i, toneTextures.length - 1)];
+    if (textures.ring !== t) { textures.ring = t; if (state.orient === 'ring') { handMat.map = t; handMat.needsUpdate = true; } }
+  }
+  if (!toneQueued) { toneQueued = true; requestAnimationFrame(() => { toneQueued = false; if (!toneTextures) recolorSkin(textures.ring); if (!HANDS.bracelet.keepBg) recolorSkin(textures.bracelet); }); }
   document.querySelectorAll('#swatches .swatch, #skinbar .swatch').forEach(s => s.classList.toggle('on', Math.abs(+s.dataset.tone - v) < 10));
 }
 $('swatches').innerHTML = TONES.map(([v, c]) => `<button class="swatch" data-tone="${v}" style="background:${c}" aria-label="Skin tone ${v / 20 + 1} of 6"></button>`).join('');
@@ -2168,7 +2384,7 @@ document.querySelectorAll('[data-act]').forEach(b => b.onclick = () => { openMen
 function lookData() {
   const sets = { ...state.hands, [state.side]: handSet() }, hands = {};
   for (const [side, s] of Object.entries(sets)) if (s) hands[side] = ringsIn(s).map(([f, pid, cfg]) =>
-    ({ k:byId[pid].key || pid, f, s:cfg.size, m:cfg.metal, z:+(cfg.stoneK || 1).toFixed(2), ...(f === 'wrist' && cfg.length ? { l:cfg.length } : {}) }));
+    ({ k:byId[pid].key || pid, f, s:cfg.size, m:cfg.metal, z:+(cfg.stoneK || 1).toFixed(2), ...(cfg.ct ? { c:cfg.ct } : {}), ...(f === 'wrist' && cfg.length ? { l:cfg.length } : {}) }));
   return { v:1, side:state.side, hands };
 }
 const encodeLook = d => btoa(unescape(encodeURIComponent(JSON.stringify(d)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -2194,6 +2410,7 @@ function applyLookData(d) {
       if (Number.isInteger(x.s)) cfg.size = clamp(x.s, 0, RING_SIZES.length - 1);
       if (x.m && metalsOf(p).includes(x.m)) cfg.metal = x.m;
       if (x.z) cfg.stoneK = clamp(+x.z, STONE_MIN, STONE_MAX);
+      if (x.c && p.carats?.includes(x.c)) { cfg.ct = x.c; cfg.stoneK = stoneKFor(p, x.c); }
       worn[x.f] = { pid, cfg, slide:0, spin:0 }; placed++;
     }
     const fs = Object.keys(worn);
@@ -2232,14 +2449,14 @@ async function lookImage(sides = [state.side]) {
   const x = c.getContext('2d');
   x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
   shots.forEach((img, i) => { const s = Math.min(cell / img.width, cell / img.height); x.drawImage(img, i * cell + (cell - img.width * s) / 2, top + (cell - img.height * s) / 2, img.width * s, img.height * s); });
-  x.fillStyle = '#2a2320'; x.font = '600 34px Inter, system-ui, sans-serif'; x.fillText(EMBED?.shopName || 'House of Amara', 40, 58);
+  x.fillStyle = '#2a2320'; x.font = '600 34px Inter, system-ui, sans-serif'; x.fillText(EMBED?.shopName || 'House of Hamara', 40, 58);
   x.fillStyle = '#8a7f78'; x.font = '24px Inter, system-ui, sans-serif'; x.textAlign = 'right'; x.fillText('Virtual try-on', W2 - 40, 58); x.textAlign = 'left';
   x.fillStyle = '#2a2320'; x.font = '24px Inter, system-ui, sans-serif';
   lines.forEach((l, i) => x.fillText(l, 40, top + cell + 40 + i * 34));
   return c;
 }
 async function downloadLook(sides) {
-  if (!textures[state.orient]) return toast('Still loading, try again in a moment');
+  if (!textures[hk()]) return toast('Still loading, try again in a moment');
   const c = await lookImage(Array.isArray(sides) ? sides : [state.side]);
   c.toBlob(b => {
     const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'my-ring-look.png';
@@ -2254,7 +2471,7 @@ async function copyText(t, input) {
   catch { try { input?.select(); return document.execCommand('copy'); } catch { return false; } }
 }
 async function shareLook() {
-  if (!textures[state.orient]) return toast('Still loading, try again in a moment');
+  if (!textures[hk()]) return toast('Still loading, try again in a moment');
   await ready();
   const url = shareUrl(encodeLook(lookData())), text = `My ring look (${lookSummary()})`;
   const m = popup('Share your look', `<img class="thumb" src="${snapshot()}" alt="Your hand with the rings">
@@ -2304,7 +2521,7 @@ async function thumbnail() {                         // small JPEG of the hand f
 }
 async function saveLook() {
   if (loggedOut()) return askSignIn('Save looks to your account and come back to them any time.');
-  if (!textures[state.orient]) return toast('Still loading, try again in a moment');
+  if (!textures[hk()]) return toast('Still loading, try again in a moment');
   await ready();
   const def = byId[state.pid].name + (allRings().length > 1 ? ` + ${allRings().length - 1} more` : '');
   const m = popup('Save this look', `<img class="thumb" src="${snapshot()}" alt="">
@@ -2378,7 +2595,7 @@ function openLook(l) {
 
 /* ---------- View both hands ---------- */
 async function bothHands() {
-  if (!textures[state.orient]) return toast('Still loading, try again in a moment');
+  if (!textures[hk()]) return toast('Still loading, try again in a moment');
   await ready();
   const fig = side => {
     const set = side === state.side ? handSet() : state.hands[side], rings = ringsIn(set);
@@ -2534,7 +2751,7 @@ function addToCart() {
     if (p.metalPrices) lineProps.Metal = METALS[c.metal].name;
     const btn = $('shopCart'); btn.disabled = true; btn.textContent = 'Adding…';
     $('addedSheet').hidden = true;
-    toParent({ type:'add', productKey:p.key, metal:c.metal, sizeUS:RING_SIZES[c.size][0], sizeAU:RING_SIZES[c.size][1], properties:{ ...lineProps, _source:'Virtual try-on' } });
+    toParent({ type:'add', productKey:p.key, metal:c.metal, carat:c.ct ?? null, sizeUS:RING_SIZES[c.size][0], sizeAU:RING_SIZES[c.size][1], properties:{ ...lineProps, _source:'Virtual try-on' } });
     return;
   }
   const item = { id:`gid://shopify/ProductVariant/${p.id}-${c.metal}`, quantity:1, properties:{ ...props, _source:state.open ? 'tryon' : 'pdp' } };
@@ -2628,7 +2845,7 @@ renderer.setAnimationLoop(frame);
 Promise.all(Object.entries(HANDS).map(async ([k, h]) => textures[k] = await photoTexture(h))).then(() => {
   Object.entries(HANDS).forEach(([k, hd]) => reliefs[k] = buildRelief(textures[k], hd.depth));
   $('loading').remove(); applyHand();
-  setTone(state.tone);
+  setTone(state.tone); loadToneTextures();
   // A shared look (?look=… on the store page, #look=… in the demo) opens on the hand
   const shared = EMBED?.look || (location.hash.match(/[#&]look=([^&]+)/) || [])[1];
   const d = shared && decodeLook(shared);

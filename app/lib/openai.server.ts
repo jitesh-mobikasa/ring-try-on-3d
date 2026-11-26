@@ -8,7 +8,7 @@ Keep the same metal colour, stone shape, stone count, stone colour, prongs and s
 View: from directly above, as the ring looks when worn on a finger and seen from the back of the hand —
 the band runs horizontally from the left edge to the right edge, the centre stone faces the camera in the middle.
 Only the ring. No hand, no finger, no box, no text, no reflection, no shadow.
-Plain pure white background (#FFFFFF). The ring is centred and fills about 90% of the image width. Photorealistic jewellery lighting.`;
+Plain pure white background (#FFFFFF), perfectly flat. The ring is centred and fills about 90% of the image width. Photorealistic jewellery lighting.`;
 
 // Bracelets are often photographed lying flat in a circle or coiled; the viewer needs the FRONT half as worn,
 // running left → right across the wrist, seen from the front at eye level (the viewer draws it flat, as made).
@@ -18,10 +18,10 @@ View: as the bracelet looks when WORN on a wrist, photographed from the FRONT wi
 Only the OUTER FRONT FACE of the FRONT HALF is visible: a band running horizontally from the left edge to the right edge of the image, its two ends curving away from the camera at the sides.
 The top edge and the bottom edge of the band are straight, parallel horizontal lines (very slightly curved at most).
 The inside of the bracelet, the top rim, the opening, the back half and the inner surface must NOT be visible at all — no ellipse, no oval, no hole, no inner wall.
-The main decorative element (centre motif, charm, stone or station) faces the camera in the middle. The clasp is hidden at the back, not visible.
+The main decorative element (centre motif, charm, stone or station) faces the camera in the middle. The CLASP is at the BACK of the wrist and must NOT appear anywhere in the image — for a tennis bracelet show only the continuous line of stones.
 A chain bracelet lies smoothly along the band, not coiled, not twisted, not hanging. A rigid bangle or kada keeps its real thickness and profile.
 Only the bracelet. No wrist, no hand, no arm, no stand, no box, no text, no reflection, no shadow.
-Plain pure white background (#FFFFFF). The bracelet is centred vertically and spans about 95% of the image width. Soft, even, natural light from the front-left (like daylight on skin), no harsh studio highlights.`;
+Plain pure white background (#FFFFFF), perfectly flat. The bracelet is centred vertically and spans about 95% of the image width. Soft, even, natural light from the front-left (like daylight on skin), no harsh studio highlights.`;
 
 export type TopViewKind = "ring" | "bracelet";
 
@@ -45,13 +45,24 @@ export async function openaiTopView(photo: Buffer, kind: TopViewKind = "ring"): 
   form.append("image", new Blob([new Uint8Array(input)], { type: "image/png" }), `${kind}.png`);
   form.append("prompt", kind === "bracelet" ? BRACELET_PROMPT : RING_PROMPT);
   form.append("size", "1024x1024");
+  // Transparent background straight from the model: nothing has to be cut out afterwards, so white diamonds
+  // (almost the colour of a white backdrop) stay solid. Models that don't support it are retried without.
+  // Off by default (OPENAI_TRANSPARENT=1 to try it): gpt-image-2 doesn't support it.
+  if (process.env.OPENAI_TRANSPARENT === "1") { form.append("background", "transparent"); form.append("output_format", "png"); }
 
-  const res = await fetch("https://api.openai.com/v1/images/edits", {
+  let res = await fetch("https://api.openai.com/v1/images/edits", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}` },
     body: form,
     signal: AbortSignal.timeout(180_000),
   });
+  if (!res.ok && res.status === 400 && form.has("background")) {
+    const err = await res.clone().json().catch(() => ({})) as ImagesResponse;
+    if (/background|output_format|transparent/i.test(err.error?.message || "")) {
+      form.delete("background"); form.delete("output_format");
+      res = await fetch("https://api.openai.com/v1/images/edits", { method: "POST", headers: { Authorization: `Bearer ${key}` }, body: form, signal: AbortSignal.timeout(180_000) });
+    }
+  }
   const body = (await res.json().catch(() => ({}))) as ImagesResponse;
   if (!res.ok) {
     const msg = "OpenAI: " + (body.error?.message || res.statusText);

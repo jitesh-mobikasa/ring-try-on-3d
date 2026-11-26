@@ -5,7 +5,7 @@
    the background worker (app/lib/jobs.server.ts) generates them one by one. */
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "@remix-run/node";
 import { useFetcher, useLoaderData, useNavigate, useRevalidator, useSearchParams } from "@remix-run/react";
-import { useIndexResourceState, Badge, Banner, BlockStack, Box, Button, ButtonGroup, Card, IndexTable, InlineStack, Layout, Modal, Page, Select, SkeletonBodyText, Text, TextField } from "@shopify/polaris";
+import { useIndexResourceState, Badge, Banner, BlockStack, Box, Button, ButtonGroup, Card, IndexTable, InlineGrid, InlineStack, Layout, Modal, Page, ProgressBar, Select, SkeletonBodyText, Text, TextField } from "@shopify/polaris";
 import type { AssetStatus, AssetView, JewelleryKind } from "@prisma/client";
 import { useEffect, useState } from "react";
 import { authenticate } from "../shopify.server";
@@ -141,6 +141,21 @@ export const action = async ({ request }: ActionFunctionArgs): Promise<ActionDat
 
 type ProductItem = ReturnType<typeof useLoaderData<typeof loader>>["products"][number];
 
+const short = (t: string, n: number) => (t.length > n ? t.slice(0, n - 1).trimEnd() + "…" : t);
+
+function StatCard({ title, value, note, onClick }: { title: string; value: number; note: string; onClick?: () => void }) {
+  const body = (
+    <Card>
+      <BlockStack gap="200">
+        <Text as="h3" variant="headingSm" tone="subdued">{title}</Text>
+        <Text as="p" variant="heading2xl">{value}</Text>
+        <Text as="p" tone="subdued" variant="bodySm">{note}</Text>
+      </BlockStack>
+    </Card>
+  );
+  return onClick ? <div role="button" tabIndex={0} style={{ cursor: "pointer" }} onClick={onClick} onKeyDown={(e) => e.key === "Enter" && onClick()}>{body}</div> : body;
+}
+
 const ago = (iso: string | null) => {
   if (!iso) return "never";
   const m = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
@@ -174,6 +189,7 @@ export default function Dashboard() {
   const post = (data: Record<string, string>) => fetcher.submit(data, { method: "post" });
   const pendingIntent = fetcher.state !== "idle" ? fetcher.formData?.get("intent") : null;
   const ready = (counts.ready ?? 0) + (counts.manual ?? 0);
+  const tryable = catalog.byKind.ring + catalog.byKind.bracelet;   // products that can have a try-on image
   const result = fetcher.data;
   // Change one filter, keep the others, go back to page 1
   const setFilter = (key: string, value: string) => {
@@ -186,8 +202,8 @@ export default function Dashboard() {
 
   return (
     <Page
-      title="Try-on products"
-      subtitle="Click Generate to make a product's try-on image (made once from its main photo)."
+      title="Virtual Try-On"
+      subtitle="Create try-on images for your rings and bracelets. Shoppers see them with “Try it on” on each product page."
       primaryAction={{ content: "Generate all", onAction: () => setBulkOpen(true), disabled: !canGenerate || !bulk.all || syncing, loading: pendingIntent === "bulk" }}
       secondaryActions={[{ content: syncing ? "Syncing…" : "Sync products", onAction: () => post({ intent: "sync" }), loading: syncing, disabled: syncing }]}
     >
@@ -232,31 +248,27 @@ export default function Dashboard() {
         )}
 
         <Layout.Section>
-          <InlineStack gap="400" wrap={false}>
-            <div style={{ flex: 1 }}>
-              <Card>
-                <BlockStack gap="200">
-                  <Text as="h3" variant="headingSm">Products</Text>
-                  <Text as="p" variant="heading2xl">{catalog.products}</Text>
-                  <Text as="p" tone="subdued">
-                    {catalog.byKind.ring} rings · {catalog.byKind.bracelet} bracelets · {catalog.byKind.other} other
-                  </Text>
-                  <Text as="p" tone="subdued" variant="bodySm">
-                    {sync.running ? "Syncing with Shopify…" : `Last synced ${ago(sync.at)}`}
-                  </Text>
-                </BlockStack>
-              </Card>
-            </div>
-            <div style={{ flex: 1 }}>
-              <Card>
-                <BlockStack gap="200">
-                  <Text as="h3" variant="headingSm">Try-on ready</Text>
+          <InlineGrid columns={{ xs: 2, md: 4 }} gap="400">
+            <StatCard title="Products" value={catalog.products}
+              note={sync.running ? "Syncing with Shopify…" : `Synced ${ago(sync.at)}`} />
+            <StatCard title="Rings" value={catalog.byKind.ring} note="Try on a finger" onClick={() => setFilter("kind", "ring")} />
+            <StatCard title="Bracelets" value={catalog.byKind.bracelet} note="Try on the wrist" onClick={() => setFilter("kind", "bracelet")} />
+            <Card>
+              <BlockStack gap="200">
+                <Text as="h3" variant="headingSm" tone="subdued">Try-on ready</Text>
+                <InlineStack gap="100" blockAlign="baseline">
                   <Text as="p" variant="heading2xl">{ready}</Text>
-                  <Text as="p" tone="subdued">{counts.queued ?? 0} queued · {counts.processing ?? 0} generating · {counts.failed ?? 0} failed</Text>
-                </BlockStack>
-              </Card>
-            </div>
-          </InlineStack>
+                  <Text as="span" tone="subdued">/ {tryable}</Text>
+                </InlineStack>
+                <ProgressBar progress={tryable ? Math.round(ready / tryable * 100) : 0} size="small" tone="success" />
+                <Text as="p" tone="subdued" variant="bodySm">
+                  {(counts.queued ?? 0) + (counts.processing ?? 0) > 0
+                    ? `${(counts.queued ?? 0) + (counts.processing ?? 0)} in progress`
+                    : counts.failed ? `${counts.failed} failed` : tryable && ready >= tryable ? "All done" : `${Math.max(0, tryable - ready)} to generate`}
+                </Text>
+              </BlockStack>
+            </Card>
+          </InlineGrid>
         </Layout.Section>
 
         <Layout.Section>
@@ -310,7 +322,7 @@ export default function Dashboard() {
                 disabled: !canGenerate,
                 onAction: () => { post({ intent: "selected", ids: JSON.stringify(selectedIds) }); clearSelection(); },
               }]}
-              headings={[{ title: "Photo" }, { title: "Try-on image" }, { title: "Product" }, { title: "Type" }, { title: "Status" }, { title: "Try-on" }, { title: "" }]}
+              headings={[{ title: "Product" }, { title: "Type" }, { title: "Try-on image" }, { title: "Store status" }, { title: "", alignment: "end" }]}
               pagination={{
                 hasNext: page < pages,
                 hasPrevious: page > 1,
@@ -325,33 +337,44 @@ export default function Dashboard() {
                 const pending = pendingIntent === "generate" && fetcher.formData?.get("productId") === p.id;
                 return (
                   <IndexTable.Row id={p.id} key={p.id} position={i} selected={selectedIds.includes(p.id)}>
-                    <IndexTable.Cell><ClickableThumb src={p.thumb} alt={p.title} onClick={() => setCompare(p)} /></IndexTable.Cell>
-                    <IndexTable.Cell><ClickableThumb src={p.tryon.image} alt="Try-on" onClick={() => setCompare(p)} /></IndexTable.Cell>
                     <IndexTable.Cell>
-                      <div style={{ maxWidth: 320, whiteSpace: "normal" }}>
-                        <Button variant="plain" onClick={() => navigate(`/app/products/${numericId(p.id)}`)}>{p.title}</Button>
-                        {p.description && <Text as="p" tone="subdued" variant="bodySm" truncate>{p.description}</Text>}
-                      </div>
+                      <InlineStack gap="300" blockAlign="center" wrap={false}>
+                        <ClickableThumb src={p.thumb} alt={p.title} onClick={() => setCompare(p)} size={52} />
+                        <div style={{ maxWidth: 340, whiteSpace: "normal" }}>
+                          <Button variant="plain" onClick={() => navigate(`/app/products/${numericId(p.id)}`)}>{p.title}</Button>
+                          {p.description && <Text as="p" tone="subdued" variant="bodySm">{short(p.description, 70)}</Text>}
+                        </div>
+                      </InlineStack>
                     </IndexTable.Cell>
                     <IndexTable.Cell>
-                      <Badge tone={p.kind === "bracelet" ? "info" : p.kind === "other" ? undefined : "success"}>
-                        {`${KIND_LABEL[p.kind]}${p.kindManual ? "" : " (auto)"}`}
-                      </Badge>
-                      {p.productType && <Text as="p" tone="subdued" variant="bodySm">{p.productType}</Text>}
+                      <BlockStack gap="050">
+                        <Badge tone={p.kind === "bracelet" ? "info" : p.kind === "other" ? undefined : "success"}>{KIND_LABEL[p.kind]}</Badge>
+                        <Text as="span" tone="subdued" variant="bodySm">{p.kindManual ? "Set by you" : "Auto-detected"}</Text>
+                      </BlockStack>
+                    </IndexTable.Cell>
+                    <IndexTable.Cell>
+                      <InlineStack gap="300" blockAlign="center" wrap={false}>
+                        {p.tryon.image
+                          ? <ClickableThumb src={p.tryon.image} alt="Try-on" onClick={() => setCompare(p)} size={52} />
+                          : <div style={{ width: 52, height: 52, borderRadius: 8, border: "1px dashed #c9cccf", display: "flex", alignItems: "center", justifyContent: "center", color: "#8c9196", fontSize: 18 }}>+</div>}
+                        <BlockStack gap="050">
+                          <InlineStack gap="100">
+                            <Badge tone={st.tone}>{st.label}</Badge>
+                            {p.tryon.stale && <Badge tone="warning">Photo changed</Badge>}
+                          </InlineStack>
+                          {p.tryon.status === "failed" && <div style={{ maxWidth: 220, whiteSpace: "normal" }}><Text as="p" tone="critical" variant="bodySm">{short(p.tryon.error ?? "", 90)}</Text></div>}
+                        </BlockStack>
+                      </InlineStack>
                     </IndexTable.Cell>
                     <IndexTable.Cell><Badge tone={ps.tone}>{ps.label}</Badge></IndexTable.Cell>
                     <IndexTable.Cell>
-                      <InlineStack gap="100">
-                        <Badge tone={st.tone}>{st.label}</Badge>
-                        {p.tryon.stale && <Badge tone="warning">Photo changed</Badge>}
+                      <InlineStack align="end">
+                        <Button size="slim" variant={p.tryon.status === "none" ? "primary" : "secondary"}
+                          disabled={!p.mediaUrl || !canGenerate || isBusy(p.tryon.status) || p.kind === "other"} loading={pending}
+                          onClick={() => post({ intent: "generate", productId: p.id })}>
+                          {p.tryon.status === "none" ? "Generate" : "Regenerate"}
+                        </Button>
                       </InlineStack>
-                      {p.tryon.status === "failed" && <Text as="p" tone="critical" variant="bodySm">{p.tryon.error}</Text>}
-                    </IndexTable.Cell>
-                    <IndexTable.Cell>
-                      <Button size="slim" disabled={!p.mediaUrl || !canGenerate || isBusy(p.tryon.status) || p.kind === "other"} loading={pending}
-                        onClick={() => post({ intent: "generate", productId: p.id })}>
-                        {p.tryon.status === "none" ? "Generate" : "Regenerate"}
-                      </Button>
                     </IndexTable.Cell>
                   </IndexTable.Row>
                 );

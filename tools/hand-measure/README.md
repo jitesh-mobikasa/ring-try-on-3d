@@ -23,3 +23,10 @@ Outputs in `out/` (not committed):
 
 To put the photos themselves in the viewer: save them as JPEG (quality 90) into `public/viewer/hands.js` as `window.HAND_SRCS.ring` / `.bracelet`
 (it is embedded so the viewer can read its pixels on the store's domain).
+
+## Bracelet photos: the wrist is measured live
+The try-on measures the wrist on the photo itself (`measureWrist` in `public/viewer/index.html`): starting from the
+rough `wrist: { x, y, rot }` in `HANDS`, it finds the arm's real edges (centre + width) and the arm's angle from the
+skin / hand mask, then fits the bracelet between the edges. For a new model photo, a rough wrist point is enough
+(roughly where a bracelet sits, angle within ~30°); `w` is only a fallback. Tune `curve` (0.1 arm facing the camera,
+0.3 arm coming towards the camera) by eye.

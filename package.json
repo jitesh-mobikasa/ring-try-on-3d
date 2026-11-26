@@ -17,6 +17,8 @@
     "db:studio": "prisma studio",
     "db:up": "docker compose up -d postgres",
     "test:e2e": "node tests/e2e/run.mjs",
+    "add-carat": "node tools/add-carat.mjs",
+    "demo-catalog": "node tools/demo-catalog.mjs",
     "build:theme": "for f in tryon configurator; do esbuild theme-src/$f.js --minify --target=es2020 --legal-comments=none --log-level=warning --outfile=extensions/tryon-theme/assets/$f.js; done"
   },
   "engines": {
