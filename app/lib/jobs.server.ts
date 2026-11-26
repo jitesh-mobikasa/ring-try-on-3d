@@ -2,7 +2,7 @@
    - enqueue():      mark a product "queued" (dashboard "Generate" / "Generate all").
    - processQueue(): picks queued products one by one and generates their image.
    - startWorker():  runs processQueue every few seconds inside the app server (also picks up jobs left by a restart). */
-import type { JewelleryKind, Shop, TryOnAsset } from "@prisma/client";
+import { Prisma, type JewelleryKind, type Shop, type TryOnAsset } from "@prisma/client";
 import db from "../db.server";
 import { unauthenticated } from "../shopify.server";
 import { errorMessage, NonRetryable } from "./errors";
@@ -10,6 +10,7 @@ import { deleteFile, uploadPng } from "./files.server";
 import { currentView, generateTryOnImage, usesAI } from "./generator.server";
 import { gql, type Admin } from "./graphql.server";
 import { writeAssetMetafield } from "./metafields.server";
+import { metalOf, type MetalKey } from "./shared";
 import { detectKind } from "./shared";
 
 const MAX_ATTEMPTS = 3;
@@ -27,6 +28,7 @@ export interface ProductRef {
   mediaId: string | null;
   mediaUrl: string | null;
   detectedKind: JewelleryKind; // ring / bracelet / other, from Shopify category, type, tags, title
+  metalPhotos?: Partial<Record<MetalKey, { mediaId: string; url: string }>>;   // photo of each metal variant (fetchProduct only)
 }
 
 /** The kind the product is treated as: the merchant's choice if set, else what was detected. */
@@ -147,6 +149,31 @@ async function runJob(job: TryOnAsset): Promise<void> {
       alt: `Try-on image: ${product.title}`,
     });
     if (job.resultFileId && job.resultFileId !== file.id) await deleteFile(admin, job.resultFileId);
+    if (usesAI()) await db.shop.update({ where: { shop: job.shop }, data: { usedThisPeriod: { increment: 1 } } });
+
+    // One try-on image per metal: each metal variant with its own photo gets its own image (a real yellow gold
+    // bracelet instead of a recoloured white one). The metal shown in the main photo reuses the main image.
+    // A metal that fails is skipped (the viewer then recolours the main image); the product is still ready.
+    const metalImages: Partial<Record<MetalKey, { url: string; fileId: string; sourceMediaId: string }>> = {};
+    for (const [m, ph] of Object.entries(product.metalPhotos ?? {}) as [MetalKey, { mediaId: string; url: string }][]) {
+      if (ph.mediaId === product.mediaId) { metalImages[m] = { url: file.url, fileId: file.id, sourceMediaId: ph.mediaId }; continue; }
+      if (usesAI() && (await quotaLeft(job.shop)) <= 0) { console.warn(label, `metal ${m}: monthly AI limit reached, skipped`); continue; }
+      try {
+        console.log(label, `generating ${kind} (metal ${m})…`);
+        const mf = await uploadPng(admin, await generateTryOnImage(ph.url, kind), {
+          filename: `tryon-${job.productId.split("/").pop()}-${m}-${Date.now()}.png`,
+          alt: `Try-on image: ${product.title} (${m})`,
+        });
+        metalImages[m] = { url: mf.url, fileId: mf.id, sourceMediaId: ph.mediaId };
+        if (usesAI()) await db.shop.update({ where: { shop: job.shop }, data: { usedThisPeriod: { increment: 1 } } });
+      } catch (e) {
+        console.warn(label, `metal ${m} failed:`, errorMessage(e));
+      }
+    }
+    // remove the previous per-metal files that are no longer used
+    const keep = new Set([file.id, ...Object.values(metalImages).map((x) => x!.fileId)]);
+    for (const old of Object.values((job.metalImages ?? {}) as Record<string, { fileId?: string }>))
+      if (old?.fileId && !keep.has(old.fileId)) await deleteFile(admin, old.fileId).catch(() => undefined);
 
     const done = await db.tryOnAsset.update({
       where: { id: job.id },
@@ -154,10 +181,10 @@ async function runJob(job: TryOnAsset): Promise<void> {
         status: "ready", error: null, productTitle: product.title,
         sourceMediaId: product.mediaId, sourceUrl: product.mediaUrl,
         resultFileId: file.id, resultUrl: file.url, view: currentView(kind), kind,
+        metalImages: Object.keys(metalImages).length ? metalImages : Prisma.DbNull,
       },
     });
     await writeAssetMetafield(admin, done);
-    if (usesAI()) await db.shop.update({ where: { shop: job.shop }, data: { usedThisPeriod: { increment: 1 } } });
     console.log(label, "ready", file.url);
   } catch (e) {
     const message = errorMessage(e);
@@ -179,7 +206,24 @@ interface ProductQuery {
     tags: string[];
     category: { fullName: string } | null;
     featuredMedia: { id: string; image?: { url: string } | null } | null;
+    options: { name: string; values: string[] }[];
+    variants: { nodes: { selectedOptions: { name: string; value: string }[]; media: { nodes: { id: string; image?: { url: string } | null }[] } }[] };
   } | null;
+}
+
+/** The photo of each metal: the metal option (named "Metal…", or the option whose values are metals) and the first
+    variant of each metal that has its own photo. Only when the product comes in 2+ metals. */
+function metalPhotos(p: NonNullable<ProductQuery["product"]>): ProductRef["metalPhotos"] {
+  const opt = p.options.find((o) => /metal/i.test(o.name))
+    ?? p.options.find((o) => new Set(o.values.map(metalOf).filter(Boolean)).size >= 2);
+  if (!opt) return undefined;
+  const out: NonNullable<ProductRef["metalPhotos"]> = {};
+  for (const v of p.variants.nodes) {
+    const m = metalOf(v.selectedOptions.find((o) => o.name === opt.name)?.value);
+    const media = v.media.nodes.find((n) => n.image?.url);
+    if (m && media && !out[m]) out[m] = { mediaId: media.id, url: media.image!.url };
+  }
+  return Object.keys(out).length >= 2 ? out : undefined;
 }
 
 export async function fetchProduct(admin: Admin, productId: string): Promise<ProductRef | null> {
@@ -188,12 +232,15 @@ export async function fetchProduct(admin: Admin, productId: string): Promise<Pro
       product(id: $id) {
         id title productType tags category { fullName }
         featuredMedia { id ... on MediaImage { image { url } } }
+        options { name values }
+        variants(first: 100) { nodes { selectedOptions { name value } media(first: 1) { nodes { id ... on MediaImage { image { url } } } } } }
       }
     }`, { id: productId });
   if (!p) return null;
   return {
     id: p.id, title: p.title, mediaId: p.featuredMedia?.id ?? null, mediaUrl: p.featuredMedia?.image?.url ?? null,
     detectedKind: detectKind({ category: p.category?.fullName, productType: p.productType, tags: p.tags, title: p.title }),
+    metalPhotos: metalPhotos(p),
   };
 }
 

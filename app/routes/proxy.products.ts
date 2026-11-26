@@ -4,7 +4,9 @@
    try-on image, in the same JSON shape as the theme snippet (extensions/tryon-theme/snippets/tryon-product.liquid).
 
    Query: collection=<handle>  &  after=<cursor> (next page) or offset=<n> (skip the n products the theme
-   already rendered)  &  country=<ISO code> (prices in the shopper's market currency). */
+   already rendered)  &  country=<ISO code> (prices in the shopper's market currency).
+   Or: ids=<product id>,<product id>… (up to 20) → those products, e.g. the pieces of a saved look that were
+   saved on another product page and aren't in this page's list. */
 import type { LoaderFunctionArgs } from "@remix-run/node";
 import { authenticate } from "../shopify.server";
 import { gql, type Admin } from "../lib/graphql.server";
@@ -28,6 +30,8 @@ interface ProductNode {
   title: string;
   handle: string;
   onlineStoreUrl: string | null;
+  status: string;
+  publishedAt: string | null;
   featuredImage: { url: string } | null;
   description: string;
   productType: string;
@@ -39,7 +43,7 @@ interface ProductNode {
 interface Page { nodes: ProductNode[]; pageInfo: { hasNextPage: boolean; endCursor: string | null } }
 
 const nodeFields = (withCountry: boolean) => `
-          legacyResourceId title handle onlineStoreUrl description(truncateAt: 600) productType
+          legacyResourceId title handle onlineStoreUrl status publishedAt description(truncateAt: 600) productType
           featuredImage { url(transform: { maxWidth: 600 }) }
           images(first: 6) { nodes { url(transform: { maxWidth: 800 }) } }
           options { name }
@@ -63,6 +67,11 @@ const productsQuery = (withCountry: boolean) => `#graphql
     }
   }`;
 
+const byIdsQuery = (withCountry: boolean) => `#graphql
+  query TryOnByIds($ids: [ID!]!${withCountry ? ", $country: CountryCode!" : ""}) {
+    nodes(ids: $ids) { ... on Product { ${nodeFields(withCountry)} } }
+  }`;
+
 // Cursor after the first n products (the ones the theme block already rendered), without loading them.
 const skipQuery = `#graphql
   query Skip($handle: String!, $first: Int!) {
@@ -71,18 +80,21 @@ const skipQuery = `#graphql
 
 function toViewer(p: ProductNode) {
   const t = p.metafield?.jsonValue;
-  if (!t?.image || t.enabled === false || !p.onlineStoreUrl) return null;   // not tryable / not on the store
+  if (!t?.image || t.enabled === false) return null;                        // not tryable
+  // onlineStoreUrl is null while the store is password-protected (e.g. a demo store), so an active, published
+  // product falls back to its usual store path.
+  if (!p.onlineStoreUrl && (p.status !== "ACTIVE" || !p.publishedAt)) return null;   // not on the store
   return {
     productId: Number(p.legacyResourceId),
     title: p.title,
     handle: p.handle,
-    url: p.onlineStoreUrl,
+    url: p.onlineStoreUrl ?? `/products/${p.handle}`,
     image: p.featuredImage?.url ?? null,
     description: p.description,
     type: p.productType,
     images: p.images.nodes.map((i) => i.url),
     options: p.options.map((o) => o.name),
-    tryon: { kind: t.kind ?? "ring", image: t.image, scale: t.scale ?? 1, offsetY: t.offsetY ?? 0, view: t.view ?? "photo", shownCarat: t.shownCarat ?? null },
+    tryon: { kind: t.kind ?? "ring", image: t.image, scale: t.scale ?? 1, offsetY: t.offsetY ?? 0, view: t.view ?? "photo", shownCarat: t.shownCarat ?? null, metalImages: t.metalImages ?? null },
     variants: p.variants.nodes.map((v) => ({
       id: Number(v.legacyResourceId),
       price: Number(v.contextualPricing?.price.amount ?? v.price),
@@ -105,6 +117,19 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
   const country = url.searchParams.get("country")?.toUpperCase();
   const withCountry = !!country && /^[A-Z]{2}$/.test(country);
+
+  const ids = (url.searchParams.get("ids") || "").split(",").map((x) => x.trim()).filter((x) => /^\d{1,20}$/.test(x)).slice(0, 20);
+  if (ids.length) {
+    try {
+      const d = await gql<{ nodes: (ProductNode | null)[] }>(admin as Admin, byIdsQuery(withCountry),
+        { ids: ids.map((id) => `gid://shopify/Product/${id}`), ...(withCountry ? { country } : {}) });
+      const products = d.nodes.map((n) => (n?.legacyResourceId ? toViewer(n) : null)).filter((p) => p !== null);
+      return json({ products, cursor: null, hasMore: false });
+    } catch (e) {
+      console.error("[proxy.products] ids", e);
+      return json({ error: "Could not load products" }, 502);
+    }
+  }
 
   const handle = url.searchParams.get("collection")?.trim();
   if (!handle) return json({ error: "collection is required" }, 400);

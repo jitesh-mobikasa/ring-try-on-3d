@@ -171,30 +171,42 @@
     }
   }
 
-  /* The viewer scrolled past the rings it has: fetch the next page of the block's collection from the app
-     (app proxy, same domain) and remember the products so add-to-cart can match their variants. */
-  async function more() {
-    const c = current.data.collection;
-    if (!c || current.done) return reply({ type: 'more', products: [], done: true });
-    if (current.loading) return;
-    current.loading = true;
+  /* Products from the app (app proxy, same domain), remembered so add-to-cart can match their variants.
+     more(): the viewer scrolled past the rings it has → the next page of the block's collection.
+     byKeys(): a saved / shared look has pieces that aren't in this page's list (saved on another product page). */
+  async function load(type, params, extra, after) {
     const ctx = current;
     try {
       const u = new URL('/apps/ring-tryon/products', location.origin);
-      u.searchParams.set('collection', c.handle);
-      if (ctx.cursor) u.searchParams.set('after', ctx.cursor); else u.searchParams.set('offset', c.offset || 0);
+      for (const k in params) u.searchParams.set(k, params[k]);
       if (window.Shopify?.country) u.searchParams.set('country', window.Shopify.country);
       const res = await fetch(u, { headers: { Accept: 'application/json' } });
       const body = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(body.error || 'Could not load more rings');
+      if (!res.ok) throw new Error(body.error || 'Could not load products');
       if (ctx !== current) return;                                  // try-on was closed meanwhile
-      ctx.cursor = body.cursor; ctx.done = !body.hasMore;
+      after?.(body);
       const fresh = (body.products || []).filter(p => !ctx.byKey[String(p.productId)]);
       fresh.forEach(p => { ctx.byKey[String(p.productId)] = p; });
-      reply({ type: 'more', products: fresh.map(p => prepare(p, ctx.data.settings || {})), done: ctx.done });
+      reply({ type, ...extra(), products: fresh.map(p => prepare(p, ctx.data.settings || {})) });
     } catch (e) {
-      if (ctx === current) reply({ type: 'more', products: [], done: false, error: e.message });
-    } finally { ctx.loading = false; }
+      if (ctx === current) reply({ type, ...extra(), products: [], error: e.message });
+    }
+  }
+
+  async function more() {
+    const c = current.data.collection, ctx = current;
+    if (!c || ctx.done) return reply({ type: 'more', products: [], done: true });
+    if (ctx.loading) return;
+    ctx.loading = true;
+    await load('more', ctx.cursor ? { collection: c.handle, after: ctx.cursor } : { collection: c.handle, offset: c.offset || 0 },
+      () => ({ done: ctx.done }), body => { ctx.cursor = body.cursor; ctx.done = !body.hasMore; });
+    ctx.loading = false;
+  }
+
+  function byKeys(msg) {
+    const keys = (msg.keys || []).map(String).filter(k => /^\d+$/.test(k) && !current.byKey[k]).slice(0, 20);
+    if (!keys.length) return reply({ type: 'byKeys', req: msg.req, products: [] });
+    load('byKeys', { ids: keys.join(',') }, () => ({ req: msg.req }));
   }
 
   /* "Buy this look": several rings (both hands) in ONE /cart/add.js call. Sold-out / unmatched rings are skipped
@@ -255,6 +267,7 @@
     if (e.data.type === 'close') close();
     else if (e.data.type === 'add') add(e.data);
     else if (e.data.type === 'more') more();
+    else if (e.data.type === 'byKeys') byKeys(e.data);
     else if (e.data.type === 'addMany') addMany(e.data);
     else if (e.data.type === 'goto') {
       const root = window.Shopify?.routes?.root || '/';
