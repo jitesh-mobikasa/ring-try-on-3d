@@ -1967,6 +1967,18 @@ function addMore(list) {                                   // rings that arrived
   list.map(fromEmbed).forEach(p => { if (!byId[p.id]) { (p.kind === 'bracelet' ? BRACELETS : PRODUCTS).push(p); byId[p.id] = p; } });
   $('kindTabs').hidden = BRACELET_ONLY || !(PRODUCTS.length && BRACELETS.length);
 }
+/* Pieces of a saved / shared look that aren't loaded on this product page (e.g. a bracelet saved on a bracelet
+   page, opened from a ring page): ask the store for them by id before deciding they're "no longer available". */
+const keyReqs = {}; let keyReqN = 0;
+function ensureProducts(keys) {
+  const missing = [...new Set(keys.map(String))].filter(k => /^\d+$/.test(k) && !pidOf(k));
+  if (!EMBED || !missing.length) return Promise.resolve();
+  return new Promise(res => {
+    const req = ++keyReqN, done = () => { delete keyReqs[req]; res(); };
+    keyReqs[req] = done; setTimeout(done, 8000);                // never wait forever (old theme script, offline)
+    toParent({ type:'byKeys', keys:missing, req });
+  });
+}
 /* Search + filters. They work on the rings loaded so far; while a search / filter is on, the rest of the
    collection keeps loading in the background so nothing is missed. */
 const filt = { q:'', stock:false, metals:new Set(), sort:'' };
@@ -2543,7 +2555,10 @@ async function renderMine() {
   }
   box.innerHTML = '<div class="mineempty">Loading your looks…</div>';
   let looks;
-  try { looks = (await looksApi()).looks || []; }
+  try {
+    looks = (await looksApi()).looks || [];
+    await ensureProducts(looks.flatMap(l => Object.values(l.data?.hands || {}).flat().map(x => x.k)));
+  }
   catch (e) { if (e.login) return renderMine(); box.innerHTML = `<div class="mineempty">Couldn't load your looks. <button id="mineRetry">Try again</button></div>`; return $('mineRetry').onclick = renderMine; }
   if (!looks.length) {
     box.innerHTML = signedInBar() + `<div class="mineempty"><div class="ico">♡</div><b>No saved looks yet</b>
@@ -2808,6 +2823,12 @@ if (EMBED) {
       renderChips(); renderShop();
       return;
     }
+    if (e.data.type === 'byKeys') {
+      if (e.data.error) console.warn('[Ring Try-On]', e.data.error);
+      addMore(e.data.products || []);
+      keyReqs[e.data.req]?.();
+      return;
+    }
     if (e.data.type === 'addedMany') {                 // Buy this look, a single piece from Selected, or the bracelet
       renderSelections(); updatePrices();
       if (!e.data.ok) return toast(e.data.error || 'Could not add to cart');
@@ -2834,7 +2855,7 @@ if (EMBED) {
   openTryOn(); toParent({ type:'ready' });
 }
 renderer.setAnimationLoop(frame);
-Promise.all(Object.entries(HANDS).map(async ([k, h]) => textures[k] = await photoTexture(h))).then(() => {
+Promise.all(Object.entries(HANDS).map(async ([k, h]) => textures[k] = await photoTexture(h))).then(async () => {
   Object.entries(HANDS).forEach(([k, hd]) => reliefs[k] = buildRelief(textures[k], hd.depth));
   $('loading').remove(); applyHand();
   setTone(state.tone);
@@ -2842,6 +2863,7 @@ Promise.all(Object.entries(HANDS).map(async ([k, h]) => textures[k] = await phot
   const shared = EMBED?.look || (location.hash.match(/[#&]look=([^&]+)/) || [])[1];
   const d = shared && decodeLook(shared);
   if (d) {
+    await ensureProducts(Object.values(d.hands || {}).flat().map(x => x.k));
     const r = applyLookData(d);
     toast(r.placed ? `Shared look: ${r.placed} ring${r.placed === 1 ? '' : 's'}${r.skipped ? ` (${r.skipped} unavailable)` : ''}` : 'The rings in this look are no longer available');
   } else startTour();
