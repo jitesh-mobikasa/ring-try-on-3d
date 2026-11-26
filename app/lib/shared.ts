@@ -47,6 +47,15 @@ export interface TryOnMetafield {
   offsetY: number;
   source: string | null;
   shownCarat?: number | null;  // rings: carat of the stone in the try-on image (other carats are drawn bigger / smaller from it)
+  metalImages?: Partial<Record<MetalKey, string>> | null;   // try-on image per metal (from each metal variant's photo)
+}
+
+/* Metal of a variant option value, same words as the storefront script (theme-src/tryon.js). */
+export type MetalKey = "Y" | "W" | "R" | "P";
+const METAL_WORDS: Record<MetalKey, string[]> = { R: ["rose"], W: ["white"], P: ["platinum", "plat"], Y: ["yellow", "gold"] };
+export function metalOf(value: string | null | undefined): MetalKey | null {
+  const v = String(value ?? "").toLowerCase();
+  return (["R", "W", "P", "Y"] as MetalKey[]).find((k) => METAL_WORDS[k].some((w) => v.includes(w))) ?? null;
 }
 
 /** Encode an object for the viewer's URL hash (#c=…), base64url of UTF-8 JSON. */

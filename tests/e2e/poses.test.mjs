@@ -31,7 +31,8 @@ await page.click('#menuBtn'); await page.waitForTimeout(300);
 check('Menu has no pose picker, has Left / Right', (await page.locator('#poseList').count()) === 0 && (await page.locator('#drawer [data-side]').count()) === 2);
 await page.click('#drawerClose'); await page.waitForTimeout(500);
 for (const side of ['right', 'left']) {
-  if (side === 'left') { await page.click('.sideseg [data-side="left"]'); await page.waitForTimeout(400); }
+  // the left hand is the default since 2026-11-26 → pick each side explicitly
+  await page.click(`.sideseg [data-side="${side}"]`); await page.waitForTimeout(400);
   check(`${side} hand active`, (await S()).side === side);
   const ok = [];
   for (const f of ['thumb', 'index', 'middle', 'ring', 'pinky']) { await tapFinger(f); ok.push((await S()).finger === f ? f : `✗${f}`); }

@@ -94,7 +94,7 @@ function toViewer(p: ProductNode) {
     type: p.productType,
     images: p.images.nodes.map((i) => i.url),
     options: p.options.map((o) => o.name),
-    tryon: { kind: t.kind ?? "ring", image: t.image, scale: t.scale ?? 1, offsetY: t.offsetY ?? 0, view: t.view ?? "photo", shownCarat: t.shownCarat ?? null },
+    tryon: { kind: t.kind ?? "ring", image: t.image, scale: t.scale ?? 1, offsetY: t.offsetY ?? 0, view: t.view ?? "photo", shownCarat: t.shownCarat ?? null, metalImages: t.metalImages ?? null },
     variants: p.variants.nodes.map((v) => ({
       id: Number(v.legacyResourceId),
       price: Number(v.contextualPricing?.price.amount ?? v.price),

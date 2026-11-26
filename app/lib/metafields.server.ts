@@ -24,6 +24,14 @@ export async function ensureDefinition(admin: Admin): Promise<UserError[]> {
   return data.metafieldDefinitionCreate.userErrors.filter((e) => e.code !== "TAKEN");
 }
 
+/** { Y: { url, … } } in the database → { Y: url } for the storefront (null when there are none). */
+export function metalUrls(v: unknown): TryOnMetafield["metalImages"] {
+  if (!v || typeof v !== "object") return null;
+  const out: Record<string, string> = {};
+  for (const [k, x] of Object.entries(v as Record<string, { url?: string }>)) if (x?.url) out[k] = x.url;
+  return Object.keys(out).length ? out : null;
+}
+
 export function assetValue(asset: TryOnAsset): TryOnMetafield {
   return {
     kind: asset.kind === "bracelet" ? "bracelet" : "ring",
@@ -34,6 +42,7 @@ export function assetValue(asset: TryOnAsset): TryOnMetafield {
     offsetY: asset.offsetY,
     source: asset.sourceMediaId,
     shownCarat: asset.shownCarat ?? null,
+    metalImages: metalUrls(asset.metalImages),
   };
 }
 

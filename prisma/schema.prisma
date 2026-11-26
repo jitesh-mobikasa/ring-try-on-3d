@@ -129,6 +129,7 @@ model TryOnAsset {
   attempts      Int         @default(0)
   scale         Float       @default(1)             // merchant fine-tuning on the finger
   offsetY       Float       @default(0) @map("offset_y")
+  metalImages   Json?       @map("metal_images")     // { Y: { url, fileId, sourceMediaId }, W: … }: one try-on image per metal, made from that metal variant's photo
   shownCarat    Float?      @map("shown_carat")      // rings: carat of the centre stone in the product photo (the try-on image) → real stone sizes per carat
   enabled       Boolean     @default(true)
   view          AssetView   @default(photo)
