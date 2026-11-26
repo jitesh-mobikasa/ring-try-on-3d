@@ -762,7 +762,9 @@ function rangeOf(id) {
 const MODEL_WRIST_CM = 15.5, COMFORT_CM = 17, MODEL_BANGLE_MM = 60;
 // Stone size limits (used by the carat → real size maths when products are first read, so defined early)
 const STONE_MIN = .6, STONE_MAX = 1.6, STONE_PAD = STONE_MAX;
-const SKIN = [[1.06,1.04,1.05],[1,1,1],[.94,.82,.72],[.8,.64,.52],[.6,.44,.34],[.42,.29,.22]];
+// Skin-tone colour factors at slider 0, 20, 40 … 100, matched to the real tone photos (tools/hand-measure/tones):
+// medium ≈ .89/.85/.73, brown ≈ .79/.71/.63, deep ≈ .50/.48/.50 of the original photo's skin colour.
+const SKIN = [[1.06,1.04,1.05],[1,1,1],[.91,.86,.76],[.82,.74,.65],[.66,.6,.56],[.5,.47,.48]];
 const rad = d => d * Math.PI / 180, clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 const money = n => EMBED?.currency
   ? new Intl.NumberFormat(EMBED.locale || undefined, { style:'currency', currency:EMBED.currency }).format(n)
@@ -2346,22 +2348,12 @@ function recolorSkin(t) {
   }
   x.putImageData(d, 0, 0); t.needsUpdate = true;
 }
-/* Real skin-tone photos of the ring hand (hands.js → HAND_SRCS.ringTones: medium, brown, deep), same pose and
-   aligned to the original. The Skin slider shows the nearest real photo; no recolouring for the ring hand. */
-const TONE_STOPS = [15, 45, 72, 100];          // slider value of: original photo, medium, brown, deep
-let toneTextures = null;                       // [original, medium, brown, deep] once loaded
-function loadToneTextures() {
-  const srcs = window.HAND_SRCS?.ringTones; if (!srcs?.length || toneTextures) return;
-  Promise.all(srcs.map(src => photoTexture({ ...HANDS.ring, src }))).then(ts => { toneTextures = [textures.ring, ...ts]; setTone(state.tone); });
-}
+/* One photo for every skin tone: the pose never changes, only the skin pixels are recoloured (recolorSkin), so the
+   slider changes the tone smoothly. (Separate AI tone photos were tried, but their fingers don't line up exactly,
+   so switching or blending them made the hand visibly move.) */
 function setTone(v) {
   state.tone = +v; $('tone').value = v; $('tone2').value = v;
-  if (toneTextures) {
-    let i = 0; TONE_STOPS.forEach((st, k) => { if (Math.abs(st - state.tone) < Math.abs(TONE_STOPS[i] - state.tone)) i = k; });
-    const t = toneTextures[Math.min(i, toneTextures.length - 1)];
-    if (textures.ring !== t) { textures.ring = t; if (state.orient === 'ring') { handMat.map = t; handMat.needsUpdate = true; } }
-  }
-  if (!toneQueued) { toneQueued = true; requestAnimationFrame(() => { toneQueued = false; if (!toneTextures) recolorSkin(textures.ring); if (!HANDS.bracelet.keepBg) recolorSkin(textures.bracelet); }); }
+  if (!toneQueued) { toneQueued = true; requestAnimationFrame(() => { toneQueued = false; recolorSkin(textures.ring); if (!HANDS.bracelet.keepBg) recolorSkin(textures.bracelet); }); }
   document.querySelectorAll('#swatches .swatch, #skinbar .swatch').forEach(s => s.classList.toggle('on', Math.abs(+s.dataset.tone - v) < 10));
 }
 $('swatches').innerHTML = TONES.map(([v, c]) => `<button class="swatch" data-tone="${v}" style="background:${c}" aria-label="Skin tone ${v / 20 + 1} of 6"></button>`).join('');
@@ -2845,7 +2837,7 @@ renderer.setAnimationLoop(frame);
 Promise.all(Object.entries(HANDS).map(async ([k, h]) => textures[k] = await photoTexture(h))).then(() => {
   Object.entries(HANDS).forEach(([k, hd]) => reliefs[k] = buildRelief(textures[k], hd.depth));
   $('loading').remove(); applyHand();
-  setTone(state.tone); loadToneTextures();
+  setTone(state.tone);
   // A shared look (?look=… on the store page, #look=… in the demo) opens on the hand
   const shared = EMBED?.look || (location.hash.match(/[#&]look=([^&]+)/) || [])[1];
   const d = shared && decodeLook(shared);

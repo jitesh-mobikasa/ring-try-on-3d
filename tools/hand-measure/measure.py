@@ -3,7 +3,7 @@
   python measure.py hand.json          → out/<name>.json, out/<name>-check.png, out/<name>-hands.js (paste into the viewer)
 
 hand.json:
-  { "image": "../../hand_for_bracelet.png", "name": "back",
+  { "image": "source/hand_for_bracelet.png", "name": "back",
     "fingers": { "ring": { "R": [x, y], "T": [x, y] }, ... },      R = where a ring sits, T = where the nail starts
     "wrist": { "x": 500, "from": 600, "to": 820 } }                  search band (photo px) for the narrowest point
 

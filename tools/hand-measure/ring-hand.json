@@ -1,5 +1,5 @@
 { "image": "out/ring-hand-v2.png", "name": "ring", "label": "Close-up hand (rings)",
-  "note": "2026-11-26: ../../Minimalist Hand Product Portrait.png scaled 1254 → 1024 px into out/ring-hand-v2.png (re-create it before measuring again)",
+  "note": "2026-11-26: source/Minimalist Hand Product Portrait.png scaled 1254 → 1024 px into out/ring-hand-v2.png (re-create it before measuring again)",
   "fit": "{ s:.6, dx:3, dy:10 }",
   "fingers": {
     "pinky":  { "R": [274, 490], "T": [229, 261] },
