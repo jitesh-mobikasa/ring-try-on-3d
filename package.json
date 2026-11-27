@@ -19,7 +19,8 @@
     "test:e2e": "node tests/e2e/run.mjs",
     "add-carat": "node tools/add-carat.mjs",
     "demo-catalog": "node tools/demo-catalog.mjs",
-    "build:theme": "for f in tryon configurator; do esbuild theme-src/$f.js --minify --target=es2020 --legal-comments=none --log-level=warning --outfile=extensions/tryon-theme/assets/$f.js; done"
+    "build:theme": "for f in tryon configurator; do esbuild theme-src/$f.js --minify --target=es2020 --legal-comments=none --log-level=warning --outfile=extensions/tryon-theme/assets/$f.js; done",
+    "vercel-build": "prisma generate && DATABASE_URL=${DIRECT_URL:-$DATABASE_URL} prisma migrate deploy && remix vite:build"
   },
   "engines": {
     "node": ">=20.10"

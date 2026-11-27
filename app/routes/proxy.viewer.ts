@@ -9,10 +9,23 @@ import { authenticate } from "../shopify.server";
 const isProd = process.env.NODE_ENV === "production";
 let cached: string | null = null;
 
+/* The viewer page, from disk where the app runs as a normal Node server (laptop, AWS EC2 / ECS / Beanstalk), else from
+   the app's own URL (serverless hosts like Vercel serve public/ from a CDN, it isn't on the function's disk). */
+async function readViewer(appUrl: string): Promise<string> {
+  try {
+    return await fs.readFile(path.join(process.cwd(), "public", "viewer", "index.html"), "utf8");
+  } catch {
+    const res = await fetch(`${appUrl}/viewer/index.html`);
+    if (!res.ok) throw new Error(`viewer ${res.status}`);
+    return res.text();
+  }
+}
+
 async function viewerHtml(): Promise<string> {
   if (cached && isProd) return cached;
-  const html = await fs.readFile(path.join(process.cwd(), "public", "viewer", "index.html"), "utf8");
-  const base = `${(process.env.SHOPIFY_APP_URL || "").replace(/\/$/, "")}/viewer/`;
+  const appUrl = (process.env.SHOPIFY_APP_URL || "").replace(/\/$/, "");
+  const html = await readViewer(appUrl);
+  const base = `${appUrl}/viewer/`;
   cached = html.replace("<head>", `<head>\n<base href="${base}">`);
   return cached;
 }
