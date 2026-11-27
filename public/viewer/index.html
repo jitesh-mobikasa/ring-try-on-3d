@@ -466,6 +466,21 @@
   .skinbar .swatch.on { box-shadow:0 0 0 2px var(--ink, #1c1917); }
   @media (max-width: 1100px) { .skinbar { left:10px; bottom:10px; gap:4px; padding:4px 6px; } .skinbar .swatch { width:20px; height:20px; } }
   .single #kindTabs, .single .carwrap, .single #carCount, .single #drawTip { display:none !important; }
+  /* Product page: "Try more pieces" under the buttons — a category switch and a 2-column list (tap = stack on the
+     finger / put on the wrist, drag = onto any finger) */
+  .morepick { border-top:1px solid var(--line); padding:14px 20px 18px; display:grid; gap:10px; }
+  @media (max-width: 1100px) { .morepick { padding:12px 16px 14px; } }
+  .morepick .mphead { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .morepick .mphead b { font-size:14px; }
+  .morepick select { height:36px; padding:0 10px; border:1px solid var(--line); border-radius:10px; background:#fff; font:inherit; font-size:13px; }
+  .morepick .mptip { font-size:12px; color:var(--muted, #78716c); margin:-4px 0 0; }
+  .single .morepick .carwrap { display:block !important; }
+  .morepick .carbtn { display:none !important; }
+  /* minmax(0, 1fr): long names end in "…" instead of widening the column (and the whole panel) */
+  .morepick, .morepick .carwrap { min-width:0; max-width:100%; }
+  .morepick .ringgrid { grid-auto-flow:row !important; grid-template-columns:repeat(2, minmax(0, 1fr)) !important; grid-auto-columns:auto !important;
+    width:100%; box-sizing:border-box; overflow-x:hidden !important; overflow-y:auto !important; max-height:420px !important; height:auto !important; gap:10px; padding:2px; }
+  .morepick .ringcard { width:auto !important; min-width:0 !important; }
   .carwrap { position:relative; }
   .tryon .ringgrid, .ringgrid { grid-template-columns:none; grid-auto-flow:column; grid-auto-columns:calc(50% - 6px); overflow-x:auto; overflow-y:hidden;
     max-height:none; scroll-snap-type:x mandatory; overscroll-behavior-x:contain; scrollbar-width:none; scroll-behavior:smooth; }
@@ -675,6 +690,7 @@ const fromEmbed = x => ({
   lengths:Array.isArray(x.lengths) && x.lengths.length ? x.lengths : null,             // bracelet Length option values (from the variants)
   carats:Array.isArray(x.carats) && x.carats.length ? x.carats : null,                // ring centre stone: Carat option values (from the variants)
   combos:x.combos || null, firstCarat:x.firstCarat ?? null,
+  metalValues:x.metalValues?.length ? x.metalValues : null,   // the store's own metal values
   shownCarat:+x.tryon?.shownCarat || null,                                             // carat of the stone in the try-on image
 });
 // Rings (PRODUCTS) go on the fingers, bracelets (BRACELETS) on the wrist. Both grow when more are loaded from the store.
@@ -682,6 +698,18 @@ const ALL = EMBED ? [...new Map((EMBED.products || []).map(x => [String(x.key), 
 const PRODUCTS = ALL.filter(p => p.kind !== 'bracelet');
 const BRACELETS = ALL.filter(p => p.kind === 'bracelet');
 const metalsOf = p => Object.keys(METALS).filter(k => !p.metalPrices || k in p.metalPrices);
+/* Store metal values: when a product has its own metal values (e.g. "92.5 Sterling Silver", "10K / 14K / 18K White
+   Gold"), the try-on lists exactly those; cfg.metalValue is the chosen one, cfg.metal its colour (Y / W / R / P) for
+   drawing and the per-metal image. Products without them use the 4 colours as before. */
+const mvOf = (p, cfg) => p?.metalValues?.find(m => m.v === cfg?.metalValue) || null;
+const metalLabel = (p, cfg) => mvOf(p, cfg)?.v || METALS[cfg.metal]?.name || '';
+const hasMetals = p => !!(p?.metalValues || p?.metalPrices);
+function metalTilesHTML(p, c, attr) {
+  if (p.metalValues) return p.metalValues.map(m => `<button class="mtile ${c.metalValue === m.v ? 'on' : ''}" ${attr}="${esc(m.v)}" data-mk="${m.k}"${m.a ? '' : ' title="Sold out"'}><img src="products/metal-${m.k}.png" alt="">${esc(m.v)}${m.a ? '' : ' · sold out'}</button>`).join('');
+  return metalsOf(p).map(k => `<button class="mtile ${c.metal === k ? 'on' : ''}" ${attr}="${k}" data-mk="${k}"><img src="products/metal-${k}.png" alt="">${METALS[k].name}</button>`).join('');
+}
+// a metal tile was clicked: value + colour for store values, else the colour only
+const metalPatch = (p, b) => p.metalValues ? { metalValue:b.dataset[b.dataset.metal !== undefined ? 'metal' : 'bmetal'], metal:b.dataset.mk } : { metal:b.dataset.mk };
 const byId = Object.fromEntries(ALL.map(p => [p.id, p]));
 // The page's own product, when it is a bracelet: it starts on the wrist
 const CUR_BRACELET = BRACELETS.find(p => p.key === EMBED?.current) || null;
@@ -690,7 +718,21 @@ const BRACELET_ONLY = !!CUR_BRACELET;
 /* Single-product mode (feedback 2026-11-26): opened from a product page, the try-on shows ONLY that product —
    no Rings / Bracelets tabs, no carousel of other products. Set to false to bring the carousel back. */
 const SINGLE = !!EMBED;
+const STACK_MAX = 3, STACK_MM = 2.6;            // rings per finger; distance between stacked rings (band + small gap)
 if (SINGLE) document.documentElement.classList.add('single');
+// Product page: move the product list under the buttons as "Try more pieces", with a Rings / Bracelets switch
+// Product page, ring products only: the store's rings under the buttons as "Try more pieces" (tap = stack on the
+// same finger, drag = any finger). Bracelet pages: switched off for now (one bracelet at a time, nothing to stack).
+const MORE_PICK_BRACELETS = false;
+function setupMorePick() {
+  const panel = $('panelShop'), car = panel?.querySelector('.carwrap'); if (!SINGLE || !car || $('morePick')) return;
+  if (CUR_BRACELET && !MORE_PICK_BRACELETS) return;
+  state.pickKind = 'ring';
+  const wrap = document.createElement('div'); wrap.className = 'morepick'; wrap.id = 'morePick';
+  wrap.innerHTML = `<div class="mphead"><b>Try more rings</b></div>
+    <p class="mptip">Tap a ring to stack it on the same finger (up to ${STACK_MAX}), or drag it onto any finger.</p>`;
+  wrap.appendChild(car); panel.appendChild(wrap);
+}
 const relabelShopTab = () => { const t = document.getElementById('tabShop'); if (t) t.lastChild.textContent = SINGLE ? 'Try on' : 'Bracelets'; };
 if (BRACELET_ONLY || SINGLE) document.readyState === 'loading' ? document.addEventListener('DOMContentLoaded', relabelShopTab) : relabelShopTab();
 const hasCenter = p => ['solitaire', 'halo', 'three', 'pave'].includes(p.style);
@@ -796,7 +838,7 @@ const $ = id => document.getElementById(id);
 /* Bracelets: one per wrist, in state.wrist ({ pid, cfg, slide }) — each hand keeps its own (see handSet).
    state.drawer = which list the drawer shows / the options edit: 'ring' or 'bracelet'.
    state.noRing = the store has no rings at all (bracelet-only): the active-ring fields are then not drawn. */
-const state = { worn:{}, wrist:null, drawer:'ring', noRing:!PRODUCTS.length, hands:{ left:null, right:null }, float:null, tab:'hand',
+const state = { slot:0, worn:{}, wrist:null, drawer:'ring', noRing:!PRODUCTS.length, hands:{ left:null, right:null }, float:null, tab:'hand',
   pid:(PRODUCTS.find(p => p.key === EMBED?.current) || PRODUCTS[0] || ALL[0]).id, cfg:null, finger:'ring', slide:0, side:'left', orient:CUR_BRACELET || !PRODUCTS.length ? 'bracelet' : 'ring', panel:'ring', tone:20,
   yaw:0, pitch:0, zoom:1, panX:0, panY:0, open:false, cart:[] };
 const product = () => byId[state.pid];
@@ -814,7 +856,8 @@ const stoneKFor = (p, ct) => { const c = caratNum(ct); return c ? clamp(Math.cbr
 const stoneMM = ct => { const c = caratNum(ct); return c ? 6.5 * Math.cbrt(c) : null; };     // round-equivalent width
 const defaultCarat = p => !p.carats ? null : (p.carats.find(c => Math.abs((caratNum(c) || 0) - (p.shownCarat || -1)) < .01) || p.firstCarat || p.carats[0]);
 const freshCfg = p => { const ct = defaultCarat(p);
-  return { metal:p.metal, stone:p.stone, shape:p.shape, carat:1, band:1, size:4, ct, stoneK:ct ? stoneKFor(p, ct) : 1, length:bestLength(p) }; };
+  const mv = p.metalValues?.find(m => m.a && m.k === p.metal) || p.metalValues?.find(m => m.a) || p.metalValues?.[0];   // like the store: an in-stock one of the default colour
+  return { metal:mv ? mv.k : p.metal, metalValue:mv ? mv.v : null, stone:p.stone, shape:p.shape, carat:1, band:1, size:4, ct, stoneK:ct ? stoneKFor(p, ct) : 1, length:bestLength(p) }; };
 // Bracelets open in the size that fits the model's wrist (bangle ≈ 60 mm inside, chain ≈ 17 cm); the shopper can change it.
 function bestLength(p) {
   const L = p.lengths; if (!L?.length) return null;
@@ -824,23 +867,39 @@ function bestLength(p) {
 state.cfg = freshCfg(product());
 const geo = id => { const h = HANDS[hk()], g = h.geo[id], f = h.fit; return { x:g.x * f.s + f.dx, y:g.y * f.s + f.dy, rot:g.rot, w:g.w * f.s }; };
 const caratFee = () => hasCenter(product()) ? Math.round((Math.pow(state.cfg.carat, 1.7) - 1) * 1400 / 10) * 10 : 0;
-const comboPrice = (p, cfg) => { const c = p.combos?.find(x => (!x.m || x.m === cfg.metal) && String(x.c) === String(cfg.ct)); return c ? c.price : null; };
-const price = () => EMBED ? (comboPrice(product(), state.cfg) ?? product().metalPrices?.[state.cfg.metal] ?? product().price) : product().price + METALS[state.cfg.metal].add + caratFee();
+const comboMetal = (x, cfg) => cfg.metalValue && x.mv ? x.mv === cfg.metalValue : (!x.m || x.m === cfg.metal);
+const comboPrice = (p, cfg) => { const c = p.combos?.find(x => comboMetal(x, cfg) && String(x.c) === String(cfg.ct)); return c ? c.price : null; };
+const price = () => EMBED ? (comboPrice(product(), state.cfg) ?? mvOf(product(), state.cfg)?.price ?? product().metalPrices?.[state.cfg.metal] ?? product().price) : product().price + METALS[state.cfg.metal].add + caratFee();
 const spec = () => ({ style:product().style, ...state.cfg });
 const snap = () => ({ pid:state.pid, cfg:state.cfg, slide:state.slide, spin:state.spin || 0 });
+/* Ring stacks: up to STACK_MAX rings on one finger. A parked ring's key in state.worn is its finger, plus "~n" for
+   the 2nd / 3rd ring on that finger ("ring", "ring~1", "ring~2"); the active ring is state.finger + state.slot.
+   Everything that measures or draws uses the plain finger (fingerOf), so fit / size / drawing are unchanged. */
+const fingerOf = k => String(k).split('~')[0];
+const slotOf = k => +(String(k).split('~')[1] || 0);
+const keyOf = (f, n) => n ? `${f}~${n}` : f;
+const activeKey = () => keyOf(state.finger, state.slot || 0);
+// keys of the rings on finger f of the hand on screen (the active one too)
+const stackOn = f => [...(state.noRing || state.finger !== f ? [] : [activeKey()]), ...Object.keys(state.worn).filter(k => fingerOf(k) === f)];
+const slideOfKey = k => k === activeKey() && !state.noRing ? state.slide : state.worn[k]?.slide ?? 0;
+const freeSlot = f => { const used = new Set(stackOn(f).map(slotOf)); let n = 0; while (used.has(n)) n++; return n; };
+const stackStep = f => STACK_MM / (geo(f).w / 19 / H_().fit.s * SC_());   // mm → slide steps on this finger
+// slide for a new ring on top of the stack on finger f (just above the highest ring there)
+const stackSlide = f => { const top = Math.max(...stackOn(f).map(slideOfKey)); return clamp(top + stackStep(f), ...rangeOf(f)); };
+const topKey = f => stackOn(f).sort((a, b) => slideOfKey(b) - slideOfKey(a))[0];
 /* Each hand has its own rings. The hand on screen lives in the active-ring fields + worn; the other hand's set
    waits in state.hands[side] (null = no rings yet). */
-const handSet = () => ({ pid:state.pid, cfg:state.cfg, finger:state.finger, slide:state.slide, spin:state.spin || 0, worn:{ ...state.worn },
+const handSet = () => ({ pid:state.pid, cfg:state.cfg, finger:state.finger, slot:state.slot || 0, slide:state.slide, spin:state.spin || 0, worn:{ ...state.worn },
   wrist:state.wrist ? { ...state.wrist } : null, noRing:state.noRing });
-const loadSet = s => Object.assign(state, { pid:s.pid, cfg:s.cfg, finger:s.finger, slide:s.slide, spin:s.spin || 0, worn:{ ...s.worn },
+const loadSet = s => Object.assign(state, { pid:s.pid, cfg:s.cfg, finger:s.finger, slot:s.slot || 0, slide:s.slide, spin:s.spin || 0, worn:{ ...s.worn },
   wrist:s.wrist ? { ...s.wrist } : null, noRing:!!s.noRing, float:null });
-// Every piece on a hand as [where, pid, cfg]: fingers first, then 'wrist' for the bracelet.
-const ringsIn = s => s ? [...(s.noRing ? [] : [[s.finger, s.pid, s.cfg]]), ...Object.entries(s.worn).map(([f, r]) => [f, r.pid, r.cfg]),
+// Every piece on a hand as [where, pid, cfg, slide]: fingers first (where = stack key, e.g. "ring~1"), then 'wrist'.
+const ringsIn = s => s ? [...(s.noRing ? [] : [[keyOf(s.finger, s.slot || 0), s.pid, s.cfg, s.slide]]), ...Object.entries(s.worn).map(([f, r]) => [f, r.pid, r.cfg, r.slide]),
   ...(s.wrist ? [['wrist', s.wrist.pid, s.wrist.cfg]] : [])] : [];
 // Run fn as if ring r on `finger` were the active one (fit / size / drawing code all read the active ring).
 function withRing(r, finger, fn) {
   const keep = { pid:state.pid, cfg:state.cfg, slide:state.slide, spin:state.spin, finger:state.finger, float:state.float };
-  Object.assign(state, { pid:r.pid, cfg:r.cfg, slide:r.slide, spin:r.spin, finger, float:null });
+  Object.assign(state, { pid:r.pid, cfg:r.cfg, slide:r.slide, spin:r.spin, finger:fingerOf(finger), float:null });   // finger may be a stack key
   try { return fn(); } finally { Object.assign(state, keep); }
 }
 
@@ -1643,39 +1702,61 @@ function placeRing(active) {
 
 /* ---------- several rings: switch, add, remove ---------- */
 function afterRingsChanged() { refreshViewer(); renderOptions(); renderShop(); rebuildRing(); }
-function activate(f) {                                  // make the ring on finger f the active one
-  const r = state.worn[f]; if (!r || (f === state.finger && !state.noRing)) return;
-  delete state.worn[f]; if (!state.noRing) state.worn[state.finger] = snap();   // no visible active ring → nothing to park
+function activate(k, render = true) {                  // make the ring with stack key k (e.g. "ring", "ring~1") the active one
+  const r = state.worn[k]; if (!r || (k === activeKey() && !state.noRing)) return;
+  delete state.worn[k]; if (!state.noRing) state.worn[activeKey()] = snap();   // no visible active ring → nothing to park
   state.noRing = false;
-  Object.assign(state, { pid:r.pid, cfg:r.cfg, slide:r.slide, spin:r.spin, finger:f, float:null });
-  afterRingsChanged();
+  Object.assign(state, { pid:r.pid, cfg:r.cfg, slide:r.slide, spin:r.spin, finger:fingerOf(k), slot:slotOf(k), float:null });
+  if (render) afterRingsChanged();
 }
-function placeNew(pid, f) {                             // a ring from the drawer dropped on finger f (replaces what was there)
-  const size = state.cfg.size;
-  if (state.noRing) { delete state.worn[f]; state.finger = f; state.spin = 0; state.noRing = false; }   // first ring on this hand
-  else if (f !== state.finger) { delete state.worn[f]; state.worn[state.finger] = snap(); state.finger = f; state.spin = 0; }
-  state.pid = pid; state.cfg = freshCfg(byId[pid]); state.cfg.size = size; state.float = null;
-  state.slide = seat(f, 0);
-  afterRingsChanged();
-  toast(fitStatus().tight ? fitStatus().msg : `${byId[pid].name} on your ${f === 'thumb' ? 'thumb' : LABEL[f].toLowerCase() + ' finger'}`);
-}
-function removeRing(f) {
-  if (f !== state.finger) delete state.worn[f];
-  else {
-    const next = Object.keys(state.worn)[0];
-    if (!next) state.noRing = true;                       // last ring off → only the bracelet (or nothing) is left
-    else { activate(next); delete state.worn[f]; }
+/* A ring from the list dropped on finger f: it is STACKED on the rings already there (just above the top one);
+   a full finger (STACK_MAX rings) gets its top ring replaced. */
+function placeNew(pid, f) {
+  const size = state.cfg.size, n = stackOn(f).length, name = f === 'thumb' ? 'thumb' : LABEL[f].toLowerCase() + ' finger';
+  let msg;
+  if (n >= STACK_MAX) {                                 // full → the top ring is swapped for the new one
+    const top = topKey(f); if (top !== activeKey()) activate(top, false);
+    msg = `Up to ${STACK_MAX} rings per finger: the top ring was replaced`;
+  } else {
+    const slide = n ? stackSlide(f) : seat(f, 0), slot = freeSlot(f);
+    if (!state.noRing) state.worn[activeKey()] = snap();   // the ring that was active stays where it is
+    Object.assign(state, { finger:f, slot, slide, spin:0, noRing:false });
+    msg = n ? `${byId[pid].name} stacked on your ${name} (${n + 1} rings)` : `${byId[pid].name} on your ${name}`;
   }
+  state.pid = pid; state.cfg = freshCfg(byId[pid]); state.cfg.size = size; state.float = null;
+  if (!n) state.slide = seat(f, 0);
+  afterRingsChanged();
+  toast(fitStatus().tight ? fitStatus().msg : msg);
+}
+// Close the gap a removed ring leaves in a stack: the rings above it move down, keeping the same spacing.
+function packStack(f) {
+  const keys = stackOn(f).sort((a, b) => slideOfKey(a) - slideOfKey(b)); if (!keys.length) return;
+  let at = 0;
+  keys.forEach((k, i) => {
+    at = i ? clamp(Math.min(slideOfKey(k), at + stackStep(f)), ...rangeOf(f)) : slideOfKey(k);
+    if (k === activeKey() && !state.noRing) state.slide = at; else state.worn[k].slide = at;
+  });
+}
+function removeRing(k) {
+  const f = fingerOf(k);
+  if (k !== activeKey() || state.noRing) delete state.worn[k];
+  else {
+    // the next ring to edit: another one on the same finger first, else any
+    const next = Object.keys(state.worn).find(x => fingerOf(x) === state.finger) || Object.keys(state.worn)[0];
+    if (!next) state.noRing = true;                       // last ring off → only the bracelet (or nothing) is left
+    else { activate(next, false); delete state.worn[k]; }
+  }
+  packStack(f);
   afterRingsChanged();
 }
 function renderWorn() {
   renderSelections();                                   // keep "My selections" + its count in sync
   const box = $('wornList'); if (!box) return;
-  const all = [...(state.noRing ? [] : [[state.finger, state.pid]]), ...Object.entries(state.worn).map(([f, r]) => [f, r.pid])]
-    .sort((a, b) => FINGERS.indexOf(a[0]) - FINGERS.indexOf(b[0]));
+  const all = [...(state.noRing ? [] : [[activeKey(), state.pid, state.slide]]), ...Object.entries(state.worn).map(([f, r]) => [f, r.pid, r.slide])]
+    .sort((a, b) => FINGERS.indexOf(fingerOf(a[0])) - FINGERS.indexOf(fingerOf(b[0])) || a[2] - b[2]);
   box.hidden = all.length < 2;
-  box.innerHTML = all.map(([f, pid]) => `<span class="wornchip ${f === state.finger ? 'on' : ''}" data-f="${f}" role="button" tabindex="0" title="Edit this ring">
-      <span>${LABEL[f]} · ${esc(byId[pid].name)}</span><button class="x" data-x="${f}" aria-label="Remove the ring from the ${LABEL[f]} finger">✕</button></span>`).join('');
+  box.innerHTML = all.map(([f, pid]) => `<span class="wornchip ${f === activeKey() && !state.noRing ? 'on' : ''}" data-f="${f}" role="button" tabindex="0" title="Edit this ring">
+      <span>${esc(stackLabel(f))} · ${esc(byId[pid].name)}</span><button class="x" data-x="${f}" aria-label="Remove ${esc(byId[pid].name)} from the ${esc(stackLabel(f))}">✕</button></span>`).join('');
   box.querySelectorAll('[data-f]').forEach(el => {
     el.onclick = e => { const x = e.target.closest('[data-x]'); x ? removeRing(x.dataset.x) : activate(el.dataset.f); };
     el.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(el.dataset.f); } };
@@ -1766,21 +1847,24 @@ function drawOverlay() {
     octx.font = '600 12px Inter,system-ui,sans-serif'; octx.textAlign = 'center'; octx.fillStyle = `rgb(${rgb})`;
     octx.fillText(state.wrist ? 'Drop to replace bracelet' : 'Drop on the wrist', c.x, c.y - r * .42 - 8);
   } else {
-    // Drop zones: every finger is outlined, the one under the pointer fills in.
-    // Fingers that already wear a ring are pink: dropping there replaces (new ring) or swaps (moved ring).
-    FINGERS.forEach(id => {
-      const g = geo(id), c = toScreen(P2L(g.x, g.y)), e = toScreen(P2L(g.x + Math.cos(rad(g.rot)) * g.w, g.y + Math.sin(rad(g.rot)) * g.w));
-      const r = Math.hypot(e.x - c.x, e.y - c.y), on = guide.hit === id;
-      const taken = !!state.worn[id] || (guide.type === 'drop' && id === state.finger), rgb = taken ? '228,106,163' : '107,78,255';
-      octx.strokeStyle = `rgb(${rgb})`;
-      octx.beginPath(); octx.ellipse(c.x, c.y, r * 1.25, r * .55, rad(g.rot) * (state.side === 'right' ? 1 : -1), 0, Math.PI * 2);
-      octx.setLineDash(on ? [] : [5, 4]); octx.lineWidth = on ? 2.5 : 1.5;
-      octx.fillStyle = `rgba(${rgb},${on ? .28 : .08})`; octx.fill(); octx.stroke(); octx.setLineDash([]);
-      if (on) {
-        octx.font = '600 12px Inter,system-ui,sans-serif'; octx.textAlign = 'center'; octx.fillStyle = `rgb(${rgb})`;
-        octx.fillText(taken ? (guide.type === 'drop' ? 'Replace' : 'Swap') : LABEL[id], c.x, c.y - r * .55 - 8);
-      }
-    });
+    // Ring drop zones hidden for now (2026-11-26, on request). Uncomment to show the finger outlines again.
+    // // Drop zones: every finger is outlined, the one under the pointer fills in.
+    // // Fingers that already wear a ring are pink: dropping there replaces (new ring) or swaps (moved ring).
+    // FINGERS.forEach(id => {
+    //   const g = geo(id), c = toScreen(P2L(g.x, g.y)), e = toScreen(P2L(g.x + Math.cos(rad(g.rot)) * g.w, g.y + Math.sin(rad(g.rot)) * g.w));
+    //   const r = Math.hypot(e.x - c.x, e.y - c.y), on = guide.hit === id;
+    //   // pink = full (dropping there replaces the top ring / swaps); a finger with room shows how many rings it will have
+    //   const have = stackOn(id).length - (guide.type === 'move' && id === state.finger ? 1 : 0), taken = have >= STACK_MAX;
+    //   const rgb = taken ? '228,106,163' : '107,78,255';
+    //   octx.strokeStyle = `rgb(${rgb})`;
+    //   octx.beginPath(); octx.ellipse(c.x, c.y, r * 1.25, r * .55, rad(g.rot) * (state.side === 'right' ? 1 : -1), 0, Math.PI * 2);
+    //   octx.setLineDash(on ? [] : [5, 4]); octx.lineWidth = on ? 2.5 : 1.5;
+    //   octx.fillStyle = `rgba(${rgb},${on ? .28 : .08})`; octx.fill(); octx.stroke(); octx.setLineDash([]);
+    //   if (on) {
+    //     octx.font = '600 12px Inter,system-ui,sans-serif'; octx.textAlign = 'center'; octx.fillStyle = `rgb(${rgb})`;
+    //     octx.fillText(taken ? (guide.type === 'drop' ? 'Replace top ring' : 'Swap') : have ? `Stack (${have + 1})` : LABEL[id], c.x, c.y - r * .55 - 8);
+    //   }
+    // });
   }
 }
 
@@ -1814,7 +1898,7 @@ canvas.addEventListener('pointerdown', e => {
   }
   let onRing = state.tab === 'hand' && !state.noRing && ringHit(e);
   if (!onRing && state.tab === 'hand') { const f = parkedHit(e); if (f) { activate(f); onRing = true; } }   // grab another ring on the hand
-  drag = { ring:onRing, finger0:state.finger, x:e.clientX, y:e.clientY, moved:false, yaw:state.yaw, pitch:state.pitch, panX:state.panX, panY:state.panY, slide0:state.slide };
+  drag = { ring:onRing, finger0:state.finger, slot0:state.slot || 0, x:e.clientX, y:e.clientY, moved:false, yaw:state.yaw, pitch:state.pitch, panX:state.panX, panY:state.panY, slide0:state.slide };
 });
 canvas.addEventListener('pointermove', e => {
   if (!drag) return;
@@ -1846,8 +1930,13 @@ canvas.addEventListener('pointerup', e => {
     if (SINGLE && CUR_BRACELET && !state.wrist && H_().wrist && onWrist(photoAt(e), 2.2)) return placeBracelet(CUR_BRACELET.id);
     if (state.noRing) return;                    // no rings in this store                       // tap a finger → ring goes there, at the tapped spot
     const f = fingerUnder(photoAt(e));
-    if (f && state.worn[f.id]) { activate(f.id); return; }                 // tap a finger that wears a ring → edit that ring
-    if (f) { state.finger = f.id; state.slide = seat(f.id, Math.round(f.slide)); rebuildRing(); renderWorn(); if (fitStatus().tight) toast(fitStatus().msg); }
+    const onIt = f ? stackOn(f.id) : [];
+    if (onIt.length) {                                 // tap a finger that wears ring(s) → edit the one nearest the tap
+      const k = onIt.sort((a, b) => Math.abs(slideOfKey(a) - f.slide) - Math.abs(slideOfKey(b) - f.slide))[0];
+      if (k !== activeKey()) activate(k);
+      return;
+    }
+    if (f) { state.finger = f.id; state.slot = 0; state.slide = seat(f.id, Math.round(f.slide)); rebuildRing(); renderWorn(); if (fitStatus().tight) toast(fitStatus().msg); }
     return;
   }
   if (d.ring) {
@@ -1856,11 +1945,20 @@ canvas.addEventListener('pointerup', e => {
       if (f) { state.finger = f.id; state.slide = f.slide; } else { state.finger = d.finger0; state.slide = d.slide0; }
       state.float = null;
     }
-    // Dropped on a finger that already wears a ring → that ring moves to where this one came from (swap).
-    const other = state.worn[state.finger];
-    if (other) {
-      delete state.worn[state.finger];
-      if (d.finger0 !== state.finger) state.worn[d.finger0] = { ...other, slide:withRing(other, d.finger0, () => seat(d.finger0, 0)) };
+    // Moved to another finger: it is stacked on the rings there (just above the top one). A full finger swaps:
+    // its top ring moves to where this one came from.
+    if (state.finger !== d.finger0) {
+      const others = Object.keys(state.worn).filter(k => fingerOf(k) === state.finger);
+      if (others.length >= STACK_MAX) {
+        const top = others.sort((a, b) => state.worn[b].slide - state.worn[a].slide)[0], other = state.worn[top];
+        delete state.worn[top]; state.slot = slotOf(top);
+        const back = keyOf(d.finger0, d.slot0 || 0);
+        state.worn[back] = { ...other, slide:withRing(other, d.finger0, () => seat(d.finger0, d.slide0)) };
+      } else {
+        const used = new Set(others.map(slotOf)); let n = 0; while (used.has(n)) n++;
+        state.slot = n;
+        if (others.length) state.slide = clamp(Math.max(...others.map(k => state.worn[k].slide)) + stackStep(state.finger), ...rangeOf(state.finger));
+      }
     }
     state.slide = seat(state.finger, Math.round(state.slide)); rebuildRing(); renderWorn();
     if (fitStatus().tight) toast(fitStatus().msg);
@@ -1934,10 +2032,17 @@ function snapshot(side = state.side, type = 'image/png', q) {
 const allRings = () => [...ringsIn(handSet()), ...ringsIn(state.hands.left), ...ringsIn(state.hands.right)];
 const ready = () => Promise.all(allRings().map(([, pid, cfg]) => byId[pid]?.tryonImage && loadTryonTexture(tryonUrl(byId[pid], cfg?.metal))));
 const loadImg = src => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
-const fingerName = f => f === 'wrist' ? 'Wrist' : f === 'thumb' ? 'Thumb' : LABEL[f] + ' finger';
+const fingerName = k => { const f = fingerOf(k); return f === 'wrist' ? 'Wrist' : f === 'thumb' ? 'Thumb' : LABEL[f] + ' finger'; };
+// "Ring finger" for a single ring, "Ring finger · 2 of 3" in a stack (counted from the base of the finger)
+function stackLabel(k, set = null) {
+  const f = fingerOf(k); if (f === 'wrist') return 'Wrist';
+  const keys = set ? ringsIn(set).filter(r => fingerOf(r[0]) === f).sort((a, b) => a[3] - b[3]).map(r => r[0])
+                   : stackOn(f).sort((a, b) => slideOfKey(a) - slideOfKey(b));
+  return keys.length > 1 ? `${fingerName(f)} · ${keys.indexOf(k) + 1} of ${keys.length}` : fingerName(f);
+}
 // "Ring finger: Lara · US 6 · 18 ct Yellow Gold" / "Wrist: Tennis bracelet · 17 cm · …"
 const pieceSpec = (f, pid, cfg) => f === 'wrist' ? (cfg.length ? String(cfg.length) : '') : `US ${RING_SIZES[cfg.size][0]}`;
-const ringLine = (f, pid, cfg) => `${fingerName(f)}: ${byId[pid].name}${pieceSpec(f, pid, cfg) ? ' · ' + pieceSpec(f, pid, cfg) : ''}${byId[pid].metalPrices ? ' · ' + METALS[cfg.metal].name : ''}`;
+const ringLine = (f, pid, cfg) => `${fingerName(f)}: ${byId[pid].name}${pieceSpec(f, pid, cfg) ? ' · ' + pieceSpec(f, pid, cfg) : ''}${hasMetals(byId[pid]) ? ' · ' + metalLabel(byId[pid], cfg) : ''}`;
 
 // Rotate the ring around the finger: mouse wheel over the ring, or the ⟳ button.
 const spinBy = a => { state.spin = ((state.spin || 0) + a) % (Math.PI * 2); rebuildRing(); };
@@ -1952,14 +2057,14 @@ function moveTo(id) { state.finger = id; state.slide = seat(id, 0); rebuildRing(
 function optionsHTML() {
   const p = product(), c = state.cfg;
   return `
-    ${!EMBED || p.metalPrices ? `
-    <div class="optgrp"><div class="optlbl">Metal Type</div><div class="metaltiles">${metalsOf(p).map(k => [k, METALS[k]]).map(([k, m]) => `<button class="mtile ${c.metal === k ? 'on' : ''}" data-metal="${k}"><img src="products/metal-${k}.png" alt="">${m.name}</button>`).join('')}</div></div>` : ''}
+    ${!EMBED || hasMetals(p) ? `
+    <div class="optgrp"><div class="optlbl">Metal Type</div><div class="metaltiles">${metalTilesHTML(p, c, 'data-metal')}</div></div>` : ''}
     ${hasCenter(p) && !EMBED ? `
     <div class="optgrp"><div class="optlbl">Centre Stone Shape</div><div class="pills">${SHAPES.map(s => `<button class="pillopt ${c.shape === s ? 'on' : ''}" data-shape="${s}">${s[0].toUpperCase() + s.slice(1)}</button>`).join('')}</div></div>
     <div class="optgrp"><div class="optlbl">Carat</div><div class="caratrow"><input data-carat type="range" min="0.5" max="7" step="0.25" value="${c.carat}"><b data-caratv>${c.carat.toFixed(2)} ct</b></div></div>` : ''}
     ${p.carats ? `
     <div class="optgrp"><div class="optlbl">Centre Stone</div><div class="pills">${p.carats.map(ct => {
-      const cp = comboPrice(p, { metal:c.metal, ct }), out = p.combos?.some(x => String(x.c) === String(ct) && (!x.m || x.m === c.metal)) && !p.combos.some(x => String(x.c) === String(ct) && (!x.m || x.m === c.metal) && x.a);
+      const cp = comboPrice(p, { ...c, ct }), out = p.combos?.some(x => String(x.c) === String(ct) && comboMetal(x, c)) && !p.combos.some(x => String(x.c) === String(ct) && comboMetal(x, c) && x.a);
       return `<button class="pillopt ${String(c.ct) === String(ct) ? 'on' : ''}" data-ct="${esc(ct)}" ${out ? 'title="Sold out"' : ''}>${esc(ct)}${out ? ' · sold out' : ''}</button>`; }).join('')}</div>
       ${stoneMM(c.ct) ? `<div class="muted" style="font-size:12px;margin-top:6px">${esc(c.ct)} ≈ ${stoneMM(c.ct).toFixed(1)} mm across (round), shown at real size on the hand</div>` : ''}</div>` : ''}
     ${STONE_PERCENT && !p.carats && p.tryonImage && p.tryonView === 'top' ? `
@@ -1967,7 +2072,7 @@ function optionsHTML() {
 }
 function bindOptions(box) {
   const live = patch => { Object.assign(state.cfg, patch); refreshViewer(); rebuildRing(); updatePrices(); };
-  box.querySelectorAll('[data-metal]').forEach(b => b.onclick = () => { live({ metal:b.dataset.metal }); renderOptions(); });
+  box.querySelectorAll('[data-metal]').forEach(b => b.onclick = () => { live(metalPatch(product(), b)); renderOptions(); });
   box.querySelectorAll('[data-stone]').forEach(b => b.onclick = () => { live({ stone:b.dataset.stone }); renderOptions(); });
   box.querySelectorAll('[data-shape]').forEach(b => b.onclick = () => { live({ shape:b.dataset.shape }); renderOptions(); });
   box.querySelector('[data-carat]')?.addEventListener('input', e => { live({ carat:+e.target.value }); box.querySelector('[data-caratv]').textContent = (+e.target.value).toFixed(2) + ' ct'; });
@@ -1993,17 +2098,18 @@ function braceletOptionsHTML() {
   if (!it) return `<div class="nocentre">Tap a bracelet to try it on, or drag it onto the wrist.</div>`;
   const p = byId[it.pid], c = it.cfg;
   return `
-    ${p.metalPrices ? `<div class="optgrp"><div class="optlbl">Metal Type</div><div class="metaltiles">${metalsOf(p).map(k => `<button class="mtile ${c.metal === k ? 'on' : ''}" data-bmetal="${k}"><img src="products/metal-${k}.png" alt="">${METALS[k].name}</button>`).join('')}</div></div>` : ''}
+    ${hasMetals(p) ? `<div class="optgrp"><div class="optlbl">Metal Type</div><div class="metaltiles">${metalTilesHTML(p, c, 'data-bmetal')}</div></div>` : ''}
     ${p.lengths ? `<div class="optgrp"><div class="optlbl">${p.lengths.some(bangleMM) ? 'Bangle size' : 'Size (length)'}</div><div class="pills">${p.lengths.map(l => `<button class="pillopt ${c.length === l ? 'on' : ''}" data-blen="${esc(l)}">${esc(l)}</button>`).join('')}</div>${lengthFit(c.length) ? `<div class="muted" style="font-size:12px;margin-top:6px">${esc(lengthFit(c.length))}</div>` : ''}</div>` : ''}
     ${SINGLE ? '' : '<div class="optgrp"><button class="linkbtn" data-bremove>Remove bracelet</button></div>'}`;
 }
 function bindBraceletOptions(box) {
   const it = state.wrist; if (!it) return;
-  box.querySelectorAll('[data-bmetal]').forEach(b => b.onclick = () => { it.cfg.metal = b.dataset.bmetal; rebuildRing(); renderOptions(); renderSelections(); });
+  box.querySelectorAll('[data-bmetal]').forEach(b => b.onclick = () => { Object.assign(it.cfg, metalPatch(byId[it.pid], b)); rebuildRing(); renderOptions(); renderSelections(); updatePrices(); });
   box.querySelectorAll('[data-blen]').forEach(b => b.onclick = () => { it.cfg.length = b.dataset.blen; rebuildRing(); renderOptions(); renderSelections(); });
   box.querySelector('[data-bremove]')?.addEventListener('click', () => { state.wrist = null; afterRingsChanged(); });
 }
 const editingBracelet = () => state.drawer === 'bracelet';
+const listBracelets = () => SINGLE ? state.pickKind === 'bracelet' : editingBracelet();   // which list the cards show
 const editing = () => editingBracelet() ? (state.wrist ? byId[state.wrist.pid] : null) : product();
 function renderOptions() {
   [$('pdpOptions'), $('shopOptions')].filter(Boolean).forEach(box => {
@@ -2035,7 +2141,7 @@ function updatePrices() {
    (the theme script calls the app's /apps/ring-tryon/products) until there are none left. */
 const PAGE = 12;
 let shown = PAGE, moreObs = null;
-let moreDone = SINGLE || !EMBED?.hasMore, moreBusy = false, moreError = false;
+let moreDone = !EMBED?.hasMore, moreBusy = false, moreError = false;   // product pages too: "Try more pieces" loads as you scroll
 function requestMore() {
   if (moreDone || moreBusy) return;
   moreBusy = true; moreError = false; toParent({ type:'more' });
@@ -2063,7 +2169,7 @@ const filtering = () => !!(filt.q || filt.stock || filt.metals.size || filt.sort
 const minPrice = p => p.metalPrices ? Math.min(...Object.values(p.metalPrices)) : p.price;
 function visibleProducts() {
   const words = filt.q.toLowerCase().split(/\s+/).filter(Boolean);
-  let list = (editingBracelet() ? BRACELETS : PRODUCTS).filter(p => {
+  let list = (listBracelets() ? BRACELETS : PRODUCTS).filter(p => {
     if (filt.stock && p.available === false) return false;
     if (filt.metals.size && ![...filt.metals].some(k => (p.metalPrices ? k in p.metalPrices : p.metal === k))) return false;
     const hay = `${p.name} ${p.type || ''} ${p.desc || ''}`.toLowerCase();
@@ -2092,7 +2198,7 @@ $('findQ')?.addEventListener('input', e => { clearTimeout(findT); findT = setTim
 
 function renderShop() {
   const box = $('shopList'); if (!box) return;
-  const list = visibleProducts(), br = editingBracelet(), noun = br ? 'bracelets' : 'rings';
+  const list = visibleProducts(), br = listBracelets(), noun = br ? 'bracelets' : 'rings';
   const idx = list.findIndex(p => p.id === (br ? state.wrist?.pid : state.pid));
   if (idx >= shown) shown = Math.ceil((idx + 1) / PAGE) * PAGE;      // the active ring is always in the loaded part
   if (filtering() && !moreDone) requestMore();                     // search the whole collection, not just what's loaded
@@ -2108,6 +2214,7 @@ function renderShop() {
     b.onclick = () => {
       if (cardDrag.suppress) return;
       if (byId[b.dataset.id].kind === 'bracelet') return placeBracelet(b.dataset.id);
+      if (SINGLE) return stackPick(b.dataset.id);          // product page: add it to the hand (stacked on the current finger)
       if (b.dataset.id === state.pid && !state.noRing) return;
       openProduct(b.dataset.id); renderPopupControls(); renderShop();
     };
@@ -2118,7 +2225,8 @@ function renderShop() {
   const next = () => { if (shown < list.length) { shown += PAGE; renderShop(); } else requestMore(); };
   $('moreRetry')?.addEventListener('click', () => { moreError = false; requestMore(); renderShop(); });
   if (more && !moreError && 'IntersectionObserver' in window) {
-    moreObs = new IntersectionObserver(es => { if (es.some(x => x.isIntersecting)) next(); }, { root:box, rootMargin:'120px' });
+    // (not while the list has no height yet — then the marker counts as "visible" and pages would load unasked)
+    moreObs = new IntersectionObserver(es => { if (box.clientHeight > 0 && es.some(x => x.isIntersecting)) next(); }, { root:box, rootMargin:'120px' });
     moreObs.observe(more);
   } else if (more && !moreError) { shown = list.length; requestMore(); }
   $('shopName').textContent = editing()?.name || '';
@@ -2150,7 +2258,7 @@ addEventListener('resize', () => carUpdate());
    (its fingers have other widths / lengths); the bracelet only shows on the photo with a wrist. */
 function setHand(k) {
   if (!HANDS[k] || k === state.orient) return;
-  const keep = (r, f) => withRing(r, f, () => seat(f, clamp(r.slide, ...rangeOf(f))));
+  const keep = (r, k) => { const f = fingerOf(k); return withRing(r, f, () => seat(f, clamp(r.slide, ...rangeOf(f)))); };
   state.orient = k;
   if (!state.noRing) state.slide = seat(state.finger, clamp(state.slide, ...rangeOf(state.finger)));
   Object.entries(state.worn).forEach(([f, r]) => r.slide = keep(r, f));
@@ -2171,6 +2279,13 @@ function setDrawer(k) {
   renderChips(); renderShop(); renderOptions(); rebuildRing();
 }
 document.querySelectorAll('[data-drawer]').forEach(b => b.onclick = () => setDrawer(b.dataset.drawer));
+// Product page, "Try more pieces": a ring goes on the finger the current ring is on (stacked; a full finger swaps its
+// top ring), or on the ring finger if the hand has no ring yet. Switches to the ring photo if the wrist photo is up.
+function stackPick(pid) {
+  if (state.drawer !== 'ring') { state.drawer = 'ring'; document.querySelectorAll('[data-drawer]').forEach(b => b.classList.toggle('on', b.dataset.drawer === 'ring')); }
+  setHand('ring');
+  placeNew(pid, state.noRing ? 'ring' : state.finger);
+}
 function placeBracelet(pid) {                    // a bracelet from the drawer goes on the wrist (replaces the one there)
   const p = byId[pid];
   state.wrist = { pid, cfg:freshCfg(p), slide:0 };
@@ -2257,7 +2372,7 @@ function applyLook(l) {
     state.worn[x.finger] = r;
   });
   const first = items[0].finger, r = state.worn[first]; delete state.worn[first];
-  Object.assign(state, { pid:r.pid, cfg:r.cfg, slide:r.slide, spin:0, finger:first, float:null });
+  Object.assign(state, { pid:r.pid, cfg:r.cfg, slide:r.slide, spin:0, finger:first, slot:0, float:null });
   afterRingsChanged(); renderPopupControls();
   if (EMBED) setTab('shop');
   toast(`${l.name}: ${items.length} ring${items.length > 1 ? 's' : ''} on your hand`);
@@ -2286,20 +2401,20 @@ function popup(title, html, buttons, wide) {
 }
 
 /* ---------- My selections + Buy this look: every ring on both hands, in sync with the canvas ---------- */
-const ringPrice = (pid, cfg) => { const p = byId[pid]; return EMBED ? (comboPrice(p, cfg) ?? p.metalPrices?.[cfg.metal] ?? p.price) : p.price + METALS[cfg.metal].add; };
-const order = f => f === 'wrist' ? 99 : FINGERS.indexOf(f);
-const handRings = side => ringsIn(side === state.side ? handSet() : state.hands[side]).sort((a, b) => order(a[0]) - order(b[0]));
+const ringPrice = (pid, cfg) => { const p = byId[pid]; return EMBED ? (comboPrice(p, cfg) ?? mvOf(p, cfg)?.price ?? p.metalPrices?.[cfg.metal] ?? p.price) : p.price + METALS[cfg.metal].add; };
+const order = f => f === 'wrist' ? 99 : FINGERS.indexOf(fingerOf(f));
+const handRings = side => ringsIn(side === state.side ? handSet() : state.hands[side]).sort((a, b) => order(a[0]) - order(b[0]) || a[3] - b[3]);
 function cartLine(side, [f, pid, cfg]) {
   const p = byId[pid], hand = side === 'left' ? 'Left' : 'Right';
   if (f === 'wrist') {                                  // bracelet: matched on metal + Length
     const props = { 'Worn on':`${hand} wrist` };
-    if (p.metalPrices) props.Metal = METALS[cfg.metal].name;
+    if (hasMetals(p)) props.Metal = metalLabel(p, cfg);
     if (cfg.length) props.Length = String(cfg.length);
-    return { productKey:p.key, metal:cfg.metal, length:cfg.length, properties:{ ...props, _source:'Virtual try-on look' } };
+    return { productKey:p.key, metal:cfg.metal, metalValue:cfg.metalValue || null, length:cfg.length, properties:{ ...props, _source:'Virtual try-on look' } };
   }
   const props = { 'Ring size':`US ${RING_SIZES[cfg.size][0]}`, 'Worn on':`${hand} hand, ${fingerName(f).toLowerCase()}` };
-  if (p.metalPrices) props.Metal = METALS[cfg.metal].name;
-  return { productKey:p.key, metal:cfg.metal, carat:cfg.ct ?? null, sizeUS:RING_SIZES[cfg.size][0], sizeAU:RING_SIZES[cfg.size][1], properties:{ ...props, _source:'Virtual try-on look' } };
+  if (hasMetals(p)) props.Metal = metalLabel(p, cfg);
+  return { productKey:p.key, metal:cfg.metal, metalValue:cfg.metalValue || null, carat:cfg.ct ?? null, sizeUS:RING_SIZES[cfg.size][0], sizeAU:RING_SIZES[cfg.size][1], properties:{ ...props, _source:'Virtual try-on look' } };
 }
 function removeFrom(side, f) {
   if (f === 'wrist') {                                  // take the bracelet off that hand
@@ -2309,8 +2424,8 @@ function removeFrom(side, f) {
   }
   if (side === state.side) return removeRing(f);
   const s = state.hands[side]; if (!s) return;
-  if (f !== s.finger) delete s.worn[f];
-  else { const next = Object.keys(s.worn)[0]; if (!next) state.hands[side] = null; else { const r = s.worn[next]; delete s.worn[next]; Object.assign(s, { pid:r.pid, cfg:r.cfg, finger:next, slide:r.slide, spin:r.spin }); } }
+  if (f !== keyOf(s.finger, s.slot || 0)) delete s.worn[f];
+  else { const next = Object.keys(s.worn)[0]; if (!next) state.hands[side] = null; else { const r = s.worn[next]; delete s.worn[next]; Object.assign(s, { pid:r.pid, cfg:r.cfg, finger:fingerOf(next), slot:slotOf(next), slide:r.slide, spin:r.spin }); } }
   renderSelections();
 }
 function renderSelections() {
@@ -2325,10 +2440,10 @@ function renderSelections() {
     ${rings.map(r => {
       const [f, pid, cfg] = r, p = byId[pid], sold = p.available === false, pr = ringPrice(pid, cfg);
       if (sold) out++; else total += pr;
-      const on = side === state.side && (f === 'wrist' ? editingBracelet() : !editingBracelet() && f === state.finger);
+      const on = side === state.side && (f === 'wrist' ? editingBracelet() : !editingBracelet() && f === activeKey());
       return `<div class="selitem ${on ? 'on' : ''}">
         ${p.img ? `<img src="${esc(p.img)}" alt="">` : '<span class="noimg"></span>'}
-        <div style="min-width:0"><b>${esc(p.name)}</b><small>${fingerName(f)}${pieceSpec(f, pid, cfg) ? ' · ' + esc(pieceSpec(f, pid, cfg)) : ''}${p.metalPrices ? ' · ' + METALS[cfg.metal].name.replace('18 ct ', '') : ''}</small>
+        <div style="min-width:0"><b>${esc(p.name)}</b><small>${esc(stackLabel(f, side === state.side ? null : state.hands[side]))}${pieceSpec(f, pid, cfg) ? ' · ' + esc(pieceSpec(f, pid, cfg)) : ''}${hasMetals(p) ? ' · ' + esc(metalLabel(p, cfg).replace('18 ct ', '')) : ''}</small>
           <small class="${sold ? 'out' : ''}">${sold ? 'Sold out' : money(pr)}</small></div>
         <div class="side"><button data-edit="${side}:${f}">Edit</button>${sold ? '' : `<button data-add1="${side}:${f}">Add</button>`}
           ${n > 1 || f === 'wrist' ? `<button data-rm="${side}:${f}" aria-label="Remove ${esc(p.name)}">✕</button>` : ''}</div></div>`;
@@ -2388,7 +2503,7 @@ function setSheet(px, snap) {
 /* ---------- Product detail panel ---------- */
 function showDetails(p = product()) {
   const imgs = p.images?.length ? p.images : [p.img].filter(Boolean);
-  const metals = p.metalPrices ? Object.keys(p.metalPrices).map(k => METALS[k].name).join(', ') : '';
+  const metals = p.metalValues ? p.metalValues.map(m => m.v).join(', ') : p.metalPrices ? Object.keys(p.metalPrices).map(k => METALS[k].name).join(', ') : '';
   // rings: US size range · bracelets: their Length values (if the product has a Length option)
   const sizes = p.kind === 'bracelet' ? (p.lengths ? p.lengths.join(', ') : '') : `US ${RING_SIZES[0][0]}–${RING_SIZES.at(-1)[0]}`;
   const m = popup(esc(p.name), `<div class="pd-grid">
@@ -2469,9 +2584,10 @@ document.querySelectorAll('[data-act]').forEach(b => b.onclick = () => { openMen
 /* ---------- Look data: which rings sit where on each hand (share links + saved looks) ---------- */
 function lookData() {
   const sets = { ...state.hands, [state.side]: handSet() }, hands = {};
-  for (const [side, s] of Object.entries(sets)) if (s) hands[side] = ringsIn(s).map(([f, pid, cfg]) =>
-    ({ k:byId[pid].key || pid, f, s:cfg.size, m:cfg.metal, z:+(cfg.stoneK || 1).toFixed(2), ...(cfg.ct ? { c:cfg.ct } : {}), ...(f === 'wrist' && cfg.length ? { l:cfg.length } : {}) }));
-  return { v:1, side:state.side, hands };
+  // stacked rings: same f several times, in order from the base of the finger up (the order they are put back in)
+  for (const [side, s] of Object.entries(sets)) if (s) hands[side] = ringsIn(s).sort((a, b) => order(a[0]) - order(b[0]) || a[3] - b[3]).map(([k, pid, cfg]) => [fingerOf(k), pid, cfg]).map(([f, pid, cfg]) =>
+    ({ k:byId[pid].key || pid, f, s:cfg.size, m:cfg.metal, ...(cfg.metalValue ? { mv:cfg.metalValue } : {}), z:+(cfg.stoneK || 1).toFixed(2), ...(cfg.ct ? { c:cfg.ct } : {}), ...(f === 'wrist' && cfg.length ? { l:cfg.length } : {}) }));
+  return { v:1, side:state.side, t:Math.round(state.tone), hands };   // t = skin tone (slider 0–100), so the look opens as it was saved
 }
 const encodeLook = d => btoa(unescape(encodeURIComponent(JSON.stringify(d)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 function decodeLook(s) {
@@ -2489,7 +2605,7 @@ function applyLookData(d) {
       const p = byId[pid], cfg = freshCfg(p);
       if (x.f === 'wrist') {                              // the bracelet
         if (p.kind !== 'bracelet') { skipped++; continue; }
-        if (x.m && metalsOf(p).includes(x.m)) cfg.metal = x.m;
+        if (x.m && metalsOf(p).includes(x.m)) cfg.metal = x.m; { const mv = x.mv && p.metalValues?.find(v => v.v === x.mv); if (mv) Object.assign(cfg, { metalValue:mv.v, metal:mv.k }); } { const mv = x.mv && p.metalValues?.find(v => v.v === x.mv); if (mv) Object.assign(cfg, { metalValue:mv.v, metal:mv.k }); }
         if (x.l && p.lengths?.includes(x.l)) cfg.length = x.l;
         wrist = { pid, cfg, slide:0 }; placed++; continue;
       }
@@ -2497,22 +2613,27 @@ function applyLookData(d) {
       if (x.m && metalsOf(p).includes(x.m)) cfg.metal = x.m;
       if (x.z) cfg.stoneK = clamp(+x.z, STONE_MIN, STONE_MAX);
       if (x.c && p.carats?.includes(x.c)) { cfg.ct = x.c; cfg.stoneK = stoneKFor(p, x.c); }
-      worn[x.f] = { pid, cfg, slide:0, spin:0 }; placed++;
+      const n = Object.keys(worn).filter(k => fingerOf(k) === x.f).length;   // stacked rings: same finger again
+      if (n >= STACK_MAX) { skipped++; continue; }
+      worn[keyOf(x.f, n)] = { pid, cfg, slide:0, spin:0 }; placed++;
     }
     const fs = Object.keys(worn);
     if (!fs.length) {                                     // only a bracelet on this hand: no ring drawn
       if (wrist) sets[side] = { pid:state.pid, cfg:{ ...state.cfg }, finger:'ring', slide:0, spin:0, worn:{}, wrist, noRing:true };
       continue;
     }
-    fs.forEach(f => worn[f].slide = withRing(worn[f], f, () => seat(f, 0)));
+    // the first ring on each finger sits at its usual spot, the next ones stacked just above it
+    fs.forEach(k => { const f = fingerOf(k), n = slotOf(k);
+      worn[k].slide = n ? clamp(worn[keyOf(f, n - 1)].slide + stackStep(f), ...rangeOf(f)) : withRing(worn[k], f, () => seat(f, 0)); });
     const a = worn[fs[0]]; delete worn[fs[0]];
-    sets[side] = { pid:a.pid, cfg:a.cfg, finger:fs[0], slide:a.slide, spin:0, worn, wrist };
+    sets[side] = { pid:a.pid, cfg:a.cfg, finger:fingerOf(fs[0]), slot:slotOf(fs[0]), slide:a.slide, spin:0, worn, wrist };
   }
   if (!placed) return { placed, skipped };
   const side = sets[d.side] ? d.side : Object.keys(sets)[0];
   state.hands = { left:null, right:null };
   for (const s of ['left', 'right']) if (s !== side) state.hands[s] = sets[s] || null;
   state.side = side; loadSet(sets[side]);
+  if (Number.isFinite(+d.t) && d.t !== null) setTone(clamp(+d.t, 0, 100));   // the skin tone the look was saved with
   updateSideButtons(); applyHand(); afterRingsChanged();
   return { placed, skipped };
 }
@@ -2586,7 +2707,9 @@ async function looksApi(method = 'GET', body, query = '') {
     if (method === 'POST') { const look = { id:String(Date.now()), createdAt:new Date().toISOString(), ...body }; localLooks.set([look, ...all]); return { look }; }
     return { looks:all };
   }
-  const res = await fetch(LOOKS_API + query, { method, headers:{ Accept:'application/json', ...(body ? { 'Content-Type':'application/json' } : {}) }, body:body ? JSON.stringify(body) : undefined });
+  // the list must never come from a cache (Shopify's app proxy / the browser): a just-saved look has to show up
+  if (method === 'GET') query += (query.includes('?') ? '&' : '?') + 't=' + Date.now();
+  const res = await fetch(LOOKS_API + query, { method, cache:'no-store', headers:{ Accept:'application/json', ...(body ? { 'Content-Type':'application/json' } : {}) }, body:body ? JSON.stringify(body) : undefined });
   const data = await res.json().catch(() => ({}));
   if (res.status === 401) { if (EMBED) EMBED.loggedIn = false; throw Object.assign(new Error('login'), { login:true }); }
   if (!res.ok) throw new Error(data.error || 'Something went wrong');
@@ -2628,6 +2751,12 @@ async function saveLook() {
 // "Signed in · Sign out" above My looks (store only: Shopify's normal customer logout)
 const signedInBar = () => EMBED ? `<div class="muted" style="text-align:right;font-size:12px">Signed in · <button class="linkbtn" data-signout>Sign out</button></div>` : '';
 document.addEventListener('click', e => { if (e.target.closest?.('[data-signout]')) toParent({ type:'goto', to:'logout' }); });
+// Which saved looks to list: on a ring product page the ones with a ring, on a bracelet page the ones with a bracelet
+const lookFits = l => {
+  if (!SINGLE) return true;
+  const pieces = Object.values(l.data?.hands || {}).flat();
+  return CUR_BRACELET ? pieces.some(x => x.f === 'wrist') : pieces.some(x => x.f !== 'wrist');
+};
 async function renderMine() {
   const box = $('mineList'); if (!box) return;
   if (loggedOut()) {
@@ -2638,13 +2767,15 @@ async function renderMine() {
   box.innerHTML = '<div class="mineempty">Loading your looks…</div>';
   let looks;
   try {
-    looks = (await looksApi()).looks || [];
+    looks = ((await looksApi()).looks || []).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))   // newest first
+      .filter(lookFits);                                 // product page: ring looks on a ring page, bracelet looks on a bracelet page
     await ensureProducts(looks.flatMap(l => Object.values(l.data?.hands || {}).flat().map(x => x.k)));
   }
   catch (e) { if (e.login) return renderMine(); box.innerHTML = `<div class="mineempty">Couldn't load your looks. <button id="mineRetry">Try again</button></div>`; return $('mineRetry').onclick = renderMine; }
   if (!looks.length) {
-    box.innerHTML = signedInBar() + `<div class="mineempty"><div class="ico">♡</div><b>No saved looks yet</b>
-      <div>Put rings on your hand, then tap “Save look” to keep them here.</div><button id="mineSave">Save this look</button></div>`;
+    const what = SINGLE ? (CUR_BRACELET ? 'bracelet ' : 'ring ') : '';
+    box.innerHTML = signedInBar() + `<div class="mineempty"><div class="ico">♡</div><b>No saved ${what}looks yet</b>
+      <div>Put ${CUR_BRACELET && SINGLE ? 'a bracelet on your wrist' : 'rings on your hand'}, then tap “Save look” to keep them here.</div><button id="mineSave">Save this look</button></div>`;
     return $('mineSave').onclick = saveLook;
   }
   box.innerHTML = signedInBar() + looks.map((l, i) => {
@@ -2809,7 +2940,7 @@ $('tabHand').onclick = () => { setTab('you'); makeQR(); };
    ===================================================================== */
 function openTryOn() {
   state.open = true; $('tryon').hidden = false; document.body.style.overflow = 'hidden';
-  Object.assign(state, { worn:{}, hands:{ left:null, right:null }, side:'left', finger:'ring', slide:0, yaw:0, pitch:0, zoom:1, panX:0, panY:0,
+  Object.assign(state, { slot:0, worn:{}, hands:{ left:null, right:null }, side:'left', finger:'ring', slide:0, yaw:0, pitch:0, zoom:1, panX:0, panY:0,
     noRing:!PRODUCTS.length || !!CUR_BRACELET, wrist:CUR_BRACELET ? { pid:CUR_BRACELET.id, cfg:freshCfg(CUR_BRACELET), slide:0 } : null,
     drawer:CUR_BRACELET || !PRODUCTS.length ? 'bracelet' : 'ring', orient:CUR_BRACELET || !PRODUCTS.length ? 'bracelet' : 'ring' });
   $('kindTabs').hidden = BRACELET_ONLY || !(PRODUCTS.length && BRACELETS.length);
@@ -2834,16 +2965,16 @@ function addToCart() {
     return buyRings([[state.side, ['wrist', state.wrist.pid, state.wrist.cfg]]]);
   }
   const p = product(), c = state.cfg;
-  const props = { Metal:METALS[c.metal].name, 'Ring size':`US ${RING_SIZES[c.size][0]}` };
+  const props = { Metal:metalLabel(p, c), 'Ring size':`US ${RING_SIZES[c.size][0]}` };
   if (c.stone) props['Stone colour'] = STONES[c.stone].name;
   if (hasCenter(p)) { props.Shape = c.shape; props.Carat = c.carat.toFixed(2); }
   if (EMBED) {
     // Real store: only facts the shopper chose (shown on the cart line and the order)
     const lineProps = { 'Ring size':`US ${RING_SIZES[c.size][0]}` };
-    if (p.metalPrices) lineProps.Metal = METALS[c.metal].name;
+    if (hasMetals(p)) lineProps.Metal = metalLabel(p, c);
     const btn = $('shopCart'); btn.disabled = true; btn.textContent = 'Adding…';
     $('addedSheet').hidden = true;
-    toParent({ type:'add', productKey:p.key, metal:c.metal, carat:c.ct ?? null, sizeUS:RING_SIZES[c.size][0], sizeAU:RING_SIZES[c.size][1], properties:{ ...lineProps, _source:'Virtual try-on' } });
+    toParent({ type:'add', productKey:p.key, metal:c.metal, metalValue:c.metalValue || null, carat:c.ct ?? null, sizeUS:RING_SIZES[c.size][0], sizeAU:RING_SIZES[c.size][1], properties:{ ...lineProps, _source:'Virtual try-on' } });
     return;
   }
   const item = { id:`gid://shopify/ProductVariant/${p.id}-${c.metal}`, quantity:1, properties:{ ...props, _source:state.open ? 'tryon' : 'pdp' } };
@@ -2893,6 +3024,7 @@ if (EMBED) {
   $('tabShop').hidden = false;
   $('tabRing').hidden = true;   // shape / carat are fixed by the product in a real store
   $('tabShop').onclick = () => setTab('shop');
+  setupMorePick(); renderShop();                 // product page: "Try more pieces" list under the buttons
   $('shopCart').onclick = addToCart;
   $('goCheckout').onclick = () => toParent({ type:'goto', to:'checkout' });
   $('goCart').onclick = () => toParent({ type:'goto', to:'cart' });
@@ -2932,7 +3064,7 @@ if (EMBED) {
       updatePrices();
       if (!e.data.ok) return toast(e.data.error || 'Could not add to cart');
       const c = state.cfg;
-      $('addedText').textContent = `${product().name} · US ${RING_SIZES[c.size][0]}${product().metalPrices ? ' · ' + METALS[c.metal].name : ''}`;
+      $('addedText').textContent = `${product().name} · US ${RING_SIZES[c.size][0]}${hasMetals(product()) ? ' · ' + metalLabel(product(), c) : ''}`;
       $('addedCount').textContent = e.data.count ? `${e.data.count} item${e.data.count > 1 ? 's' : ''} in your bag` : '';
       $('addedSheet').hidden = false;
     }

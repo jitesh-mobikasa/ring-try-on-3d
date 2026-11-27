@@ -18,16 +18,20 @@
       </svg>
       <span>{{ block.settings.label }}</span>
     </button>
+    {%- comment -%} The pieces to try next to this one ("Try more pieces"): the block's collection, else every product in
+         the store (collections.all); only products with a try-on image are listed. {%- endcomment -%}
+    {%- assign rc = block.settings.collection -%}
+    {%- if rc == blank -%}{%- assign rc = collections.all -%}{%- endif -%}
     <script type="application/json" data-ring-tryon-product>
       {
         "currentId": {{ product.id }},
         "customer": {% if customer %}true{% else %}false{% endif %},
         "shopName": {{ shop.name | json }},
         {%- comment -%} More rings than max_products are loaded page by page from the app (/apps/ring-tryon/products) {%- endcomment -%}
-        "collection": {% if block.settings.collection %}{
-          "handle": {{ block.settings.collection.handle | json }},
+        "collection": {% if rc %}{
+          "handle": {{ rc.handle | json }},
           "offset": {{ block.settings.max_products }},
-          "more": {% if block.settings.collection.products_count > block.settings.max_products %}true{% else %}false{% endif %}
+          "more": {% if rc.products_count > block.settings.max_products %}true{% else %}false{% endif %}
         }{% else %}null{% endif %},
         "currency": {{ cart.currency.iso_code | json }},
         "locale": {{ request.locale.iso_code | json }},
@@ -41,8 +45,8 @@
         },
         "products": [
           {%- render 'tryon-product', p: product -%}
-          {%- if block.settings.collection -%}
-            {%- for p in block.settings.collection.products limit: block.settings.max_products -%}
+          {%- if rc -%}
+            {%- for p in rc.products limit: block.settings.max_products -%}
               {%- assign pt = p.metafields.tryon.asset.value -%}
               {%- if p.id != product.id and pt and pt.image and pt.enabled != false -%}
                 ,{%- render 'tryon-product', p: p -%}
@@ -52,7 +56,7 @@
           {%- comment -%} Bracelets: a second collection, by handle (app blocks allow only one collection picker) {%- endcomment -%}
           {%- assign bc = nil -%}
           {%- if block.settings.bracelet_collection_handle != blank -%}{%- assign bc = collections[block.settings.bracelet_collection_handle] -%}{%- endif -%}
-          {%- if bc and bc.id != block.settings.collection.id -%}
+          {%- if bc and bc.id != rc.id -%}
             {%- for p in bc.products limit: block.settings.max_products -%}
               {%- assign pt = p.metafields.tryon.asset.value -%}
               {%- if p.id != product.id and pt and pt.image and pt.enabled != false -%}

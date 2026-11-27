@@ -5,7 +5,8 @@
   if (window.__ringTryOn) return; window.__ringTryOn = true;
 
   // Metal key used by the viewer → words that identify it in a variant option value.
-  const METAL_WORDS = { R: ['rose'], W: ['white'], P: ['platinum', 'plat'], Y: ['yellow', 'gold'] };
+  // metal colour of a variant value (silver / sterling / 925 look like white metal)
+  const METAL_WORDS = { R: ['rose'], W: ['white', 'silver', 'sterling', '925'], P: ['platinum', 'plat'], Y: ['yellow', 'gold'] };
   const norm = s => String(s || '').toLowerCase().trim();
   const metalOf = value => {
     const v = norm(value);
@@ -38,7 +39,12 @@
     const lengths = p._lengthIdx >= 0 ? [...new Set(p.variants.map(v => v.options[p._lengthIdx]))] : null;
     const carats = p._caratIdx >= 0 ? [...new Set(p.variants.map(v => v.options[p._caratIdx]))] : null;
     // price + stock of each metal × carat (the try-on shows the real price of the chosen stone)
-    const combos = carats ? p.variants.map(v => ({ m: p._metalIdx >= 0 ? metalOf(v.options[p._metalIdx]) : null, c: v.options[p._caratIdx], price: v.price, a: v.available })) : null;
+    const combos = carats ? p.variants.map(v => ({ m: p._metalIdx >= 0 ? metalOf(v.options[p._metalIdx]) : null, mv: p._metalIdx >= 0 ? v.options[p._metalIdx] : null, c: v.options[p._caratIdx], price: v.price, a: v.available })) : null;
+    // the store's own metal values ("92.5 Sterling Silver", "14K White Gold", …) in its order, with colour, lowest price, stock
+    const mi = p._metalIdx, metalValues = mi < 0 ? null : [...new Set(p.variants.map(v => v.options[mi]))].map(v => {
+      const vs = p.variants.filter(x => x.options[mi] === v);
+      return { v, k: metalOf(v) || 'W', price: Math.min(...vs.map(x => x.price)), a: vs.some(x => x.available) };
+    });
     const metalPrices = {}, metalImages = {};
     if (p._metalIdx >= 0) {
       for (const v of p.variants) {
@@ -57,6 +63,7 @@
       metalImages: Object.keys(metalImages).length ? metalImages : null,
       kind: p.tryon?.kind === 'bracelet' ? 'bracelet' : 'ring', lengths, carats, combos,
       firstCarat: carats && first ? first.options[p._caratIdx] : null,
+      metalValues,
     };
   }
 
@@ -66,7 +73,8 @@
       const val = norm(v.options[p._sizeIdx]).replace(/^(us|uk|au)\s*/, '');
       return val === norm(msg.sizeUS) || val === norm(msg.sizeAU) || val.split(/[\s/]+/).includes(norm(msg.sizeUS));
     };
-    const metalMatch = v => p._metalIdx < 0 || metalOf(v.options[p._metalIdx]) === msg.metal;
+    // the exact metal value when the try-on sends one ("14K White Gold"), else by colour
+    const metalMatch = v => p._metalIdx < 0 || (msg.metalValue ? norm(v.options[p._metalIdx]) === norm(msg.metalValue) : metalOf(v.options[p._metalIdx]) === msg.metal);
     // bracelets: the shopper's Length (rings send none)
     const lengthMatch = v => p._lengthIdx < 0 || msg.length == null || norm(v.options[p._lengthIdx]) === norm(msg.length);
     const caratMatch = v => p._caratIdx < 0 || msg.carat == null || norm(v.options[p._caratIdx]) === norm(msg.carat);
@@ -151,20 +159,12 @@
     if (!v) return reply({ type: 'added', ok: false, error: 'This size / metal is not available' });
     if (!v.available) return reply({ type: 'added', ok: false, error: 'Sorry, this option is sold out' });
     try {
-      const root = window.Shopify?.routes?.root || '/';
-      const res = await fetch(root + 'cart/add.js', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ items: [{ id: v.id, quantity: 1, properties: msg.properties || {} }] }),
-      });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.description || body.message || 'Could not add to cart');
-      const count = await refreshCart();
+      const { body, count } = await cartAdd([{ id: v.id, quantity: 1, properties: msg.properties || {} }]);
       reply({ type: 'added', ok: true, count });
       track('tryon_add_to_cart', { productId: p.productId, variantId: v.id });
       document.dispatchEvent(new CustomEvent('ring-tryon:added', { detail: { variant: v, item: body } }));
-      document.dispatchEvent(new CustomEvent('cart:refresh', { bubbles: true }));   // themes that listen for it
       const after = current.data.settings?.afterAdd;
-      if (after === 'cart') location.href = root + 'cart';
+      if (after === 'cart') location.href = (window.Shopify?.routes?.root || '/') + 'cart';
       else if (after === 'close') close();
     } catch (e) {
       reply({ type: 'added', ok: false, error: e.message });
@@ -220,21 +220,25 @@
     }
     if (!lines.length) return reply({ type: 'addedMany', ok: false, error: 'These rings are sold out', skipped });
     try {
-      const root = window.Shopify?.routes?.root || '/';
-      const res = await fetch(root + 'cart/add.js', {
-        method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ items: lines }),
-      });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.description || body.message || 'Could not add to cart');
-      const count = await refreshCart();
+      const { body, count } = await cartAdd(lines);
       reply({ type: 'addedMany', ok: true, added: lines.length, skipped, count });
       track('tryon_buy_look', { rings: lines.length });
       document.dispatchEvent(new CustomEvent('ring-tryon:added', { detail: { items: body.items || [] } }));
-      document.dispatchEvent(new CustomEvent('cart:refresh', { bubbles: true }));
     } catch (e) {
       reply({ type: 'addedMany', ok: false, error: e.message, skipped });
     }
+  }
+
+  /* /cart/add.js with these lines, then refresh the theme's cart count. → { body, count } */
+  async function cartAdd(items) {
+    const res = await fetch((window.Shopify?.routes?.root || '/') + 'cart/add.js', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ items }),
+    });
+    const body = await res.json();
+    if (!res.ok) throw new Error(body.description || body.message || 'Could not add to cart');
+    const count = await refreshCart();
+    document.dispatchEvent(new CustomEvent('cart:refresh', { bubbles: true }));   // themes that listen for it
+    return { body, count };
   }
 
   /* Update the theme's cart icon / count without reloading the page. Returns the number of items in the cart. */

@@ -72,6 +72,17 @@ const byIdsQuery = (withCountry: boolean) => `#graphql
     nodes(ids: $ids) { ... on Product { ${nodeFields(withCountry)} } }
   }`;
 
+// "all" (the theme's collections.all, used when the block has no collection): every active product, newest first
+const allQuery = (withCountry: boolean) => `#graphql
+  query TryOnAll($first: Int!, $after: String${withCountry ? ", $country: CountryCode!" : ""}) {
+    products(first: $first, after: $after, query: "status:active", sortKey: UPDATED_AT, reverse: true) {
+      pageInfo { hasNextPage endCursor }
+      nodes { ${nodeFields(withCountry)} }
+    }
+  }`;
+const allSkipQuery = `#graphql
+  query AllSkip($first: Int!) { products(first: $first, query: "status:active", sortKey: UPDATED_AT, reverse: true) { pageInfo { hasNextPage endCursor } } }`;
+
 // Cursor after the first n products (the ones the theme block already rendered), without loading them.
 const skipQuery = `#graphql
   query Skip($handle: String!, $first: Int!) {
@@ -138,8 +149,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
   try {
     if (!after && offset > 0) {
-      const d = await gql<{ collectionByIdentifier: { products: Page } | null }>(admin as Admin, skipQuery, { handle, first: offset });
-      const info = d.collectionByIdentifier?.products.pageInfo;
+      const info = handle === "all"
+        ? (await gql<{ products: Page }>(admin as Admin, allSkipQuery, { first: offset })).products.pageInfo
+        : (await gql<{ collectionByIdentifier: { products: Page } | null }>(admin as Admin, skipQuery, { handle, first: offset })).collectionByIdentifier?.products.pageInfo;
       if (!info?.hasNextPage) return json({ products: [], cursor: null, hasMore: false });
       after = info.endCursor;
     }
@@ -147,9 +159,10 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     const products: NonNullable<ReturnType<typeof toViewer>>[] = [];
     let hasMore = true;
     for (let round = 0; round < MAX_ROUNDS && products.length < WANT && hasMore; round++) {
-      const d = await gql<{ collectionByIdentifier: { products: Page } | null }>(admin as Admin, productsQuery(withCountry),
-        { handle, first: BATCH, after, ...(withCountry ? { country } : {}) });
-      const page = d.collectionByIdentifier?.products;
+      const vars = { first: BATCH, after, ...(withCountry ? { country } : {}) };
+      const page = handle === "all"
+        ? (await gql<{ products: Page }>(admin as Admin, allQuery(withCountry), vars)).products
+        : (await gql<{ collectionByIdentifier: { products: Page } | null }>(admin as Admin, productsQuery(withCountry), { handle, ...vars })).collectionByIdentifier?.products;
       if (!page) return json({ products: [], cursor: null, hasMore: false });
       for (const node of page.nodes) { const p = toViewer(node); if (p) products.push(p); }
       hasMore = page.pageInfo.hasNextPage;

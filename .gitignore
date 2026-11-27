@@ -10,3 +10,6 @@ prisma/*.sqlite*
 tests/e2e/output/
 tools/hand-measure/.venv/
 tools/hand-measure/out/
+.xlsx
+# Ignore all CSV files everywhere
+*.csv
