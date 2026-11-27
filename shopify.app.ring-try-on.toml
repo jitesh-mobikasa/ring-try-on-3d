@@ -2,11 +2,11 @@
 client_id = "5b211a7fa86c3ab5669ee673329f5648"
 name = "ring-try-on"
 # `npm run dev` replaces these URLs with the tunnel automatically
-application_url = "https://example.com"
+application_url = "https://ring-try-on-3d.vercel.app"
 embedded = true
 
 [build]
-automatically_update_urls_on_dev = true
+automatically_update_urls_on_dev = false   # keep Shopify on the Vercel URL (local dev: use another config)
 include_config_on_deploy = true
 
 [access_scopes]
@@ -14,11 +14,11 @@ include_config_on_deploy = true
 scopes = "read_products,write_products,read_files,write_files,write_app_proxy"
 
 [auth]
-redirect_urls = [ "https://example.com/auth/callback" ]
+redirect_urls = [ "https://ring-try-on-3d.vercel.app/auth/callback" ]
 
 # The storefront opens the viewer at https://<store>/apps/ring-tryon/viewer (same domain, nothing for merchants to configure)
 [app_proxy]
-url = "https://example.com/proxy"
+url = "https://ring-try-on-3d.vercel.app/proxy"
 subpath = "ring-tryon"
 prefix = "apps"
 
